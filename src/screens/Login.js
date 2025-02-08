@@ -13,6 +13,7 @@ import {
 import LinearGradient from "react-native-linear-gradient";
 import Svg, { Path } from "react-native-svg";
 import { darkTheme, lightTheme } from "../theme/theme";
+import { getLoginDetails } from "../core/CommonService";
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
@@ -33,6 +34,58 @@ export default function LoginScreen({navigation}) {
     "Personalised Dashboard"
   ];
 
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState({ email: "", password: "" });
+
+  const validateFields = () => {
+    let valid = true;
+    let newErrors = { email: "", password: "" };
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; 
+    const phoneRegex = /^[0-9]{10}$/; 
+    if (!emailRegex.test(email) && !phoneRegex.test(email)) {
+      newErrors.email = "Enter a valid email or phone number";
+      valid = false;
+    }
+
+    if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+      valid = false;
+    }
+
+    setErrors(newErrors);
+    return valid;
+  };
+
+  const handleLogin = async () => {
+    if (!check) {
+      alert("Please agree to the privacy policy and terms of service.");
+      return; 
+    }
+  
+    const data = {
+      [validateEmailOrPhone(email) ? "email" : "mobile"]: email,
+      password: password
+    };
+  
+    if (validateFields()) {
+      const response = await getLoginDetails(data);
+      console.log("Response", response);
+  
+      // Handle the response as needed (e.g., navigate to a new screen)
+      // if (response.statusCode === 201) {
+      //   navigation.navigate("AccountCreated");
+      // }
+    }
+  };
+  
+  const validateEmailOrPhone = (input) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; 
+    const phoneRegex = /^[0-9]{10}$/;
+    return emailRegex.test(input); 
+  };
+
   useEffect(() => {
     const interval = setInterval(() => {
       scrollRef.current?.scrollTo({
@@ -44,7 +97,6 @@ export default function LoginScreen({navigation}) {
 
     return () => clearInterval(interval);
   }, [currentIndex, accessOptions.length]);
-
 
   return (
     <LinearGradient
@@ -74,27 +126,57 @@ export default function LoginScreen({navigation}) {
             { backgroundColor: theme.path },
           ]}
         >
-          <View style={{ top: -180,padding:20 }}>
-            <Text style={[styles.welcomeText, { color: theme.textColor }]}>
+          <View style={{ top: -180, padding: 20 }}>
+            <Text style={[styles.welcomeText, { color: theme.wb }]}>
               Welcome back!
             </Text>
+
             <TextInput
               style={[
                 styles.input,
-                { borderColor: theme.inputBorder, backgroundColor: "#fff" },
+                {
+                  borderColor: errors.email ? theme.red : theme.inputBorder,
+                  backgroundColor: "#fff",
+                  borderWidth: errors.email ? 1 : 0,
+                  color: "#000",
+                },
               ]}
               placeholder="Email / Phone Number"
-              placeholderTextColor={theme.textColor}
+              placeholderTextColor={theme.gray}
+              value={email}
+              onChangeText={(text) => {
+                setEmail(text);
+                if (errors.email) {
+                  setErrors((prevErrors) => ({ ...prevErrors, email: null }));
+                }
+              }}
             />
+            {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
+
             <TextInput
               style={[
                 styles.input,
-                { borderColor: theme.inputBorder, backgroundColor: "#fff" },
+                {
+                  borderColor: errors.password ? theme.red : theme.inputBorder,
+                  backgroundColor: "#fff",
+                  borderWidth: errors.password ? 1 : 0,
+                  color: "#000",
+                },
               ]}
               placeholder="Password"
-              placeholderTextColor={theme.textColor}
+              placeholderTextColor={theme.gray}
               secureTextEntry={true}
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                if (errors.password) {
+                  setErrors((prevErrors) => ({ ...prevErrors, password: null }));
+                }
+              }}
             />
+            {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
+
+            {/* Checkbox */}
             <View style={styles.checkboxContainer}>
               <TouchableOpacity
                 onPress={() => {
@@ -103,33 +185,37 @@ export default function LoginScreen({navigation}) {
               >
                 <Image
                   style={{
-                    tintColor: check ? "#fff" : theme.textColor1,
+                    tintColor: check ? theme.green : "#fff",
                     marginRight: 5,
                   }}
                   source={require("../images/check_box.png")}
                 />
               </TouchableOpacity>
 
-              <Text style={[styles.checkboxText, { color: theme.textColor }]}>
+              <Text style={[styles.checkboxText, { color: theme.wb }]}>
                 I have read and agree to the privacy policy, terms of service
               </Text>
             </View>
 
+            {/* Login Button */}
             <TouchableOpacity
               style={[
                 styles.loginButton,
                 { backgroundColor: theme.buttonBackground },
               ]}
+              onPress={handleLogin}
             >
               <Text
                 style={[
                   styles.loginButtonText,
-                  { color: theme.buttonText },
+                  { color: theme.textColor1 },
                 ]}
               >
                 Login
               </Text>
             </TouchableOpacity>
+
+            {/* Forgot Password Link */}
             <TouchableOpacity onPress={()=>{
               navigation.navigate("ResetPassword")
             }}>
@@ -146,32 +232,30 @@ export default function LoginScreen({navigation}) {
             {/* Footer Section */}
             <View style={styles.footer}>
               <View style={{flexDirection:'row'}}>
-              <Text
-                style={[styles.newHereText, { color: theme.textColor }]}
-              >
-                New here?{" "}
-               
-              </Text>
-              <TouchableOpacity onPress={()=>{
-                navigation.navigate("Signup")
-              }}>
-              <Text
-                  style={[
-                    styles.signUpText,
-                    { color: theme.accentText },
-                  ]}
+                <Text
+                  style={[styles.newHereText, { color: theme.wb }]}
                 >
-                  Sign Up
+                  New here?{" "}
                 </Text>
-              </TouchableOpacity>
-             
+                <TouchableOpacity onPress={()=>{
+                  navigation.navigate("Signup")
+                }}>
+                  <Text
+                    style={[
+                      styles.signUpText,
+                      { color: theme.accentText },
+                    ]}
+                  >
+                    Sign Up
+                  </Text>
+                </TouchableOpacity>
               </View>
-              
+
               <Text
                 style={[
                   styles.accessText,
                   {
-                    color: theme.textColor,
+                    color: theme.wb,
                     alignSelf: "flex-start",
                     marginLeft: 20,
                   },
@@ -180,30 +264,29 @@ export default function LoginScreen({navigation}) {
                 Login to access:
               </Text>
               <View style={{justifyContent:'flex-end',height:50}}>
-              <ScrollView
-                ref={scrollRef}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.accessOptions}
-              >
-                {accessOptions.map((option, index) => (
-                  <Text
-                    key={index}
-                    style={[
-                      styles.accessOption,
-                      {
-                        color: theme.accentText,
-                        backgroundColor: theme.textbgcolor,
-                        height:35
-                      },
-                    ]}
-                  >
-                    {option}
-                  </Text>
-                ))}
-              </ScrollView>
+                <ScrollView
+                  ref={scrollRef}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.accessOptions}
+                >
+                  {accessOptions.map((option, index) => (
+                    <Text
+                      key={index}
+                      style={[
+                        styles.accessOption,
+                        {
+                          color: theme.accentText,
+                          backgroundColor: theme.textbgcolor,
+                          height:35
+                        },
+                      ]}
+                    >
+                      {option}
+                    </Text>
+                  ))}
+                </ScrollView>
               </View>
-             
             </View>
           </View>
         </View>
@@ -252,11 +335,11 @@ const styles = StyleSheet.create({
     height: 40,
     borderWidth: 1,
     borderRadius: 5,
-    marginBottom: 15,
+    marginBottom: 10,
     paddingHorizontal: 10,
     fontSize: 14,
     marginHorizontal: 10,
-    marginVertical:8
+    marginVertical: 8,
   },
   checkboxContainer: {
     flexDirection: "row",
@@ -273,7 +356,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 15,
     marginHorizontal: 10,
-    height:40
+    height: 40,
   },
   loginButtonText: {
     fontSize: 14,
@@ -283,7 +366,7 @@ const styles = StyleSheet.create({
     textAlign: "right",
     fontSize: 14,
     marginHorizontal: 10,
-    marginBottom:20
+    marginBottom: 20,
   },
   footer: {
     alignItems: "center",
@@ -310,6 +393,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 12,
     marginHorizontal: 10,
-    
+  },
+  errorText: {
+    fontSize: 12,
+    marginLeft: 10,
+    marginBottom: 5,
+    color: 'red'
   },
 });

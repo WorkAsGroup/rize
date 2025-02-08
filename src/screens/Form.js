@@ -13,6 +13,7 @@ import LinearGradient from "react-native-linear-gradient";
 import { darkTheme, lightTheme } from "../theme/theme";
 import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Text as SvgText } from "react-native-svg";
 import { theme } from "../core/theme";
+import { getExamType } from "../core/CommonService";
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
@@ -20,6 +21,30 @@ const windowHeight = Dimensions.get("window").height;
 export default function Form({ navigation }) {
     const colorScheme = useColorScheme();
     const theme = colorScheme === "dark" ? darkTheme : lightTheme;
+
+    const [selectedYear, setSelectedYear] = useState(null);
+    const [selectedExam, setSelectedExam] = useState(null);
+    const [selectedSubjects, setSelectedSubjects] = useState([]);
+    const [selectedLevel, setSelectedLevel] = useState(null);
+    const [selectedDuration, setSelectedDuration] = useState(null);
+
+    useEffect(() => {
+        getExam();
+    }, []);
+
+    const getExam = async () => {
+        const exams = await getExamType();
+        console.log("response", exams);
+    };
+
+    const toggleSubject = (subject) => {
+        setSelectedSubjects((prev) =>
+            prev.includes(subject) ? prev.filter((s) => s !== subject) : [...prev, subject]
+        );
+    };
+
+    const isFormComplete = selectedYear && selectedExam && selectedSubjects.length > 0 && selectedLevel && selectedDuration;
+
 
     return (
         <LinearGradient
@@ -88,7 +113,7 @@ export default function Form({ navigation }) {
 
                                 <Svg height="50" width={windowWidth * 0.9}>
                                     <Defs>
-                                        <SvgLinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
+                                        <SvgLinearGradient id="grad" x1="0" y1="1" x2="1" y2="1">
                                             <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
                                             <Stop offset="1" stopColor={theme.bg2} stopOpacity="1" />
                                         </SvgLinearGradient>
@@ -106,6 +131,7 @@ export default function Form({ navigation }) {
                                     </SvgText>
                                 </Svg>
                                 <View style={{ paddingStart: 10, flexDirection: 'row',marginTop:-8 }}>
+                                    
                                     <TouchableOpacity style={{ flexDirection: 'row', borderRadius: 25,borderColor:theme.textColor, borderWidth: 1, width: 90, padding: 10 }}>
                                         <Text
                                             style={{ height: 10, width: 10,borderColor:theme.textColor, borderRadius: 10, borderWidth: 1, marginRight: 5, marginTop: 3 }}
@@ -128,9 +154,9 @@ export default function Form({ navigation }) {
                                 </View>
                                 <Svg height="50" width={windowWidth * 0.9}>
                                     <Defs>
-                                        <SvgLinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
-                                            <Stop offset="0" stopColor={theme.bg2} stopOpacity="1" />
-                                            <Stop offset="1" stopColor={theme.bg1} stopOpacity="1" />
+                                        <SvgLinearGradient id="grad" x1="0" y1="1" x2="1" y2="1">
+                                            <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
+                                            <Stop offset="1" stopColor={theme.bg2} stopOpacity="1" />
                                         </SvgLinearGradient>
                                     </Defs>
                                     <SvgText
@@ -188,9 +214,9 @@ export default function Form({ navigation }) {
 
                                     <Svg height="50" width={windowWidth * 0.9}>
                                     <Defs>
-                                        <SvgLinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
-                                            <Stop offset="0" stopColor={theme.bg2} stopOpacity="1" />
-                                            <Stop offset="1" stopColor={theme.bg1} stopOpacity="1" />
+                                        <SvgLinearGradient id="grad" x1="0" y1="1" x2="1" y2="1">
+                                            <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
+                                            <Stop offset="1" stopColor={theme.bg2} stopOpacity="1" />
                                         </SvgLinearGradient>
                                     </Defs>
                                     <SvgText
@@ -249,7 +275,7 @@ export default function Form({ navigation }) {
 
                                     <Svg height="50" width={windowWidth * 0.9}>
                                     <Defs>
-                                        <SvgLinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
+                                        <SvgLinearGradient id="grad" x1="0" y1="1" x2="1" y2="1">
                                             <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
                                             <Stop offset="1" stopColor={theme.bg2} stopOpacity="1" />
                                         </SvgLinearGradient>
@@ -300,7 +326,7 @@ export default function Form({ navigation }) {
 
                                 <Svg height="50" width={windowWidth * 0.9}>
                                     <Defs>
-                                        <SvgLinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
+                                        <SvgLinearGradient id="grad" x1="0" y1="1" x2="1" y2="1">
                                             <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
                                             <Stop offset="1" stopColor={theme.bg2} stopOpacity="1" />
                                         </SvgLinearGradient>

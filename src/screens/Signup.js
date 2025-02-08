@@ -13,17 +13,73 @@ import {
 import LinearGradient from "react-native-linear-gradient";
 import Svg, { Path } from "react-native-svg";
 import { darkTheme, lightTheme } from "../theme/theme";
+import { getSignUpDetails } from "../core/CommonService";
+
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
-export default function Signup({navigation}) {
+export default function Signup({ navigation }) {
   const colorScheme = useColorScheme();
   const [check, setCheck] = useState(false);
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
 
   const scrollRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [name, setName] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState({});
+
+  const validate = () => {
+    let valid = true;
+    let errors = {};
+
+    if (!name.trim()) {
+      errors.name = "Name is required";
+      valid = false;
+    } else if (!/^[a-zA-Z ]+$/.test(name)) {
+      errors.name = "Name must contain only letters";
+      valid = false;
+    }
+
+    if (!mobile.trim()) {
+      errors.mobile = "Mobile number is required";
+      valid = false;
+    } else if (!/^\d{10}$/.test(mobile)) {
+      errors.mobile = "Mobile number must be 10 digits";
+      valid = false;
+    }
+
+    if (!password.trim()) {
+      errors.password = "Password is required";
+      valid = false;
+    } else if (password.length < 6) {
+      errors.password = "Password must be at least 6 characters";
+      valid = false;
+    }
+
+    setErrors(errors);
+    return valid;
+  };
+
+
+  const handleSignup = async () => {
+    const data = {
+      "name": name,
+      "mobile": mobile,
+      "email": "",
+      "password": password
+    }
+    if (validate()) {
+      const response = await getSignUpDetails(data);
+      console.log("111111", response)
+      if (response.statusCode == 201) {
+        navigation.navigate("AccountCreated");
+      }
+    }
+
+  }
 
   const accessOptions = [
     "Personalized dashboard",
@@ -36,11 +92,11 @@ export default function Signup({navigation}) {
   useEffect(() => {
     const interval = setInterval(() => {
       scrollRef.current?.scrollTo({
-        x: (currentIndex + 1) % accessOptions.length * 200, 
+        x: (currentIndex + 1) % accessOptions.length * 200,
         animated: true,
       });
       setCurrentIndex((prev) => (prev + 1) % accessOptions.length);
-    }, 2000); 
+    }, 2000);
 
     return () => clearInterval(interval);
   }, [currentIndex, accessOptions.length]);
@@ -73,42 +129,88 @@ export default function Signup({navigation}) {
             { backgroundColor: theme.path },
           ]}
         >
-          <View style={{ top: -180,padding:20 }}>
-            <Text style={[styles.welcomeText, { color: theme.textColor }]}>
+          <View style={{ top: -180, padding: 20 }}>
+            <Text style={[styles.welcomeText, { color: theme.wb }]}>
               Hi, Let's get started!
             </Text>
+
             <TextInput
               style={[
                 styles.input,
-                { borderColor: theme.inputBorder, backgroundColor: "#fff" },
+                {
+                  borderColor: errors.name ? theme.red : theme.inputBorder,
+                  backgroundColor: "#fff",
+                  borderWidth: errors.password ? 1 : 0,
+                  color: "#000"
+
+                },
               ]}
               placeholder="Name"
-              placeholderTextColor={theme.textColor}
+              placeholderTextColor={theme.gray}
+              value={name}
+              onChangeText={(text) => {
+                const filteredText = text.replace(/[^A-Za-z\s]/g, "");
+                setName(filteredText);
+                if (errors.name) {
+                  setErrors((prevErrors) => ({ ...prevErrors, name: null }));
+                }
+              }}
             />
+            {errors.name && <Text style={[styles.errorText, { color: theme.red }]}>{errors.name}</Text>}
+
             <TextInput
               style={[
                 styles.input,
-                { borderColor: theme.inputBorder, backgroundColor: "#fff" },
+                {
+                  borderColor: errors.mobile ? theme.red : theme.inputBorder,
+                  backgroundColor: "#fff",
+                  borderWidth: errors.password ? 1 : 0,
+                  color: "#000"
+
+                },
               ]}
               placeholder="Mobile"
-              placeholderTextColor={theme.textColor}
-              secureTextEntry={true}
+              placeholderTextColor={theme.gray}
+              keyboardType="number-pad"
+              maxLength={10}
+              value={mobile}
+              onChangeText={(text) => {
+                const filteredText = text.replace(/[^0-9]/g, "");
+                setMobile(filteredText);
+                if (errors.mobile) {
+                  setErrors((prevErrors) => ({ ...prevErrors, mobile: null }));
+                }
+
+              }}
             />
-             <TextInput
+            {errors.mobile && <Text style={[styles.errorText, { color: theme.red }]}>{errors.mobile}</Text>}
+
+            <TextInput
               style={[
                 styles.input,
-                { borderColor: theme.inputBorder, backgroundColor: "#fff" },
+                {
+                  borderColor: errors.password ? theme.red : theme.inputBorder,
+                  borderWidth: errors.password ? 1 : 0,
+                  backgroundColor: "#fff",
+                  color: "#000"
+                },
               ]}
               placeholder="New Password"
-              placeholderTextColor={theme.textColor}
-              secureTextEntry={true}
+              // placeholderTextColor={theme.textColor}
+              placeholderTextColor={theme.gray}
+              // secureTextEntry={true}
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                if (errors.password) {
+                  setErrors((prevErrors) => ({ ...prevErrors, password: null }));
+                }
+              }}
             />
+            {errors.password && <Text style={[styles.errorText, { color: theme.red }]}>{errors.password}</Text>}
+
             <View style={styles.checkboxContainer}>
-              <TouchableOpacity
-                onPress={() => {
-                  setCheck(!check);
-                }}
-              >
+              <TouchableOpacity onPress={() => setCheck(!check)}>
                 <Image
                   style={{
                     tintColor: check ? "#fff" : theme.textColor1,
@@ -118,90 +220,61 @@ export default function Signup({navigation}) {
                 />
               </TouchableOpacity>
 
-              <Text style={[styles.checkboxText, { color: theme.textColor }]}>
+              <Text style={[styles.checkboxText, { color: theme.wb }]}>
                 I have read and agree to the privacy policy, terms of service
               </Text>
             </View>
 
             <TouchableOpacity
-              style={[
-                styles.loginButton,
-                { backgroundColor: theme.buttonBackground },
-              ]}
-              onPress={()=>{navigation.navigate("AccountCreated")}}
+              style={[styles.loginButton, { backgroundColor: theme.buttonBackground }]}
+              onPress={handleSignup}
             >
-              <Text
-                style={[
-                  styles.loginButtonText,
-                  { color: theme.buttonText },
-                ]}
-              >
+              <Text style={[styles.loginButtonText, { color: theme.textColor1 }]}>
                 Sign Up
               </Text>
             </TouchableOpacity>
-           
 
             {/* Footer Section */}
             <View style={styles.footer}>
-                <View style={{flexDirection:'row'}}>
-                <Text
-                style={[styles.newHereText, { color: theme.textColor }]}
-              >
-                Already have an account? 
+              <View style={{ flexDirection: "row" }}>
+                <Text style={[styles.newHereText, { color: theme.wb }]}>
+                  Already have an account?
                 </Text>
-                <TouchableOpacity onPress={()=>{
-                    navigation.navigate("Login")
-                }}>
-                <Text
-                  style={[
-                    styles.signUpText,
-                    { color: theme.accentText },
-                  ]}
-                >
-                {" "} Login
-                </Text>
+                <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+                  <Text style={[styles.signUpText, { color: theme.accentText }]}>
+                    {" "} Login
+                  </Text>
                 </TouchableOpacity>
-                
-                </View>
-             
-              
+              </View>
+
               <Text
                 style={[
                   styles.accessText,
-                  {
-                    color: theme.textColor,
-                    alignSelf: "flex-start",
-                    marginLeft: 20,
-                  },
+                  { color: theme.wb, alignSelf: "flex-start", marginLeft: 20 },
                 ]}
               >
                 Login to access:
               </Text>
-              <View style={{justifyContent:'flex-end',height:50}}>
-              <ScrollView
-                ref={scrollRef}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.accessOptions}
-              >
-                {accessOptions.map((option, index) => (
-                  <Text
-                    key={index}
-                    style={[
-                      styles.accessOption,
-                      {
-                        color: theme.accentText,
-                        backgroundColor: theme.textbgcolor,
-                        height:35
-                      },
-                    ]}
-                  >
-                    {option}
-                  </Text>
-                ))}
-              </ScrollView>
+              <View style={{ justifyContent: "flex-end", height: 50 }}>
+                <ScrollView
+                  ref={scrollRef}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.accessOptions}
+                >
+                  {accessOptions.map((option, index) => (
+                    <Text
+                      key={index}
+                      style={[
+                        styles.accessOption,
+                        { color: theme.accentText, backgroundColor: theme.textbgcolor, height: 35 },
+                      ]}
+                    >
+                      {option}
+                    </Text>
+                  ))}
+                </ScrollView>
               </View>
-             
             </View>
           </View>
         </View>
@@ -250,7 +323,7 @@ const styles = StyleSheet.create({
     height: 40,
     borderWidth: 1,
     borderRadius: 5,
-    marginBottom: 15,
+    marginBottom: 10,
     paddingHorizontal: 10,
     fontSize: 14,
     marginHorizontal: 10,
@@ -305,6 +378,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 12,
     marginHorizontal: 10,
-    
+
+  },
+  errorText: {
+    fontSize: 12,
+    marginLeft: 10,
+    marginBottom: 5,
   },
 });

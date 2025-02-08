@@ -17,8 +17,15 @@ const lightTheme = {
     path: "rgba(255, 255, 255, 0.5)",
     textbgcolor: "#FFF",
     mcb:["#EADFDF","#ECE2DF"],
+    mcb1:["#EADFDF","#ECE2DF"],
     brad:"#6a11CB",
-    back:["#EEF1F5","#EEF1F5"]
+    back:["#EEF1F5","#EEF1F5"],
+    gray:"#4A4A4A",
+    wb:"#000000",
+    red:"#DD3737",
+    green:"#00913A"
+
+
 
   };
   
@@ -41,8 +48,15 @@ const lightTheme = {
     path: "rgba(56,56,43,0.5)",
     textbgcolor: "#000",
     mcb:["#0c0c0c","#000000"],
+    mcb1:["#292929","#292929"],
     brad:"#96E6A1",
-    back:["#000000","#000000"]
+    back:["#000000","#000000"],
+    gray:"#4A4A4A",
+    wb:"#FFFFFF",
+    red:"#DD3737",
+    green:"#B1FF01"
+
+
   };
   
   export { lightTheme, darkTheme };
