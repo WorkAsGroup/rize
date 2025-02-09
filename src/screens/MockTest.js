@@ -14,6 +14,7 @@ import { darkTheme, lightTheme } from "../theme/theme";
 import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Text as SvgText } from "react-native-svg";
 import { getPreExam } from "../core/CommonService";
 import { WebView } from 'react-native-webview';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const windowWidth = Dimensions.get("window").width;
 
@@ -75,79 +76,67 @@ export default function MockTest({ navigation }) {
     const handleAnswerSelect = async (option) => {
         const updatedAnswers = { ...answeredQuestions, [selectedNumber]: option };
         setAnsweredQuestions(updatedAnswers);
-    
-        // Update the selected answer state (for highlighting purposes)
+
         setSelectedAnswers((prev) => ({
             ...prev,
-            [selectedNumber]: option,  // Set the selected option for the current question
+            [selectedNumber]: option,
         }));
-    
-        // Remove from skipped if it's marked as answered
+
         const updatedSkipped = { ...skippedQuestions };
         delete updatedSkipped[selectedNumber];
         setSkippedQuestions(updatedSkipped);
-    
-        // Set reviewed questions if it's reviewed
+
         const updatedReviewed = { ...reviewedQuestions };
         delete updatedReviewed[selectedNumber];
         setReviewedQuestions(updatedReviewed);
-    
-        // Save to AsyncStorage
+        setSelectedOption(option);
         await AsyncStorage.setItem('answeredQuestions', JSON.stringify(updatedAnswers));
         await AsyncStorage.setItem('skippedQuestions', JSON.stringify(updatedSkipped));
         await AsyncStorage.setItem('reviewedQuestions', JSON.stringify(updatedReviewed));
     };
-    
+
     const handleReviewTag = async (questionId) => {
-        // Toggle review status for the selected question
-        const updatedReviewed = { ...reviewedQuestions, [questionId]: !reviewedQuestions[questionId] };
+        const updatedReviewed = { ...reviewedQuestions, [selectedNumber]: true };
         setReviewedQuestions(updatedReviewed);
-    
-        // Remove from answered and skipped questions if it's being reviewed
+
         const updatedAnswered = { ...answeredQuestions };
-        delete updatedAnswered[questionId];
+        delete updatedAnswered[selectedNumber];
         setAnsweredQuestions(updatedAnswered);
-    
+
         const updatedSkipped = { ...skippedQuestions };
-        delete updatedSkipped[questionId];
+        delete updatedSkipped[selectedNumber];
         setSkippedQuestions(updatedSkipped);
-    
-        // Save the updated review status to AsyncStorage
+
         await AsyncStorage.setItem('reviewedQuestions', JSON.stringify(updatedReviewed));
         await AsyncStorage.setItem('answeredQuestions', JSON.stringify(updatedAnswered));
         await AsyncStorage.setItem('skippedQuestions', JSON.stringify(updatedSkipped));
     };
-    
+
     const handleSkipQuestion = async () => {
         const updatedSkipped = { ...skippedQuestions, [selectedNumber]: true };
         setSkippedQuestions(updatedSkipped);
-    
-        // Remove from answered questions if it was previously answered
+
         const updatedAnswers = { ...answeredQuestions };
         delete updatedAnswers[selectedNumber];
         setAnsweredQuestions(updatedAnswers);
-    
-        // Remove from reviewed questions if it's being skipped
+
         const updatedReviewed = { ...reviewedQuestions };
         delete updatedReviewed[selectedNumber];
         setReviewedQuestions(updatedReviewed);
-    
-        // Reset selected option
-        setSelectedOption(null); 
-    
-        // Save to AsyncStorage
+
+        setSelectedOption(null);
+
         await AsyncStorage.setItem('skippedQuestions', JSON.stringify(updatedSkipped));
         await AsyncStorage.setItem('answeredQuestions', JSON.stringify(updatedAnswers));
         await AsyncStorage.setItem('reviewedQuestions', JSON.stringify(updatedReviewed));
     };
 
-    // Toggle the tag status of the question
     const handleTagQuestion = async () => {
         const updatedTags = { ...taggedQuestions };
         if (updatedTags[selectedNumber]) {
-            delete updatedTags[selectedNumber]; // Remove tag if already tagged
+            delete updatedTags[selectedNumber];
         } else {
-            updatedTags[selectedNumber] = true; // Mark as tagged
+            updatedTags[selectedNumber] = true;
         }
         setTaggedQuestions(updatedTags);
         await AsyncStorage.setItem('taggedQuestions', JSON.stringify(updatedTags));
@@ -326,7 +315,7 @@ export default function MockTest({ navigation }) {
         };
 
         return (
-            <View style={{ flexDirection: 'row'}}>
+            <View style={{ flexDirection: 'row' }}>
                 <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>Question Timer:</Text>
                 <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>{formatTime(timeElapsed)}</Text>
             </View>
@@ -400,22 +389,21 @@ export default function MockTest({ navigation }) {
                                 ref={scrollRef}
                                 showsHorizontalScrollIndicator={false}
                             >
-                                 {Array.from({ length: 60 }, (_, i) => i + 1).map((num) => {
-        let backgroundColor = theme.gray;
+                                {Array.from({ length: 60 }, (_, i) => i + 1).map((num) => {
+                                    let backgroundColor = theme.gray;
 
-        // Determine the background color based on the state of each question
-        if (answeredQuestions[num]) backgroundColor = "#04A953";  // Green for answered
-        else if (skippedQuestions[num]) backgroundColor = "#DE6C00";  // Orange for skipped
-        else if (reviewedQuestions[num]) backgroundColor = "#36A1F5";  // Blue for reviewed
+                                    if (answeredQuestions[num]) backgroundColor = "#04A953";
+                                    else if (skippedQuestions[num]) backgroundColor = "#DE6C00";
+                                    else if (reviewedQuestions[num]) backgroundColor = "#36A1F5";
 
-        return (
-            <TouchableOpacity key={num} onPress={() => setSelectedNumber(num)}>
-                <View style={[styles.numberCircle, { backgroundColor }]}>
-                    <Text style={{ color: "#FFF", fontSize: 16 }}>{num}</Text>
-                </View>
-            </TouchableOpacity>
-        );
-    })}
+                                    return (
+                                        <TouchableOpacity key={num} onPress={() => setSelectedNumber(num)}>
+                                            <View style={[styles.numberCircle, { backgroundColor }]}>
+                                                <Text style={{ color: "#FFF", fontSize: 16 }}>{num}</Text>
+                                            </View>
+                                        </TouchableOpacity>
+                                    );
+                                })}
                             </ScrollView>
 
                             <TouchableOpacity onPress={scrollRight}>
@@ -432,7 +420,7 @@ export default function MockTest({ navigation }) {
                                     Not Seen
                                 </Text>
                                 <Text style={[styles.res, { color: theme.textColor }]}>
-                                    {60 - Object.keys(answeredQuestions).length - Object.keys(skippedQuestions).length}
+                                    {exams.length - Object.keys(answeredQuestions).length - Object.keys(skippedQuestions).length}
                                 </Text>
                             </View>
                             <View style={{ alignItems: 'center' }}>
@@ -510,6 +498,7 @@ export default function MockTest({ navigation }) {
                                 {exams.length > 0 ? removeHtmlTags(exams[selectedNumber - 1]?.question) : "Loading question..."}
                             </Text>
                         </View>
+                        <View>
                         {["A", "B", "C", "D"].map((option, index) => {
     const optionText = index === 0 ? exams[selectedNumber - 1]?.option1 :
         index === 1 ? exams[selectedNumber - 1]?.option2 :
@@ -520,7 +509,8 @@ export default function MockTest({ navigation }) {
     const imagesInOption = extractImagesForOptions(optionText);
     const isImageUrl = imagesInOption.length > 0;
 
-    const isSelected = selectedAnswers[selectedNumber] === option; // Check selection
+    // Determine if this option is selected for the current question
+    const isSelected = selectedAnswers[selectedNumber] === option;
 
     return (
         <TouchableOpacity
@@ -528,12 +518,16 @@ export default function MockTest({ navigation }) {
             style={[
                 styles.opt,
                 {
-                    borderColor: isSelected ? "#04A953" : theme.textColor,
+                    borderColor: isSelected ? "#04A953" : theme.textColor, // Green border if selected
                     borderRadius: 25,
-                    backgroundColor: isSelected ? "#04A953" : "transparent"
+                    backgroundColor: isSelected ? "#04A953" : "transparent",  // Green background if selected
                 }
             ]}
-            onPress={() => handleAnswerSelect(selectedNumber, option)}
+            onPress={() => {
+                setSelectedOption(option);  // Update selected option for the current question
+                handleAnswerSelect(selectedNumber, option); // Store the selected answer
+                console.log("selectedOption", option, index, selectedNumber,isSelected,selectedAnswers[selectedNumber]);
+            }}
         >
             <View style={[styles.optbg, { backgroundColor: theme.gray }]}>
                 <Text style={[styles.option, { color: "#FFF" }]}>
@@ -550,7 +544,7 @@ export default function MockTest({ navigation }) {
                 ) : (
                     <Text style={[
                         styles.option,
-                        { color: isSelected ? "#FFF" : theme.textColor }
+                        { color: isSelected ? "#FFF" : theme.textColor }  // White text for selected option
                     ]}>
                         {cleanedOptionText || "Option not available"}
                     </Text>
@@ -561,14 +555,15 @@ export default function MockTest({ navigation }) {
                 style={[
                     styles.select,
                     {
-                        borderColor: theme.textColor,
-                        backgroundColor: isSelected ? "#04A953" : "transparent"
+                        borderColor: theme.textColor, // Border color for the selected option
+                        backgroundColor: isSelected ? "#04A953" : "transparent",  // Green background if selected
                     }
                 ]}
             />
         </TouchableOpacity>
     );
 })}
+                        </View>
                         <View style={{ marginTop: 10, width: windowWidth * 0.8, paddingStart: 10 }}>
                             <View style={{ flexDirection: 'row' }}>
                                 <TouchableOpacity style={[styles.ins, { backgroundColor: theme.textColor1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]}>

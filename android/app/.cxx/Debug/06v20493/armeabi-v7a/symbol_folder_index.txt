@@ -1,0 +1,1 @@
+/Users/akki/Documents/GitHub/rize/android/app/build/intermediates/cxx/Debug/06v20493/obj/armeabi-v7a
