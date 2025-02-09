@@ -25,11 +25,132 @@ export default function MockTest({ navigation }) {
     const [selectedNumber, setSelectedNumber] = useState(1);
     const scrollRef = useRef(null);
     const [exams, setExams] = useState([]);
-    const [question, setQuestion] = useState("");
+    const [selectedAnswers, setSelectedAnswers] = useState({});
     const [options, setOptions] = useState([]);
     const [selectedOption, setSelectedOption] = useState(null);
     const handleSubjectSelect = (subject) => {
         setSelectedSubject(subject);
+    };
+    const [answeredQuestions, setAnsweredQuestions] = useState({});
+    const [skippedQuestions, setSkippedQuestions] = useState({});
+    const [taggedQuestions, setTaggedQuestions] = useState({});
+    const [reviewedQuestions, setReviewedQuestions] = useState({});
+
+    useEffect(() => {
+        loadStoredData();
+    }, []);
+
+    useEffect(() => {
+        const loadStoredData = async () => {
+            try {
+                const answered = await AsyncStorage.getItem('answeredQuestions');
+                const skipped = await AsyncStorage.getItem('skippedQuestions');
+                const reviewed = await AsyncStorage.getItem('reviewedQuestions');
+
+                setAnsweredQuestions(answered ? JSON.parse(answered) : {});
+                setSkippedQuestions(skipped ? JSON.parse(skipped) : {});
+                setReviewedQuestions(reviewed ? JSON.parse(reviewed) : {});
+            } catch (error) {
+                console.error('Error loading stored answers:', error);
+            }
+        };
+
+        loadStoredData();
+    }, []);
+
+    const loadStoredData = async () => {
+        try {
+            const storedAnswers = await AsyncStorage.getItem('answeredQuestions');
+            const storedSkipped = await AsyncStorage.getItem('skippedQuestions');
+            const storedTags = await AsyncStorage.getItem('taggedQuestions');
+
+            if (storedAnswers) setAnsweredQuestions(JSON.parse(storedAnswers));
+            if (storedSkipped) setSkippedQuestions(JSON.parse(storedSkipped));
+            if (storedTags) setTaggedQuestions(JSON.parse(storedTags));
+        } catch (error) {
+            console.error("Error loading saved data:", error);
+        }
+    };
+
+    const handleAnswerSelect = async (option) => {
+        const updatedAnswers = { ...answeredQuestions, [selectedNumber]: option };
+        setAnsweredQuestions(updatedAnswers);
+    
+        // Update the selected answer state (for highlighting purposes)
+        setSelectedAnswers((prev) => ({
+            ...prev,
+            [selectedNumber]: option,  // Set the selected option for the current question
+        }));
+    
+        // Remove from skipped if it's marked as answered
+        const updatedSkipped = { ...skippedQuestions };
+        delete updatedSkipped[selectedNumber];
+        setSkippedQuestions(updatedSkipped);
+    
+        // Set reviewed questions if it's reviewed
+        const updatedReviewed = { ...reviewedQuestions };
+        delete updatedReviewed[selectedNumber];
+        setReviewedQuestions(updatedReviewed);
+    
+        // Save to AsyncStorage
+        await AsyncStorage.setItem('answeredQuestions', JSON.stringify(updatedAnswers));
+        await AsyncStorage.setItem('skippedQuestions', JSON.stringify(updatedSkipped));
+        await AsyncStorage.setItem('reviewedQuestions', JSON.stringify(updatedReviewed));
+    };
+    
+    const handleReviewTag = async (questionId) => {
+        // Toggle review status for the selected question
+        const updatedReviewed = { ...reviewedQuestions, [questionId]: !reviewedQuestions[questionId] };
+        setReviewedQuestions(updatedReviewed);
+    
+        // Remove from answered and skipped questions if it's being reviewed
+        const updatedAnswered = { ...answeredQuestions };
+        delete updatedAnswered[questionId];
+        setAnsweredQuestions(updatedAnswered);
+    
+        const updatedSkipped = { ...skippedQuestions };
+        delete updatedSkipped[questionId];
+        setSkippedQuestions(updatedSkipped);
+    
+        // Save the updated review status to AsyncStorage
+        await AsyncStorage.setItem('reviewedQuestions', JSON.stringify(updatedReviewed));
+        await AsyncStorage.setItem('answeredQuestions', JSON.stringify(updatedAnswered));
+        await AsyncStorage.setItem('skippedQuestions', JSON.stringify(updatedSkipped));
+    };
+    
+    const handleSkipQuestion = async () => {
+        const updatedSkipped = { ...skippedQuestions, [selectedNumber]: true };
+        setSkippedQuestions(updatedSkipped);
+    
+        // Remove from answered questions if it was previously answered
+        const updatedAnswers = { ...answeredQuestions };
+        delete updatedAnswers[selectedNumber];
+        setAnsweredQuestions(updatedAnswers);
+    
+        // Remove from reviewed questions if it's being skipped
+        const updatedReviewed = { ...reviewedQuestions };
+        delete updatedReviewed[selectedNumber];
+        setReviewedQuestions(updatedReviewed);
+    
+        // Reset selected option
+        setSelectedOption(null); 
+    
+        // Save to AsyncStorage
+        await AsyncStorage.setItem('skippedQuestions', JSON.stringify(updatedSkipped));
+        await AsyncStorage.setItem('answeredQuestions', JSON.stringify(updatedAnswers));
+        await AsyncStorage.setItem('reviewedQuestions', JSON.stringify(updatedReviewed));
+    };
+
+    // Toggle the tag status of the question
+    const handleTagQuestion = async () => {
+        const updatedTags = { ...taggedQuestions };
+        if (updatedTags[selectedNumber]) {
+            delete updatedTags[selectedNumber]; // Remove tag if already tagged
+        } else {
+            updatedTags[selectedNumber] = true; // Mark as tagged
+        }
+        setTaggedQuestions(updatedTags);
+        await AsyncStorage.setItem('taggedQuestions', JSON.stringify(updatedTags));
     };
 
     const scrollX = useRef(0);
@@ -56,7 +177,7 @@ export default function MockTest({ navigation }) {
     }
     const RenderContent = ({ html }) => {
         const contentArray = extractContent(html);
-    
+
         return (
             <View style={[styles.question, { color: theme.textColor }]}>
                 {contentArray.map((item, index) => {
@@ -80,35 +201,35 @@ export default function MockTest({ navigation }) {
             </View>
         );
     };
-    
+
     const extractContent = (html) => {
         const imageRegex = /<img[^>]+src="([^">]+)"/g;
         let contentArray = [];
         let lastIndex = 0;
         let match;
-    
-        html = html.replace(/<\/?p[^>]*>/g, '')  
-        .replace(/\/>?>/g, '>')        
-        .replace(/&nbsp;/g, ' ')      
-        .trim();
+
+        html = html.replace(/<\/?p[^>]*>/g, '')
+            .replace(/\/>?>/g, '>')
+            .replace(/&nbsp;/g, ' ')
+            .trim();
         while ((match = imageRegex.exec(html)) !== null) {
             const textBeforeImage = html.slice(lastIndex, match.index).trim();
             if (textBeforeImage) {
                 contentArray.push({ type: 'text', content: textBeforeImage });
             }
             contentArray.push({ type: 'image', content: match[1] });
-    
+
             lastIndex = match.index + match[0].length;
         }
-    
+
         const remainingText = html.slice(lastIndex).trim();
         if (remainingText) {
             contentArray.push({ type: 'text', content: remainingText });
         }
-    
+
         return contentArray;
     };
-    
+
     const removeHtmlTags = (html) => {
         if (!html) return "";
         let cleanedHtml = html.replace(/<p[^>]*>/g, '').replace(/<\/p>/g, '\n');
@@ -116,7 +237,7 @@ export default function MockTest({ navigation }) {
         cleanedHtml = cleanedHtml.replace(/&nbsp;/g, " ");
         return cleanedHtml;
     };
-    
+
     const extractImages = (html) => {
         const imageRegex = /<img[^>]+src="([^">]+)"/g;
         let images = [];
@@ -154,91 +275,65 @@ export default function MockTest({ navigation }) {
         return images;
     };
 
-    // const MockTestTimer = ({ theme }) => {
-    //     const [timeLeft, setTimeLeft] = useState(30 * 60); // 30 minutes in seconds
-    
-    //     useEffect(() => {
-    //         if (timeLeft <= 0) return;
-    
-    //         const timer = setInterval(() => {
-    //             setTimeLeft(prevTime => prevTime - 1);
-    //         }, 1000);
-    
-    //         return () => clearInterval(timer); // Cleanup interval on unmount
-    //     }, [timeLeft]);
-    
-    //     // Function to format seconds into HH:MM:SS
-    //     const formatTime = (seconds) => {
-    //         const hrs = Math.floor(seconds / 3600);
-    //         const mins = Math.floor((seconds % 3600) / 60);
-    //         const secs = seconds % 60;
-    //         return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-    //     };
-    
-    //     return (
-    //         <View style={{ flexDirection: 'row', marginTop: 10 }}>
-    //             <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>EAMCET Mock Test</Text>
-    //             <Text style={[styles.mockSubtitle, { color: theme.textColor, marginLeft: 25 }]}>Remaining Time</Text>
-    //             <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>{formatTime(timeLeft)}</Text>
-    //         </View>
-    //     );
-    // };
+
     const QuestionTimer = ({ questionId }) => {
-        const [timeElapsed, setTimeElapsed] = useState(120); 
+        const [timeElapsed, setTimeElapsed] = useState(120);
         const colorScheme = useColorScheme();
         const theme = colorScheme === "dark" ? darkTheme : lightTheme;
-    
+
         useEffect(() => {
             const loadTimer = async () => {
                 try {
                     const savedStartTime = await AsyncStorage.getItem(`questionStartTime_${questionId}`);
                     if (savedStartTime) {
                         const elapsedTime = Math.floor((Date.now() - parseInt(savedStartTime, 10)) / 1000);
-                        setTimeElapsed(Math.max(60 - elapsedTime, 0)); 
+                        setTimeElapsed(Math.max(60 - elapsedTime, 0));
                     } else {
                         await AsyncStorage.setItem(`questionStartTime_${questionId}`, Date.now().toString());
-                        setTimeElapsed(60); 
+                        setTimeElapsed(60);
                     }
                 } catch (error) {
                     console.error('Error loading question timer:', error);
                 }
             };
-    
-            loadTimer(); 
-        }, [questionId]); 
-    
+
+            loadTimer();
+        }, [questionId]);
+
         useEffect(() => {
             const timer = setInterval(() => {
                 setTimeElapsed(prevTime => {
                     if (prevTime <= 0) {
-                        clearInterval(timer); 
+                        clearInterval(timer);
                         return 0;
                     }
                     return prevTime - 1;
                 });
             }, 1000);
-    
+
             return () => clearInterval(timer);
         }, []);
-    
+
         const formatTime = (seconds) => {
             const mins = Math.floor(seconds / 60);
             const secs = seconds % 60;
             return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
         };
-    
+
         const resetTimer = async () => {
             await AsyncStorage.setItem(`questionStartTime_${questionId}`, Date.now().toString());
-            setTimeElapsed(60); 
+            setTimeElapsed(60);
         };
-    
+
         return (
-            <View style={{ flexDirection: 'row', marginTop: 10 }}>
+            <View style={{ flexDirection: 'row'}}>
                 <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>Question Timer:</Text>
                 <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>{formatTime(timeElapsed)}</Text>
             </View>
         );
     };
+
+
 
     return (
         <LinearGradient
@@ -305,20 +400,22 @@ export default function MockTest({ navigation }) {
                                 ref={scrollRef}
                                 showsHorizontalScrollIndicator={false}
                             >
-                                {Array.from({ length: 60 }, (_, i) => i + 1).map((num) => (
-                                    <TouchableOpacity key={num} onPress={() => setSelectedNumber(num)}>
-                                        <View
-                                            style={[
-                                                styles.numberCircle,
-                                                {
-                                                    backgroundColor: num === selectedNumber ? "#04A953" : theme.gray,
-                                                },
-                                            ]}
-                                        >
-                                            <Text style={{ color: "#FFF", fontSize: 16 }}>{num}</Text>
-                                        </View>
-                                    </TouchableOpacity>
-                                ))}
+                                 {Array.from({ length: 60 }, (_, i) => i + 1).map((num) => {
+        let backgroundColor = theme.gray;
+
+        // Determine the background color based on the state of each question
+        if (answeredQuestions[num]) backgroundColor = "#04A953";  // Green for answered
+        else if (skippedQuestions[num]) backgroundColor = "#DE6C00";  // Orange for skipped
+        else if (reviewedQuestions[num]) backgroundColor = "#36A1F5";  // Blue for reviewed
+
+        return (
+            <TouchableOpacity key={num} onPress={() => setSelectedNumber(num)}>
+                <View style={[styles.numberCircle, { backgroundColor }]}>
+                    <Text style={{ color: "#FFF", fontSize: 16 }}>{num}</Text>
+                </View>
+            </TouchableOpacity>
+        );
+    })}
                             </ScrollView>
 
                             <TouchableOpacity onPress={scrollRight}>
@@ -335,7 +432,7 @@ export default function MockTest({ navigation }) {
                                     Not Seen
                                 </Text>
                                 <Text style={[styles.res, { color: theme.textColor }]}>
-                                    45
+                                    {60 - Object.keys(answeredQuestions).length - Object.keys(skippedQuestions).length}
                                 </Text>
                             </View>
                             <View style={{ alignItems: 'center' }}>
@@ -343,7 +440,7 @@ export default function MockTest({ navigation }) {
                                     Answered
                                 </Text>
                                 <Text style={[styles.res, { color: "#04A953" }]}>
-                                    1
+                                    {Object.keys(answeredQuestions).length}
                                 </Text>
                             </View>
                             <View style={{ alignItems: 'center' }}>
@@ -351,7 +448,7 @@ export default function MockTest({ navigation }) {
                                     Skipped
                                 </Text>
                                 <Text style={[styles.res, { color: "#DE6C00" }]}>
-                                    1
+                                    {Object.keys(skippedQuestions).length}
                                 </Text>
                             </View>
                             <View style={{ alignItems: 'center' }}>
@@ -359,7 +456,7 @@ export default function MockTest({ navigation }) {
                                     Review
                                 </Text>
                                 <Text style={[styles.res, { color: "#36A1F5" }]}>
-                                    1
+                                    {Object.keys(reviewedQuestions).length}
                                 </Text>
                             </View>
                         </View>
@@ -374,7 +471,7 @@ export default function MockTest({ navigation }) {
                         style={styles.header}
                     >
                         <View style={{ flexDirection: 'row', marginTop: 8 }}>
-                            <Svg height="35" width={windowWidth * 0.3}>
+                            <Svg height="35" width={windowWidth * 0.35}>
                                 <Defs>
                                     <SvgLinearGradient id="grad" x1="0" y1="1" x2="1" y2="1">
                                         <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
@@ -393,13 +490,13 @@ export default function MockTest({ navigation }) {
                                     {selectedNumber && `Question # ${selectedNumber}`}
                                 </SvgText>
                             </Svg>
-                           <QuestionTimer/>
-                            </View>
+                            <QuestionTimer />
+                        </View>
                         <View>
                             {/* <Text style={[styles.question, { color: theme.textColor }]}>
                                 {exams.length > 0 ? removeHtmlTags(exams[selectedNumber - 1]?.compquestion) : "Loading question..."}
                             </Text> */}
-                            <RenderContent html={questionHtml1}  />
+                            <RenderContent html={questionHtml1} />
                             {images.length > 0 && images.map((imageUrl, index) => (
                                 <View style={{ backgroundColor: '#FFF' }}>
                                     <Image
@@ -413,66 +510,65 @@ export default function MockTest({ navigation }) {
                                 {exams.length > 0 ? removeHtmlTags(exams[selectedNumber - 1]?.question) : "Loading question..."}
                             </Text>
                         </View>
-                        <View>
-                            {["A", "B", "C", "D"].map((option, index) => {
-                                const optionText = index === 0 ? exams[selectedNumber - 1]?.option1 :
-                                    index === 1 ? exams[selectedNumber - 1]?.option2 :
-                                        index === 2 ? exams[selectedNumber - 1]?.option3 :
-                                            exams[selectedNumber - 1]?.option4;
+                        {["A", "B", "C", "D"].map((option, index) => {
+    const optionText = index === 0 ? exams[selectedNumber - 1]?.option1 :
+        index === 1 ? exams[selectedNumber - 1]?.option2 :
+        index === 2 ? exams[selectedNumber - 1]?.option3 :
+        exams[selectedNumber - 1]?.option4;
 
-                                const cleanedOptionText = removeHtmlTagsForOptions(optionText);
+    const cleanedOptionText = removeHtmlTagsForOptions(optionText);
+    const imagesInOption = extractImagesForOptions(optionText);
+    const isImageUrl = imagesInOption.length > 0;
 
-                                const imagesInOption = extractImagesForOptions(optionText);
+    const isSelected = selectedAnswers[selectedNumber] === option; // Check selection
 
-                                const isImageUrl = imagesInOption.length > 0;
+    return (
+        <TouchableOpacity
+            key={option}
+            style={[
+                styles.opt,
+                {
+                    borderColor: isSelected ? "#04A953" : theme.textColor,
+                    borderRadius: 25,
+                    backgroundColor: isSelected ? "#04A953" : "transparent"
+                }
+            ]}
+            onPress={() => handleAnswerSelect(selectedNumber, option)}
+        >
+            <View style={[styles.optbg, { backgroundColor: theme.gray }]}>
+                <Text style={[styles.option, { color: "#FFF" }]}>
+                    {option}
+                </Text>
+            </View>
+            
+            <View>
+                {isImageUrl ? (
+                    <Image
+                        source={{ uri: imagesInOption[0] }}
+                        style={{ width: 80, height: 40, borderRadius: 25, resizeMode: 'contain' }}
+                    />
+                ) : (
+                    <Text style={[
+                        styles.option,
+                        { color: isSelected ? "#FFF" : theme.textColor }
+                    ]}>
+                        {cleanedOptionText || "Option not available"}
+                    </Text>
+                )}
+            </View>
 
-                                const handleImageError = (e) => {
-                                    e.target.src = "path/to/default-image.png";
-                                };
-
-                                return (
-                                    <TouchableOpacity
-                                        key={option}
-                                        style={[
-                                            styles.opt,
-                                            { borderColor: theme.textColor, borderRadius: 25 }
-                                        ]}
-                                        onPress={() => setSelectedOption(option)}
-                                    >
-                                        <View style={[styles.optbg, { backgroundColor: theme.gray }]}>
-                                            <Text style={[styles.option, { color: "#FFF" }]}>
-                                                {option}
-                                            </Text>
-                                        </View>
-                                        <View>
-                                            {isImageUrl ? (
-                                                <View style={{ backgroundColor: '#fff' }}>
-                                                    <Image
-                                                        source={{ uri: imagesInOption[0] }}
-                                                        style={{ width: 80, height: 40, borderRadius: 25, resizeMode: 'contain' }}
-                                                        onError={handleImageError}
-                                                    />
-                                                </View>
-                                            ) : (
-                                                <Text style={[styles.option, { color: theme.textColor }]}>
-                                                    {cleanedOptionText || "Option not available"}
-                                                </Text>
-                                            )}
-                                        </View>
-
-                                        <View
-                                            style={[
-                                                styles.select,
-                                                {
-                                                    borderColor: theme.textColor,
-                                                    backgroundColor: selectedOption === option ? theme.textColor : "transparent"
-                                                }
-                                            ]}
-                                        />
-                                    </TouchableOpacity>
-                                );
-                            })}
-                        </View>
+            <View
+                style={[
+                    styles.select,
+                    {
+                        borderColor: theme.textColor,
+                        backgroundColor: isSelected ? "#04A953" : "transparent"
+                    }
+                ]}
+            />
+        </TouchableOpacity>
+    );
+})}
                         <View style={{ marginTop: 10, width: windowWidth * 0.8, paddingStart: 10 }}>
                             <View style={{ flexDirection: 'row' }}>
                                 <TouchableOpacity style={[styles.ins, { backgroundColor: theme.textColor1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]}>
@@ -481,7 +577,7 @@ export default function MockTest({ navigation }) {
                                         source={require("../images/caution.png")}
                                     />
                                 </TouchableOpacity>
-                                <TouchableOpacity style={[styles.ins, { backgroundColor: theme.textColor1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]}>
+                                <TouchableOpacity onPress={handleReviewTag} style={[styles.ins, { backgroundColor: theme.textColor1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]}>
                                     <Image
                                         style={{ height: 20, width: 20, resizeMode: 'contain', tintColor: theme.textColor }}
                                         source={require("../images/tag.png")}
@@ -493,7 +589,7 @@ export default function MockTest({ navigation }) {
                                         source={require("../images/eye.png")}
                                     />
                                 </TouchableOpacity>
-                                <TouchableOpacity style={{ width: 130, height: 36, borderWidth: 1, borderColor: theme.textColor, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginLeft: 15 }}>
+                                <TouchableOpacity onPress={handleSkipQuestion} style={{ width: 130, height: 36, borderWidth: 1, borderColor: theme.textColor, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginLeft: 15 }}>
                                     <Text style={[styles.ans, { color: theme.textColor, }]}>
                                         Skip Question
                                     </Text>
