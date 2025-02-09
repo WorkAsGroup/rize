@@ -674,10 +674,12 @@ export default function MockTest({ navigation }) {
 
                                         <View>
                                             {isImageUrl ? (
+                                                <View style={{backgroundColor:'#FFF'}}>
                                                 <Image
                                                     source={{ uri: imagesInOption[0] }}
                                                     style={{ width: 80, height: 40, borderRadius: 25, resizeMode: 'contain' }}
                                                 />
+                                                </View>
                                             ) : (
                                                 <Text style={[
                                                     styles.option,

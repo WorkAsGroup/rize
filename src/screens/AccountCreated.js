@@ -13,17 +13,22 @@ import {
 import LinearGradient from "react-native-linear-gradient";
 import Svg, { Path } from "react-native-svg";
 import { darkTheme, lightTheme } from "../theme/theme";
+import { getUpdatedEmail } from "../core/CommonService";
+import Toast from 'react-native-toast-message'; // Import Toast
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
-export default function AccountCreated() {
+export default function AccountCreated({ navigation, route }) {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
-  const [check, setCheck] = useState(false);
-
+  const mobile = route?.params?.mobile;
+  const studentId = route?.params?.studentId;
   const scrollRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [email, setEmail] = useState(""); // State for email input
+  const [loading, setLoading] = useState(false); // State for loading indicator
+    const [errors, setErrors] = useState({});
 
   const accessOptions = [
     "Personalized dashboard",
@@ -33,19 +38,86 @@ export default function AccountCreated() {
     "Personalised Dashboard"
   ];
 
+    const validate = () => {
+        let valid = true;
+        let errors = {};
+
+        if (!email.trim()) {
+            errors.email = "Email is required";
+            valid = false;
+        } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+            errors.email = "Enter valid email";
+            valid = false;
+        }
+
+        setErrors(errors);
+        return valid;
+    };
+
   useEffect(() => {
     const interval = setInterval(() => {
       scrollRef.current?.scrollTo({
-        x: (currentIndex + 1) % accessOptions.length * 200, 
+        x: (currentIndex + 1) % accessOptions.length * 200,
         animated: true,
       });
       setCurrentIndex((prev) => (prev + 1) % accessOptions.length);
-    }, 2000); 
+    }, 2000);
 
     return () => clearInterval(interval);
   }, [currentIndex, accessOptions.length]);
 
- 
+
+  const submitEmail = async () => {
+      if(validate()){
+          setLoading(true);
+          try {
+              const data = {
+                  "student_user_id": studentId,
+                  "mobile": mobile,
+                  "email": email
+              };
+
+              const response = await getUpdatedEmail(data);
+              console.log("Response:", response);
+
+              setLoading(false);
+
+              if (response.statusCode === 200) {
+                  showToast("Email updated successfully!", "success");
+                  navigation.navigate("Dashboard"); 
+              } else {
+                  let errorMessage = "Failed to update email. Please try again.";
+                  if (response.data && response.data.message) {
+                      errorMessage = response.data.message;
+                  }
+                  showToast(errorMessage, "error");
+              }
+          } catch (error) {
+              console.error("Error updating email:", error);
+              setLoading(false);
+              showToast("An error occurred while updating email. Please check your internet connection and try again.", "error");
+          }
+      }
+  };
+
+  const skipEmail = () => {
+    // Navigate to dashboard
+    navigation.navigate("Dashboard"); 
+  };
+
+    const showToast = (message, type = "default") => {
+        Toast.show({
+            type: type,
+            text1: type === "success" ? "Success" : "Error",
+            text2: message,
+            position: 'top',
+            visibilityTime: 4000,
+            autoHide: true,
+            topOffset: 30,
+            bottomOffset: 40,
+        });
+    };
+
   return (
     <LinearGradient
       colors={theme.background}
@@ -74,37 +146,48 @@ export default function AccountCreated() {
             { backgroundColor: theme.path },
           ]}
         >
-          <View style={{ top: -180,padding:20 }}>
+          <View style={{ top: -180, padding: 20 }}>
             <Text style={[styles.welcomeText, { color: theme.textColor }]}>
-             Account created!
+              Account created!
             </Text>
-         <View style={{justifyContent:'center',alignItems:'center',marginBottom:20}}>
-            <Text style={{ color: theme.textColor,}}>
+            <View style={{ justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
+              <Text style={{ color: theme.textColor, textAlign: 'center',paddingStart:20,paddingEnd:20 }}>
                 Please provide your email ID to recover your
-            </Text>
-            <Text style={{ color: theme.textColor,}}>
                 account in case you lose access to your phone
-            </Text>
-            <Text style={{ color: theme.textColor,}}>
                 number and to receive results over email.
-            </Text>
-         </View>
-             <TextInput
+              </Text>
+            </View>
+
+            <TextInput
               style={[
                 styles.input,
-                { borderColor: theme.inputBorder, backgroundColor: "#fff" },
+                {
+                  borderColor: errors.email ? theme.red : theme.inputBorder,
+                  backgroundColor: "#fff",
+                  color:theme.textColor
+                },
               ]}
               placeholder="Email ID"
-              placeholderTextColor={theme.textColor}
-              secureTextEntry={true}
+              placeholderTextColor={theme.gray}
+              keyboardType="email-address"
+              value={email}
+              onChangeText={(text) => {
+                  setEmail(text);
+                  if (errors.email) {
+                      setErrors((prevErrors) => ({ ...prevErrors, email: null }));
+                  }
+              }}
             />
-        
+              {errors.email && <Text style={[styles.errorText, { color: theme.red }]}>{errors.email}</Text>}
+
 
             <TouchableOpacity
               style={[
                 styles.loginButton,
                 { backgroundColor: theme.buttonBackground },
               ]}
+              onPress={submitEmail}
+              disabled={loading}
             >
               <Text
                 style={[
@@ -112,18 +195,20 @@ export default function AccountCreated() {
                   { color: theme.buttonText },
                 ]}
               >
-                Submit
+                {loading ? "Submitting..." : "Submit"}
               </Text>
             </TouchableOpacity>
-           
+
 
             {/* Footer Section */}
             <View style={styles.footer}>
-              <Text
-                style={[styles.newHereText, { color: theme.textColor,fontWeight:'bold' }]}
-              >
-                Skip and proceed to dashboard 
-              </Text>
+              <TouchableOpacity onPress={skipEmail}>
+                <Text
+                  style={[styles.newHereText, { color: theme.textColor, fontWeight: 'bold' }]}
+                >
+                  Skip and proceed to dashboard
+                </Text>
+              </TouchableOpacity>
               <Text
                 style={[
                   styles.accessText,
@@ -136,35 +221,36 @@ export default function AccountCreated() {
               >
                 Login to access:
               </Text>
-              <View style={{justifyContent:'flex-end',height:50}}>
-              <ScrollView
-                ref={scrollRef}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.accessOptions}
-              >
-                {accessOptions.map((option, index) => (
-                  <Text
-                    key={index}
-                    style={[
-                      styles.accessOption,
-                      {
-                        color: theme.accentText,
-                        backgroundColor: theme.textbgcolor,
-                        height:35
-                      },
-                    ]}
-                  >
-                    {option}
-                  </Text>
-                ))}
-              </ScrollView>
+              <View style={{ justifyContent: 'flex-end', height: 50 }}>
+                <ScrollView
+                  ref={scrollRef}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.accessOptions}
+                >
+                  {accessOptions.map((option, index) => (
+                    <Text
+                      key={index}
+                      style={[
+                        styles.accessOption,
+                        {
+                          color: theme.accentText,
+                          backgroundColor: theme.textbgcolor,
+                          height: 35
+                        },
+                      ]}
+                    >
+                      {option}
+                    </Text>
+                  ))}
+                </ScrollView>
               </View>
-             
+
             </View>
           </View>
         </View>
       </View>
+      <Toast ref={(ref) => Toast.setRef(ref)} />
     </LinearGradient>
   );
 }
@@ -264,7 +350,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 12,
     marginHorizontal: 10,
-    
+
   },
-  
+    errorText: {
+        fontSize: 12,
+        marginLeft: 10,
+        marginBottom: 5,
+    },
+
 });

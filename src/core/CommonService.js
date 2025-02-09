@@ -8,11 +8,11 @@ export const endPoint = {
 	exmQuestions: "/api/v1/exams/questions",
 	signup: "/api/v1/auth/register",
 	login: "/api/v1/auth/login",
-	verifyOtp: "/api/v1/auth/verifyOtp",
+	verifyOtp: "/api/v1/auth/verify-otp",
 	forgetPassword: "/api/v1/auth/forgetPassword",
 	changePassword: "/api/v1/auth/changePassword",
 	googleAuth: "/api/v1/auth/google",
-	updateDetails: "/api/v1/auth/updateMobileOrEmail",
+	updateEmail: "/api/v1/auth/update-mobileOrEmail",
   };
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -56,6 +56,27 @@ export const getPreExam = async (fields) => {
 		});
 };
 
+export const getUpdatedEmail = async (fields) => {
+	const headers = {
+		"content-type": "application/json",
+		"X-Content-Type-Options": "nosniff",
+		"X-Frame-Options": "SAMEORIGIN",
+	};
+	const data = {
+		"exam_paper_id":15090,
+		"exam_session_id":0,
+		"type":"schedule_exam"
+	}
+	return await axios
+		.post(apiurl +  endPoint.updateEmail, fields, { headers: headers })
+		.then((res) => {
+			return res.data;
+		})
+		.catch((error) => {
+			return error;
+		});
+};
+
 export const getSignUpDetails = async (fields) => {
 	const headers = {
 	  "content-type": "application/json",
@@ -85,6 +106,24 @@ export const getSignUpDetails = async (fields) => {
 	
 	return await axios
 	  .post(apiurl + endPoint.login, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in getExamType:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
+
+  export const getOTPSubmittedDetails = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.examtype, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.verifyOtp, fields, { headers: headers })
 	  .then((res) => res.data)
 	  .catch((error) => {
 		console.error("Error in getExamType:", error.response?.data || error.message);

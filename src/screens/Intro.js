@@ -92,7 +92,7 @@ export default function Intro({ navigation }) {
   </Svg>
         </View>
         <View style={{width:windowWidth/1.2,marginBottom:20}}>
-          <Text style={[styles.feature,{color:theme.textColor}]}>✅ Track your progress</Text>
+          <Text style={[styles.feature,{color:theme.textColor}]}>📊 Track your progress</Text>
           <Text style={[styles.feature,{color:theme.textColor}]}>⚡ Improve speed & accuracy</Text>
           <Text style={[styles.feature,{color:theme.textColor}]}>🎯 Identify weak topics instantly</Text>
           </View>

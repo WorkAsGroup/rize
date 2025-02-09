@@ -12,6 +12,7 @@ import Intro from './src/screens/Intro';
 import Form from './src/screens/Form';
 import Instruction from './src/screens/Instruction';
 import MockTest from './src/screens/MockTest';
+import OTPScreen from './src/screens/OTPScreen';
 
 const Stack = createStackNavigator();
 
@@ -29,10 +30,10 @@ export default function App() {
         <Stack.Screen name="MockTest" component={MockTest} />
         <Stack.Screen name="Signup" component={Signup} />
         <Stack.Screen name="Login" component={Login} />
+        <Stack.Screen name="OTPScreen" component={OTPScreen} />
         <Stack.Screen name="ResetPassword" component={ResetPassword} />
         <Stack.Screen name="ResetLink" component={ResetLink} />
         <Stack.Screen name="AccountCreated" component={AccountCreated} />
-
         <Stack.Screen name="CreateAccount" component={CreateAccount} />
 
 
