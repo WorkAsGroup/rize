@@ -19,13 +19,6 @@
 /Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/rnreanimated_autolinked_build/CMakeFiles/react_codegen_rnreanimated.dir/react/renderer/components/rnreanimated/States.cpp.o
 /Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/rnreanimated_autolinked_build/CMakeFiles/react_codegen_rnreanimated.dir/react/renderer/components/rnreanimated/rnreanimatedJSI-generated.cpp.o
 /Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/rnreanimated_autolinked_build/CMakeFiles/react_codegen_rnreanimated.dir/rnreanimated-generated.cpp.o
-/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/RNVectorIconsSpec_autolinked_build/CMakeFiles/react_codegen_RNVectorIconsSpec.dir/RNVectorIconsSpec-generated.cpp.o
-/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/RNVectorIconsSpec_autolinked_build/CMakeFiles/react_codegen_RNVectorIconsSpec.dir/react/renderer/components/RNVectorIconsSpec/ComponentDescriptors.cpp.o
-/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/RNVectorIconsSpec_autolinked_build/CMakeFiles/react_codegen_RNVectorIconsSpec.dir/react/renderer/components/RNVectorIconsSpec/EventEmitters.cpp.o
-/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/RNVectorIconsSpec_autolinked_build/CMakeFiles/react_codegen_RNVectorIconsSpec.dir/react/renderer/components/RNVectorIconsSpec/Props.cpp.o
-/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/RNVectorIconsSpec_autolinked_build/CMakeFiles/react_codegen_RNVectorIconsSpec.dir/react/renderer/components/RNVectorIconsSpec/RNVectorIconsSpecJSI-generated.cpp.o
-/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/RNVectorIconsSpec_autolinked_build/CMakeFiles/react_codegen_RNVectorIconsSpec.dir/react/renderer/components/RNVectorIconsSpec/ShadowNodes.cpp.o
-/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/RNVectorIconsSpec_autolinked_build/CMakeFiles/react_codegen_RNVectorIconsSpec.dir/react/renderer/components/RNVectorIconsSpec/States.cpp.o
 /Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/RNCWebViewSpec_autolinked_build/CMakeFiles/react_codegen_RNCWebViewSpec.dir/RNCWebViewSpec-generated.cpp.o
 /Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/RNCWebViewSpec_autolinked_build/CMakeFiles/react_codegen_RNCWebViewSpec.dir/react/renderer/components/RNCWebViewSpec/ComponentDescriptors.cpp.o
 /Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/RNCWebViewSpec_autolinked_build/CMakeFiles/react_codegen_RNCWebViewSpec.dir/react/renderer/components/RNCWebViewSpec/EventEmitters.cpp.o

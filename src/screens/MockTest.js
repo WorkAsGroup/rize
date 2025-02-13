@@ -8,7 +8,8 @@ import {
     Dimensions,
     Image,
     ScrollView,
-    ActivityIndicator
+    ActivityIndicator,
+    Modal  // Import Modal
 } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import { darkTheme, lightTheme } from "../theme/theme";
@@ -117,8 +118,11 @@ export default function MockTest({ navigation }) {
     const [isLoading, setIsLoading] = useState(true);
     const [selectedAnswers, setSelectedAnswers] = useState({});
     const [selectedOption, setSelectedOption] = useState(null);
-    const [filteredQuestionNumbers, setFilteredQuestionNumbers] = useState([]); // new state
+    const [filteredQuestionNumbers, setFilteredQuestionNumbers] = useState([]);
     const timerInterval = useRef(null);
+
+    // New state for the submit modal
+    const [submitModalVisible, setSubmitModalVisible] = useState(false);
 
     const handleSubjectSelect = (subject) => {
         setSelectedSubject(subject);
@@ -337,6 +341,7 @@ export default function MockTest({ navigation }) {
         try {
             const examsResponse = await getPreExam();
             setExams(examsResponse.data);
+            // console.log("1234", examsResponse)
         } catch (error) {
             console.error("Error fetching exams:", error);
         } finally {
@@ -376,7 +381,7 @@ export default function MockTest({ navigation }) {
             }
 
             const numbers = [];
-            for (let i = start; i <= end && i <= exams.length; i++) { // make sure we don't exceed the maximum number of questions available
+            for (let i = start; i <= end && i <= exams.length; i++) {
                 numbers.push(i);
             }
             setFilteredQuestionNumbers(numbers);
@@ -468,9 +473,14 @@ export default function MockTest({ navigation }) {
     const moveToNextQuestion = () => {
         const currentIndex = filteredQuestionNumbers.indexOf(selectedNumber);
         if (currentIndex < filteredQuestionNumbers.length - 1) {
-            setSelectedNumber(filteredQuestionNumbers[currentIndex + 1]); // Move to next question
-            setSelectedOption(null); // Clear selected option
+            setSelectedNumber(filteredQuestionNumbers[currentIndex + 1]);
+            setSelectedOption(null);
         }
+    };
+
+    // Function to handle Submit Test press
+    const handleSubmitTest = () => {
+        setSubmitModalVisible(true);
     };
 
     if (isLoading) {
@@ -691,11 +701,11 @@ export default function MockTest({ navigation }) {
 
                                         <View>
                                             {isImageUrl ? (
-                                                <View style={{backgroundColor:'#FFF'}}>
-                                                <Image
-                                                    source={{ uri: imagesInOption[0] }}
-                                                    style={{ width: 80, height: 40, borderRadius: 25, resizeMode: 'contain' }}
-                                                />
+                                                <View style={{ backgroundColor: '#FFF' }}>
+                                                    <Image
+                                                        source={{ uri: imagesInOption[0] }}
+                                                        style={{ width: 80, height: 40, borderRadius: 25, resizeMode: 'contain' }}
+                                                    />
                                                 </View>
                                             ) : (
                                                 <Text style={[
@@ -741,9 +751,9 @@ export default function MockTest({ navigation }) {
                                     />
                                 </TouchableOpacity>
                                 <TouchableOpacity onPress={() => {
-                                             handleSkipQuestion();
-                                            setSelectedOption(null);
-                                        }} style={{ width: 130, height: 36, borderWidth: 1, borderColor: theme.textColor, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginLeft: 15 }}>
+                                    handleSkipQuestion();
+                                    setSelectedOption(null);
+                                }} style={{ width: 130, height: 36, borderWidth: 1, borderColor: theme.textColor, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginLeft: 15 }}>
                                     <Text style={[styles.ans, { color: theme.textColor, }]}>
                                         Skip Question
                                     </Text>
@@ -754,17 +764,19 @@ export default function MockTest({ navigation }) {
                     </LinearGradient>
 
                     <View style={{ marginTop: 20, flexDirection: 'row', justifyContent: 'center' }}>
-                        <TouchableOpacity style={{ width: 130, height: 36, borderWidth: 1, borderColor: theme.textColor, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginLeft: 15 }}>
+                        <TouchableOpacity style={{ width: 130, height: 36, borderWidth: 1, borderColor: theme.textColor, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginLeft: 15 }}
+                            onPress={handleSubmitTest} // Open the modal on press
+                        >
                             <Text style={[styles.ans, { color: theme.textColor, fontWeight: '700' }]}>
                                 Submit Test
                             </Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity  onPress={() => {
-                                            if (selectedOption) {
-                                                handleSelectAndNext(selectedNumber, selectedOption);
-                                            }
-                                        }}>
+                        <TouchableOpacity onPress={() => {
+                            if (selectedOption) {
+                                handleSelectAndNext(selectedNumber, selectedOption);
+                            }
+                        }}>
                             <LinearGradient
                                 colors={theme.background}
                                 style={{ width: 150, height: 36, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginLeft: 15 }} start={{ x: 0, y: 1 }}
@@ -784,6 +796,56 @@ export default function MockTest({ navigation }) {
                     </TouchableOpacity>
                 </View>
             </ScrollView>
+
+            {/* Submit Test Modal */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={submitModalVisible}
+                onRequestClose={() => {
+                    setSubmitModalVisible(!submitModalVisible);
+                }}
+            >
+                <View style={styles.centeredView}>
+                    <TouchableOpacity>
+                    <Image
+                                    style={{ tintColor: theme.textColor, marginRight: 10 ,height:45,width:45,left:150,top:40,position:'absolute'}}
+                                    source={require("../images/delete.png")}
+                                />
+                    </TouchableOpacity>
+                    <View style={[styles.modalView, { backgroundColor: theme.bmc1 }]}>
+                        <Text style={[styles.modalText, { color: theme.textColor }]}>
+                            In order to get the results, you need to either login or register.
+                        </Text>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-around', width: '100%' }}>
+                            <TouchableOpacity
+                                style={[styles.button, { backgroundColor: theme.background[0] }]}
+                                onPress={() => {
+                                    setSubmitModalVisible(false);
+                                    navigation.navigate("Login"); 
+                                }}
+                            >
+                                <Text style={[styles.textStyle, { color: theme.textColor1 }]}>Login</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.button, { backgroundColor: theme.background[1] }]}
+                                onPress={() => {
+                                    setSubmitModalVisible(false);
+                                    navigation.navigate("Signup");
+                                }}
+                            >
+                                <Text style={[styles.textStyle, { color: theme.textColor1 }]}>Register</Text>
+                            </TouchableOpacity>
+                        </View>
+                        {/* <TouchableOpacity
+                            style={[styles.button, { backgroundColor: theme.gray, marginTop: 10 }]}
+                            onPress={() => setSubmitModalVisible(false)}
+                        >
+                            <Text style={[styles.textStyle, { color: '#FFF' }]}>Cancel</Text>
+                        </TouchableOpacity> */}
+                    </View>
+                </View>
+            </Modal>
         </LinearGradient>
     );
 }
@@ -891,4 +953,55 @@ const styles = StyleSheet.create({
         marginLeft: 8,
         marginRight: 8
     },
+    centeredView: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+      },
+      modalView: {
+        margin: 20,
+        borderRadius: 20,
+        padding: 35,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+          width: 0,
+          height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+      },
+      modalText: {
+        marginBottom: 15,
+        textAlign: 'center',
+        fontSize: 18,
+        fontWeight: 'bold',
+        fontFamily: "CustomFont",
+      },
+      buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        width: '100%',
+      },
+      button: {
+        borderRadius: 20,
+        padding: 10,
+        elevation: 2,
+        marginHorizontal: 10,
+        width: 100,
+        alignItems: 'center',
+      },
+      buttonLogin: {
+        backgroundColor: "transparent",
+      },
+      buttonRegister: {
+        backgroundColor: '#2196F3',
+      },
+      textStyle: {
+        color: 'white',
+        fontWeight: 'bold',
+        textAlign: 'center',
+      },
 });

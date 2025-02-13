@@ -19,9 +19,6 @@
 /Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86/rnsvg_autolinked_build/CMakeFiles/react_codegen_rnsvg.dir
 /Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86/rnsvg_autolinked_build/CMakeFiles/edit_cache.dir
 /Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86/rnsvg_autolinked_build/CMakeFiles/rebuild_cache.dir
-/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86/RNVectorIconsSpec_autolinked_build/CMakeFiles/react_codegen_RNVectorIconsSpec.dir
-/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86/RNVectorIconsSpec_autolinked_build/CMakeFiles/edit_cache.dir
-/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86/RNVectorIconsSpec_autolinked_build/CMakeFiles/rebuild_cache.dir
 /Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86/RNCWebViewSpec_autolinked_build/CMakeFiles/react_codegen_RNCWebViewSpec.dir
 /Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86/RNCWebViewSpec_autolinked_build/CMakeFiles/edit_cache.dir
 /Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86/RNCWebViewSpec_autolinked_build/CMakeFiles/rebuild_cache.dir

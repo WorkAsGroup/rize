@@ -17,11 +17,11 @@ import { darkTheme, lightTheme } from "../theme/theme";
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
-export default function ResetLink({navigation}) {
+export default function ResetLink({navigation,route}) {
   const colorScheme = useColorScheme();
   const [check, setCheck] = useState(false);
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
-
+  const mobile = route?.params?.mobile;
   const scrollRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -76,14 +76,14 @@ export default function ResetLink({navigation}) {
           ]}
         >
           <View style={{ top: -180,padding:20 }}>
-            <Text style={[styles.welcomeText, { color: theme.textColor }]}>
+            <Text style={[styles.welcomeText, { color: theme.white }]}>
              Password reset link sent to
             </Text>
-            <Text style={[styles.welcomeText, { color: theme.textColor }]}>
-             +91 987654321. Please check!
+            <Text style={[styles.welcomeText, { color: theme.white }]}>
+             +91 {mobile}. Please check!
             </Text>
          <View style={{justifyContent:'center',alignItems:'center',marginBottom:120,marginTop:30}}>
-         <Text style={[styles.welcomeText, { color: theme.textColor }]}>
+         <Text style={[styles.welcomeText, { color: theme.white }]}>
              Didn't receive link? Request Again
             </Text>
          </View>
@@ -93,7 +93,7 @@ export default function ResetLink({navigation}) {
             <View style={styles.footer}>
             <View style={{flexDirection:'row'}}>
                 <Text
-                style={[styles.newHereText, { color: theme.textColor }]}
+                style={[styles.newHereText, { color: theme.white }]}
               >
                 New here? 
               </Text>
@@ -114,7 +114,7 @@ export default function ResetLink({navigation}) {
                 style={[
                   styles.accessText,
                   {
-                    color: theme.textColor,
+                    color: theme.white,
                     alignSelf: "flex-start",
                     marginLeft: 20,
                   },

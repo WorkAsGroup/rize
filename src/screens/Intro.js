@@ -31,7 +31,7 @@ export default function Intro({ navigation }) {
       <ScrollView contentContainerStyle={styles.scrollContainer} >
         <View style={{flexDirection:'row',width:windowWidth,paddingStart:15}}>
         <Image
-            style={{height:36,width:36,justifyContent:'flex-start'}}
+            style={{height:36,width:36,justifyContent:'flex-start',tintColor:'transparent'}}
             source={require("../images/back.png")}
           />
         <View style={{flexDirection:'row',alignItems:"flex-end",width:windowWidth/1.12,justifyContent:'flex-end',paddingEnd:15}}>

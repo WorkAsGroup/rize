@@ -50,7 +50,6 @@ if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   include("/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/safeareacontext_autolinked_build/cmake_install.cmake")
   include("/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/rnscreens_autolinked_build/cmake_install.cmake")
   include("/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/rnsvg_autolinked_build/cmake_install.cmake")
-  include("/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/RNVectorIconsSpec_autolinked_build/cmake_install.cmake")
   include("/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/RNCWebViewSpec_autolinked_build/cmake_install.cmake")
 
 endif()

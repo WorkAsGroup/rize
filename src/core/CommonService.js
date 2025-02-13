@@ -13,6 +13,7 @@ export const endPoint = {
 	changePassword: "/api/v1/auth/changePassword",
 	googleAuth: "/api/v1/auth/google",
 	updateEmail: "/api/v1/auth/update-mobileOrEmail",
+	resetPass: "/api/v1/auth/otp-generation",
   };
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -95,6 +96,23 @@ export const getSignUpDetails = async (fields) => {
 	  }); 
   };
 
+  export const getResetDetails = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.examtype, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.resetPass, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in getExamType:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
   export const getLoginDetails = async (fields) => {
 	const headers = {
 	  "content-type": "application/json",

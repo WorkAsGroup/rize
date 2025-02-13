@@ -9,7 +9,7 @@
       "platforms": {
         "ios": {
           "podspecPath": "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-async-storage/async-storage/RNCAsyncStorage.podspec",
-          "version": "2.1.0",
+          "version": "2.1.1",
           "configurations": [],
           "scriptPhases": []
         },
@@ -34,7 +34,7 @@
       "platforms": {
         "ios": {
           "podspecPath": "/Users/akki/Documents/GitHub/rize/node_modules/react-native-gesture-handler/RNGestureHandler.podspec",
-          "version": "2.22.1",
+          "version": "2.23.1",
           "configurations": [],
           "scriptPhases": []
         },
@@ -135,7 +135,7 @@
       "platforms": {
         "ios": {
           "podspecPath": "/Users/akki/Documents/GitHub/rize/node_modules/react-native-safe-area-context/react-native-safe-area-context.podspec",
-          "version": "5.1.0",
+          "version": "5.2.0",
           "configurations": [],
           "scriptPhases": []
         },
@@ -163,7 +163,7 @@
       "platforms": {
         "ios": {
           "podspecPath": "/Users/akki/Documents/GitHub/rize/node_modules/react-native-screens/RNScreens.podspec",
-          "version": "4.5.0",
+          "version": "4.6.0",
           "configurations": [],
           "scriptPhases": []
         },
@@ -242,31 +242,6 @@
             "RNSVGUseComponentDescriptor"
           ],
           "cmakeListsPath": "/Users/akki/Documents/GitHub/rize/node_modules/react-native-svg/android/src/main/jni/CMakeLists.txt",
-          "cxxModuleCMakeListsModuleName": null,
-          "cxxModuleCMakeListsPath": null,
-          "cxxModuleHeaderName": null,
-          "isPureCxxDependency": false
-        }
-      }
-    },
-    "react-native-vector-icons": {
-      "root": "/Users/akki/Documents/GitHub/rize/node_modules/react-native-vector-icons",
-      "name": "react-native-vector-icons",
-      "platforms": {
-        "ios": {
-          "podspecPath": "/Users/akki/Documents/GitHub/rize/node_modules/react-native-vector-icons/RNVectorIcons.podspec",
-          "version": "10.2.0",
-          "configurations": [],
-          "scriptPhases": []
-        },
-        "android": {
-          "sourceDir": "/Users/akki/Documents/GitHub/rize/node_modules/react-native-vector-icons/android",
-          "packageImportPath": "import com.oblador.vectoricons.VectorIconsPackage;",
-          "packageInstance": "new VectorIconsPackage()",
-          "buildTypes": [],
-          "libraryName": "RNVectorIconsSpec",
-          "componentDescriptors": [],
-          "cmakeListsPath": "/Users/akki/Documents/GitHub/rize/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/CMakeLists.txt",
           "cxxModuleCMakeListsModuleName": null,
           "cxxModuleCMakeListsPath": null,
           "cxxModuleHeaderName": null,

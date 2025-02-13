@@ -1,3 +1,5 @@
+//src/screens/Login.js
+
 import React, { useState, useRef, useEffect } from "react";
 import {
     View,
@@ -9,25 +11,27 @@ import {
     useColorScheme,
     Dimensions,
     Image,
+    Alert
 } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import Svg, { Path } from "react-native-svg";
 import { darkTheme, lightTheme } from "../theme/theme";
 import { getLoginDetails } from "../core/CommonService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { storeToken } from "../auth"; 
-import { useNavigation } from '@react-navigation/native'; // Import useNavigation
+import { useNavigation } from '@react-navigation/native';
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
-export default function LoginScreen() {  // Removed navigation from props
+export default function Login({ route }) { // Receive route prop
+
     const colorScheme = useColorScheme();
     const [check, setCheck] = useState(false);
     const theme = colorScheme === "dark" ? darkTheme : lightTheme;
 
     const scrollRef = useRef(null);
     const [currentIndex, setCurrentIndex] = useState(0);
+    const navigation = useNavigation()
 
     const accessOptions = [
         "Personalized dashboard",
@@ -41,7 +45,7 @@ export default function LoginScreen() {  // Removed navigation from props
     const [password, setPassword] = useState("");
     const [errors, setErrors] = useState({ email: "", password: "" });
     const [passwordVisible, setPasswordVisible] = useState(false);
-    const navigation = useNavigation(); // Get the navigation object
+   
 
     const togglePasswordVisibility = () => {
         setPasswordVisible(!passwordVisible);
@@ -69,7 +73,7 @@ export default function LoginScreen() {  // Removed navigation from props
 
     const handleLogin = async () => {
         if (!check) {
-            alert("Please agree to the privacy policy and terms of service.");
+            Alert.alert("Please agree to the privacy policy and terms of service.");
             return;
         }
 
@@ -83,10 +87,17 @@ export default function LoginScreen() {  // Removed navigation from props
             console.log("Response", response);
 
             if(response.statusCode == 200){
-                 await storeToken(response.data.token);
-                 navigation.replace("Dashboard"); 
+                 //Trigger the parent components state change
+
+                 if (route.params && route.params.onChangeAuth) {
+                  route.params.onChangeAuth(response.data.token);
+                 } else {
+                  console.log("onChangeAuth not found")
+                 }
+
+
             } else {
-                 alert("Login failed. Please check your credentials.");
+                 Alert.alert("Login failed. Please check your credentials.");
             }
 
         }
@@ -308,7 +319,7 @@ export default function LoginScreen() {  // Removed navigation from props
                         </View>
                     </View>
                 </View>
-            </View>
+                </View>
         </LinearGradient>
     );
 }
@@ -428,7 +439,7 @@ const styles = StyleSheet.create({
         marginVertical: 8,
         backgroundColor: '#fff',
         paddingRight: 10,
-        borderColor: '#8e8e8e', //Default border color
+        borderColor: '#8e8e8e', 
     },
     passwordInput: {
         flex: 1,
