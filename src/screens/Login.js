@@ -15,11 +15,13 @@ import Svg, { Path } from "react-native-svg";
 import { darkTheme, lightTheme } from "../theme/theme";
 import { getLoginDetails } from "../core/CommonService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { storeToken } from "../auth"; 
+import { useNavigation } from '@react-navigation/native'; // Import useNavigation
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen() {  // Removed navigation from props
     const colorScheme = useColorScheme();
     const [check, setCheck] = useState(false);
     const theme = colorScheme === "dark" ? darkTheme : lightTheme;
@@ -38,7 +40,8 @@ export default function LoginScreen({ navigation }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [errors, setErrors] = useState({ email: "", password: "" });
-    const [passwordVisible, setPasswordVisible] = useState(false); // New state
+    const [passwordVisible, setPasswordVisible] = useState(false);
+    const navigation = useNavigation(); // Get the navigation object
 
     const togglePasswordVisibility = () => {
         setPasswordVisible(!passwordVisible);
@@ -80,15 +83,12 @@ export default function LoginScreen({ navigation }) {
             console.log("Response", response);
 
             if(response.statusCode == 200){
-              if(response.message == "Login successful"){
-              navigation.navigate("Dashboard");
-              }
+                 await storeToken(response.data.token);
+                 navigation.replace("Dashboard"); 
+            } else {
+                 alert("Login failed. Please check your credentials.");
             }
 
-            // Handle the response as needed (e.g., navigate to a new screen)
-            // if (response.statusCode === 201) {
-            //   navigation.navigate("AccountCreated");
-            // }
         }
     };
 

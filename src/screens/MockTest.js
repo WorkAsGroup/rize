@@ -296,6 +296,10 @@ export default function MockTest({ navigation }) {
             await AsyncStorage.setItem(SKIPPED_QUESTIONS_KEY, JSON.stringify(updatedSkipped));
             await AsyncStorage.setItem(ANSWERED_QUESTIONS_KEY, JSON.stringify(updatedAnswers));
             await AsyncStorage.setItem(REVIEWED_QUESTIONS_KEY, JSON.stringify(updatedReviewed));
+
+            // Move to the next question after skipping
+            moveToNextQuestion();
+
         } catch (error) {
             console.error("Error skipping question:", error);
         }
@@ -454,6 +458,19 @@ export default function MockTest({ navigation }) {
                 <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>{formatTime(timeElapsed)}</Text>
             </View>
         );
+    };
+
+    const handleSelectAndNext = async (questionId, option) => {
+        await handleAnswerSelect(questionId, option);
+        moveToNextQuestion();
+    };
+
+    const moveToNextQuestion = () => {
+        const currentIndex = filteredQuestionNumbers.indexOf(selectedNumber);
+        if (currentIndex < filteredQuestionNumbers.length - 1) {
+            setSelectedNumber(filteredQuestionNumbers[currentIndex + 1]); // Move to next question
+            setSelectedOption(null); // Clear selected option
+        }
     };
 
     if (isLoading) {
@@ -723,7 +740,10 @@ export default function MockTest({ navigation }) {
                                         source={require("../images/eye.png")}
                                     />
                                 </TouchableOpacity>
-                                <TouchableOpacity onPress={handleSkipQuestion} style={{ width: 130, height: 36, borderWidth: 1, borderColor: theme.textColor, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginLeft: 15 }}>
+                                <TouchableOpacity onPress={() => {
+                                             handleSkipQuestion();
+                                            setSelectedOption(null);
+                                        }} style={{ width: 130, height: 36, borderWidth: 1, borderColor: theme.textColor, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginLeft: 15 }}>
                                     <Text style={[styles.ans, { color: theme.textColor, }]}>
                                         Skip Question
                                     </Text>
@@ -740,7 +760,11 @@ export default function MockTest({ navigation }) {
                             </Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity >
+                        <TouchableOpacity  onPress={() => {
+                                            if (selectedOption) {
+                                                handleSelectAndNext(selectedNumber, selectedOption);
+                                            }
+                                        }}>
                             <LinearGradient
                                 colors={theme.background}
                                 style={{ width: 150, height: 36, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginLeft: 15 }} start={{ x: 0, y: 1 }}
