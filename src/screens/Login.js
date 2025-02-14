@@ -216,6 +216,8 @@ export default function Login({ route }) { // Receive route prop
                                     style={{
                                         tintColor: check ? theme.green : "#fff",
                                         marginRight: 5,
+                                        height:25,
+                                        width:25,
                                     }}
                                     source={require("../images/check_box.png")}
                                 />

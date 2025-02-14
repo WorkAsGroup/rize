@@ -248,6 +248,8 @@ export default function Signup({ navigation }) {
                                     style={{
                                         tintColor: check ? "#fff" : theme.textColor1,
                                         marginRight: 5,
+                                        height:25,
+                                        width:25,
                                     }}
                                     source={require("../images/check_box.png")}
                                 />
