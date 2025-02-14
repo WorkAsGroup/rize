@@ -320,14 +320,16 @@ export default function Instruction({ navigation }) {
                                         </Text>
                                 </View>
 
-                                <TouchableOpacity onPress={()=>{navigation.navigate("Signup")}}>
-                                <View style={{ padding: 8,marginLeft:10, marginTop: 10,borderWidth:1,borderColor:theme.textColor,width:150,borderRadius:30 }}>
+                                {/* <TouchableOpacity onPress={()=>{navigation.navigate("Signup")}}> */}
+                                
+                                <View>
+                                  <View style={{ padding: 8,marginLeft:10, marginTop: 10,borderWidth:1,borderColor:theme.textColor,width:150,borderRadius:30 }}>
                                 
                                     <Text style={{ color: theme.textColor, marginTop: -2, width: "85%", fontWeight: '400', fontSize: 18, marginLeft: 8 }}>
                                         Skip Question                                    
                                         </Text>
                                 </View>
-                                </TouchableOpacity>
+                                </View>
 
 
                             </View>

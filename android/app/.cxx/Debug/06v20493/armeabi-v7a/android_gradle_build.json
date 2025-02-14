@@ -6,6 +6,7 @@
     "/Users/akki/Documents/GitHub/rize/node_modules/react-native-safe-area-context/android/src/main/jni/CMakeLists.txt",
     "/Users/akki/Documents/GitHub/rize/node_modules/react-native-screens/android/src/main/jni/CMakeLists.txt",
     "/Users/akki/Documents/GitHub/rize/node_modules/react-native-svg/android/src/main/jni/CMakeLists.txt",
+    "/Users/akki/Documents/GitHub/rize/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/CMakeLists.txt",
     "/Users/akki/Documents/GitHub/rize/node_modules/react-native-webview/android/build/generated/source/codegen/jni/CMakeLists.txt",
     "/Users/akki/Documents/GitHub/rize/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/CMakeLists.txt"
   ],
@@ -42,6 +43,11 @@
       "toolchain": "toolchain",
       "abi": "armeabi-v7a",
       "artifactName": "react_codegen_RNCWebViewSpec"
+    },
+    "react_codegen_RNVectorIconsSpec::@479809fae146501fd34d": {
+      "toolchain": "toolchain",
+      "abi": "armeabi-v7a",
+      "artifactName": "react_codegen_RNVectorIconsSpec"
     },
     "react_codegen_rnasyncstorage::@1596841e19ec5b9eeffe": {
       "toolchain": "toolchain",

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState ,useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { LineChart } from 'react-native-svg-charts';
 import { useNavigation } from '@react-navigation/native';
+import { getAutoLogin , getYearsData ,getMockExams} from '../core/CommonService';
 
 const DashboardContent = ({ route }) => {
   const navigation = useNavigation();
@@ -12,12 +13,44 @@ const DashboardContent = ({ route }) => {
   };
 
   const [selectedExam, setSelectedExam] = useState('EAMCET');
+  const [name, setName] = useState("");
+  const [studentId,setStudentId] = useState("");
 
   const handleExamTypePress = (examType) => {
     setSelectedExam(examType);
   };
 
   const data = [50, 70, 60, 90, 80];
+
+  useEffect(() => {
+    getUser();
+    getYears();
+    getMock();
+}, []);
+
+const getUser = async () => {
+    const response = await getAutoLogin();
+    console.log("auto-login", response);
+    const nm = response.data.name;
+    const id = response.data.student_user_id;
+    setName(nm);
+    setStudentId(id);
+};
+
+const getYears = async () => {
+  const response = await getYearsData();
+    console.log("years", response);
+};
+
+const getMock = async () => {
+  const data = {
+    "student_user_exam_id": studentId
+  }
+  console.log("student_user_exam_id", studentId);
+
+  const response = await getMockExams(data);
+    console.log("mock exam", response);
+};
 
   return (
     <View style={styles.container}>
@@ -58,7 +91,7 @@ const DashboardContent = ({ route }) => {
 
       {/* Welcome Message */}
       <Text style={styles.welcome}>Good morning 🔥</Text>
-      <Text style={styles.username}>Welcome, Olive</Text>
+      <Text style={styles.username}>Welcome, {name}</Text>
 
       {/* Weekly Performance Section */}
       <View style={styles.performanceCard}>

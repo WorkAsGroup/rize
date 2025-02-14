@@ -273,7 +273,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     marginTop: 8,
     width:'100%',
-    paddingStart:10
+    paddingStart:8,
+    alignItems:'center',
+    marginLeft:-6
   },
   tag: {
     borderRadius: 10,

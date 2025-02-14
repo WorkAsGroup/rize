@@ -221,6 +221,31 @@ if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
   file(TOUCH_NOCREATE "/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86/CMakeFiles/cmake.verify_globs")
 endif()
 
+# react_codegen_SRCS at /Users/akki/Documents/GitHub/rize/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/CMakeLists.txt:9 (file)
+file(GLOB NEW_GLOB LIST_DIRECTORIES true "/Users/akki/Documents/GitHub/rize/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/*.cpp")
+set(OLD_GLOB
+  "/Users/akki/Documents/GitHub/rize/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/RNVectorIconsSpec-generated.cpp"
+  )
+if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
+  message("-- GLOB mismatch!")
+  file(TOUCH_NOCREATE "/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86/CMakeFiles/cmake.verify_globs")
+endif()
+
+# react_codegen_SRCS at /Users/akki/Documents/GitHub/rize/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/CMakeLists.txt:9 (file)
+file(GLOB NEW_GLOB LIST_DIRECTORIES true "/Users/akki/Documents/GitHub/rize/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/react/renderer/components/RNVectorIconsSpec/*.cpp")
+set(OLD_GLOB
+  "/Users/akki/Documents/GitHub/rize/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/react/renderer/components/RNVectorIconsSpec/ComponentDescriptors.cpp"
+  "/Users/akki/Documents/GitHub/rize/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/react/renderer/components/RNVectorIconsSpec/EventEmitters.cpp"
+  "/Users/akki/Documents/GitHub/rize/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/react/renderer/components/RNVectorIconsSpec/Props.cpp"
+  "/Users/akki/Documents/GitHub/rize/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/react/renderer/components/RNVectorIconsSpec/RNVectorIconsSpecJSI-generated.cpp"
+  "/Users/akki/Documents/GitHub/rize/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/react/renderer/components/RNVectorIconsSpec/ShadowNodes.cpp"
+  "/Users/akki/Documents/GitHub/rize/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/react/renderer/components/RNVectorIconsSpec/States.cpp"
+  )
+if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
+  message("-- GLOB mismatch!")
+  file(TOUCH_NOCREATE "/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86/CMakeFiles/cmake.verify_globs")
+endif()
+
 # react_codegen_SRCS at /Users/akki/Documents/GitHub/rize/node_modules/react-native-webview/android/build/generated/source/codegen/jni/CMakeLists.txt:9 (file)
 file(GLOB NEW_GLOB LIST_DIRECTORIES true "/Users/akki/Documents/GitHub/rize/node_modules/react-native-webview/android/build/generated/source/codegen/jni/*.cpp")
 set(OLD_GLOB

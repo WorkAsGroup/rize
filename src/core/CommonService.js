@@ -14,9 +14,74 @@ export const endPoint = {
 	googleAuth: "/api/v1/auth/google",
 	updateEmail: "/api/v1/auth/update-mobileOrEmail",
 	resetPass: "/api/v1/auth/otp-generation",
+	autologin: "/api/v1/auth/auto-login",
+	years: "/api/v1/general/years",
+	mocktest: "/api/v1/general/mocktests"
   };
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+
+
+export const getYearsData = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.examtype, "with data:", fields);
+	
+	return await axios
+	  .get(apiurl + endPoint.years, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in getExamType:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
+
+  export const getMockExams = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.examtype, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.mocktest, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in getExamType:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
+
+export const getAutoLogin = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+
+	const token = await AsyncStorage.getItem('authToken');
+
+	const data = {
+		token : token
+	}
+  
+	console.log("Making request to:", apiurl + endPoint.examtype, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.autologin, data, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in getExamType:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
 
 export const getExamType = async (fields) => {
 	const headers = {
