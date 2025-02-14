@@ -15,7 +15,7 @@ import CreateAccount from './src/screens/CreateAccount';
 import Intro from './src/screens/Intro';
 import Form from './src/screens/Form';
 import OTPScreen from './src/screens/OTPScreen';
-import DashboardDrawer from './src/screens/DashboardDrawer'; // Import the Drawer
+import DashboardDrawer from './src/screens/DashboardDrawer'; 
 import Instruction from './src/screens/Instruction';
 import MockTest from './src/screens/MockTest';
 
@@ -38,7 +38,7 @@ const AuthNavigator = ({ onChangeAuth }) => (
 
 const AppNavigator = ({ onChangeAuth }) => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
-    <Stack.Screen name="Dashboard" >
+    <Stack.Screen name="DashboardContent" >
        {(props) => <DashboardDrawer {...props} route={{ params: { onChangeAuth: onChangeAuth } }} />}
     </Stack.Screen>
   </Stack.Navigator>

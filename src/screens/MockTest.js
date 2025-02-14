@@ -829,12 +829,14 @@ export default function MockTest({ navigation }) {
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.button, { backgroundColor: theme.background[1] }]}
-                                onPress={() => {
-                                    setSubmitModalVisible(false);
-                                    navigation.navigate("Signup");
-                                }}
+                                // onPress={() => {
+                                //     setSubmitModalVisible(false);
+                                //     navigation.navigate("Signup");
+                                // }}
+                                onPress={() => setSubmitModalVisible(false)}
+
                             >
-                                <Text style={[styles.textStyle, { color: theme.textColor1 }]}>Register</Text>
+                                <Text style={[styles.textStyle, { color: theme.textColor1 }]}>Cancel</Text>
                             </TouchableOpacity>
                         </View>
                         {/* <TouchableOpacity
