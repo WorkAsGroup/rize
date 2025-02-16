@@ -25,7 +25,8 @@ const lightTheme = {
     red:"#DD3737",
     green:"#00913A",
     white:"#FFFFFF",
-    black:"#000"
+    black:"#000",
+    conbk:"#ECE2DF"
 
 
 
@@ -59,7 +60,8 @@ const lightTheme = {
     red:"#DD3737",
     green:"#B1FF01",
     white:"#FFFFFF",
-    black:"#000"
+    black:"#000",
+    conbk:"#292929"
 
 
   };

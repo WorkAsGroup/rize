@@ -5,7 +5,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { View, StyleSheet, Image, useColorScheme } from 'react-native';
 import { darkTheme, lightTheme } from './src/theme/theme';
 
-// Import your screens
 import Login from './src/screens/Login';
 import Signup from './src/screens/Signup';
 import AccountCreated from './src/screens/AccountCreated';

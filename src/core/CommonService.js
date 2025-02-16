@@ -16,12 +16,64 @@ export const endPoint = {
 	resetPass: "/api/v1/auth/otp-generation",
 	autologin: "/api/v1/auth/auto-login",
 	years: "/api/v1/general/years",
-	mocktest: "/api/v1/general/mocktests"
+	mocktest: "/api/v1/mocktests",
+	achievements:"/api/v1/general/achievements",
+	leaderBoard:"/api/v1/general/leaderboards",
+	previousPapers:"/api/v1/previousPapers"
   };
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+export const getPreviousPapers = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+	return await axios
+	  .post(apiurl + endPoint.previousPapers, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in getExamType:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
 
+export const getAchievements = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.examtype, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.achievements, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in getExamType:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
+
+  export const getLeaderBoards = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.examtype, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.leaderBoard, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in getExamType:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
 
 export const getYearsData = async (fields) => {
 	const headers = {

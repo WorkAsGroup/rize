@@ -4,18 +4,13 @@ import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigatio
 import DashboardContent from './DashboardContent';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { darkTheme, lightTheme } from '../theme/theme';
+import Intro from './Intro';
 
 const Drawer = createDrawerNavigator();
 
 const Settings = () => (
   <View style={styles.container}>
     <Text style={styles.text}>Settings</Text>
-  </View>
-);
-
-const Performance = () => (
-  <View style={styles.container}>
-    <Text style={styles.text}>Performance Analytics</Text>
   </View>
 );
 
@@ -31,8 +26,8 @@ const CustomDrawerContent = (props) => {
     switch (routeName) {
       case 'Dashboard':
         return require('../images/dashboard.png');
-      case 'Performance':
-        return require('../images/performance.png');
+      case 'MockTests':
+        return require('../images/test.png');
       case 'Settings':
         return require('../images/settings.png');
       default:
@@ -42,40 +37,40 @@ const CustomDrawerContent = (props) => {
 
   const handleNavigation = (routeName) => {
     navigation.navigate(routeName);
-    props.navigation.closeDrawer(); // Close the drawer after navigation
+    props.navigation.closeDrawer(); 
   };
 
   return (
-    <DrawerContentScrollView {...props} style={{ backgroundColor: theme.white }}>
+    <DrawerContentScrollView {...props} style={{ backgroundColor: theme.textbgcolor }}>
       {/* App Title */}
       <View style={[styles.drawerHeader]}>
-        <Text style={[styles.drawerTitle, { color: theme.primary }]}>MockTest AI</Text>
+      <Image source={require("../images/title.png")} style={{width:160,tintColor:theme.textColor,resizeMode:'contain',marginLeft:10}} />
       </View>
 
       {/* Drawer Items */}
       <TouchableOpacity style={[styles.drawerItem, currentRouteName === 'Dashboard' && styles.selectedDrawerItem]} onPress={() => handleNavigation('Dashboard')}>
         <Image
           source={getIconSource('Dashboard')}
-          style={[styles.drawerIcon, { tintColor: theme.black }]}
+          style={[styles.drawerIcon, { tintColor: theme.textColor }]}
         />
-        <Text style={[styles.drawerItemText, { color: theme.black }]}>Dashboard</Text>
+        <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Dashboard</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.drawerItem, currentRouteName === 'Performance' && styles.selectedDrawerItem]} onPress={() => handleNavigation('Performance')}>
+      {/* <TouchableOpacity style={[styles.drawerItem, currentRouteName === 'MockTests' && styles.selectedDrawerItem]} onPress={() => handleNavigation('MockTests')}>
         <Image
-          source={getIconSource('Performance')}
-          style={[styles.drawerIcon, { tintColor: theme.black }]}
+          source={getIconSource('MockTests')}
+          style={[styles.drawerIcon, { tintColor: theme.textColor }]}
         />
-        <Text style={[styles.drawerItemText, { color: theme.black }]}>Performance analytics</Text>
+        <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Mock Tests</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={[styles.drawerItem, currentRouteName === 'Settings' && styles.selectedDrawerItem]} onPress={() => handleNavigation('Settings')}>
         <Image
           source={getIconSource('Settings')}
-          style={[styles.drawerIcon, { tintColor: theme.primary }]}
+          style={[styles.drawerIcon, { tintColor: theme.textColor }]}
         />
-        <Text style={[styles.drawerItemText, { color: theme.black }]}>Settings</Text>
-      </TouchableOpacity>
+        <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Settings</Text>
+      </TouchableOpacity> */}
     </DrawerContentScrollView>
   );
 };
@@ -104,8 +99,8 @@ const DashboardDrawer = ({ route }) => {
           />
         )}
       </Drawer.Screen>
-      <Drawer.Screen name="Performance" component={Performance} />
-      <Drawer.Screen name="Settings" component={Settings} />
+      {/* <Drawer.Screen name="Introv2" component={Intro} />
+      <Drawer.Screen name="Settings" component={Settings} /> */}
     </Drawer.Navigator>
   );
 };
@@ -122,9 +117,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
   },
-  drawerHeader: {
-    padding: 20,
-  },
+  
   drawerTitle: {
     fontSize: 26,
     fontWeight: 'bold',

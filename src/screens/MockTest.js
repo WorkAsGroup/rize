@@ -498,10 +498,10 @@ export default function MockTest({ navigation }) {
             start={{ x: 0, y: 1 }}
             end={{ x: 1, y: 1 }}
         >
-            <ScrollView style={{ flex: 1 }}>
+            <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', marginTop: 10 }}>
                     <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>EAMCET Mock Test</Text>
-                    <Text style={[styles.mockSubtitle, { color: theme.textColor, marginLeft: 25 }]}>Remaining Time</Text>
+                    <Text style={[styles.mockSubtitle, { color: theme.textColor, marginLeft: 35 }]}>Remaining Time</Text>
                     <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>{formatTime(remainingTime)}</Text>
                 </View>
 
@@ -620,7 +620,7 @@ export default function MockTest({ navigation }) {
                     </LinearGradient>
                 </View>
 
-                <View style={{ paddingHorizontal: 20, marginTop: 10 }}>
+                <ScrollView style={{ paddingHorizontal: 20, marginTop: 10 }}>
                     <LinearGradient
                         colors={theme.mcb1}
                         start={{ x: 0, y: 1 }}
@@ -763,9 +763,12 @@ export default function MockTest({ navigation }) {
                         </View>
                     </LinearGradient>
 
-                    <View style={{ marginTop: 20, flexDirection: 'row', justifyContent: 'center' }}>
+                  
+                </ScrollView>
+
+                <View style={{ marginTop: 20, flexDirection: 'row', justifyContent: 'center' }}>
                         <TouchableOpacity style={{ width: 130, height: 36, borderWidth: 1, borderColor: theme.textColor, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginLeft: 15 }}
-                            onPress={handleSubmitTest} // Open the modal on press
+                            onPress={handleSubmitTest} 
                         >
                             <Text style={[styles.ans, { color: theme.textColor, fontWeight: '700' }]}>
                                 Submit Test
@@ -794,8 +797,7 @@ export default function MockTest({ navigation }) {
                             View Test Rules
                         </Text>
                     </TouchableOpacity>
-                </View>
-            </ScrollView>
+            </View>
 
             {/* Submit Test Modal */}
             <Modal
