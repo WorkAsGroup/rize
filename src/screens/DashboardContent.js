@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, useColorScheme, FlatList, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, useColorScheme, FlatList, ActivityIndicator, ScrollView, RefreshControl, Alert } from 'react-native';
 import { LineChart } from 'react-native-svg-charts';
 import { useNavigation } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -27,21 +27,18 @@ const DashboardContent = ({ route }) => {
   const [mock, setMock] = useState([]); // This will hold the filtered/displayed mock tests
   const [loading, setLoading] = useState(true);
   const [ach, setAch] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   const data = [50, 70, 60, 90, 80];
   const [selectedType, setSelectedType] = useState('mock');
   const chartData = [
-    { data: [50, 70, 60, 90, 80], color: '#6A5ACD', strokeWidth: 2 }, 
-    { data: [90, 50, 20, 50, 50], color: 'green', strokeWidth: 2 },  
-    { data: [10, 90, 20, 80, 50], color: 'red', strokeWidth: 2 },     
-];  
+    { data: [50, 70, 60, 90, 80], color: '#6A5ACD', strokeWidth: 2 },
+    { data: [90, 50, 20, 50, 50], color: 'green', strokeWidth: 2 },
+    { data: [10, 90, 20, 80, 50], color: 'red', strokeWidth: 2 },
+  ];
   const handleSetMockType = (type) => {
     setSelectedType(type);
-    // if (type === 'mock') {
-    //   setMock(mocklist);
-    // } else if (type === 'previous') {
-    //   setMock(pre);
-    // }
+
   };
 
   const fetchData = useCallback(async () => {
@@ -55,11 +52,11 @@ const DashboardContent = ({ route }) => {
       await getPrevious();
     } catch (error) {
       console.error("Error fetching data in useEffect:", error);
-      // Handle errors more gracefully, maybe show an error message
+      Alert.alert("Error", "Failed to refresh data. Please check your connection and try again.");  // More user-friendly error handling
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [studentExamId]);  // Add studentExamId as a dependency - important!
 
   useEffect(() => {
     fetchData();
@@ -91,6 +88,7 @@ const DashboardContent = ({ route }) => {
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
+      Alert.alert("Error", "Failed to get user data. Please check your connection and try again.");
     }
   };
 
@@ -100,10 +98,12 @@ const DashboardContent = ({ route }) => {
     };
     try {
       const res = await getPreviousPapers(data);
-      console.log("Previouspao", res.data);
-      setPre(res.data);
+      console.log("Previouspao", res);
+      const tyu = res?.data;
+      setPre(tyu);
     } catch (error) {
       console.error("Error fetching Previouspaper data:", error);
+      Alert.alert("Error", "Failed to get previous papers. Please check your connection and try again.");
     }
   };
 
@@ -113,6 +113,7 @@ const DashboardContent = ({ route }) => {
       console.log("years", response);
     } catch (error) {
       console.error("Error fetching years data:", error);
+      Alert.alert("Error", "Failed to get years data. Please check your connection and try again.");
     }
   };
 
@@ -128,6 +129,7 @@ const DashboardContent = ({ route }) => {
       }
     } catch (error) {
       console.error("Error fetching achievements:", error);
+      Alert.alert("Error", "Failed to get achievements. Please check your connection and try again.");
     }
   };
 
@@ -147,6 +149,7 @@ const DashboardContent = ({ route }) => {
     } catch (error) {
       console.error("Error fetching leaderboard data:", error);
       setChamp([]);
+      Alert.alert("Error", "Failed to get leaderboard data. Please check your connection and try again.");
     }
   };
 
@@ -157,16 +160,17 @@ const DashboardContent = ({ route }) => {
     try {
       const response = await getMockExams(data);
       console.log("mock exam", response.data);
-      const ex = response.data;
-      setMocklist(ex);
+      const tyu = response?.data;
+      setMocklist(tyu);
     } catch (error) {
       console.error("Error fetching mock exams:", error);
+      Alert.alert("Error", "Failed to get mock exams. Please check your connection and try again.");
     }
   };
 
   const renderItem = ({ item }) => {
     return (
-      <View style={{ width: "98%", margin: 5, flexDirection: 'row', padding: 5, backgroundColor: theme.textColor1, borderRadius: 15 ,left:-5}}>
+      <View style={{ width: "98%", margin: 5, flexDirection: 'row', padding: 5, backgroundColor: theme.textColor1, borderRadius: 15, left: -5 }}>
         <LinearGradient
           colors={[theme.tx1, theme.tx2]}
           start={{ x: 0, y: 1 }}
@@ -205,8 +209,8 @@ const DashboardContent = ({ route }) => {
     return (
       <View style={{ width: "98%", margin: 5, flexDirection: 'row', padding: 5, backgroundColor: theme.textColor1, borderRadius: 15 }}>
         <View style={{ flexDirection: 'row', padding: 8, width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View style={{ flex: 1 }}> 
-            <Text style={{ color: theme.textColor, fontSize: 12,marginBottom:3 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: theme.textColor, fontSize: 12, marginBottom: 3 }}>
               {item.exam_name}
             </Text>
             <View style={{ flexDirection: 'row' }}>
@@ -240,6 +244,11 @@ const DashboardContent = ({ route }) => {
     )
   };
 
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchData().then(() => setRefreshing(false));
+  }, [fetchData]);
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -257,32 +266,27 @@ const DashboardContent = ({ route }) => {
         <Text style={[styles.bigText, { color: theme.textColor }]}>02</Text>
 
         {/* Graph */}
-        {/* <LineChart
-          style={styles.chart}
-          data={data}
-          svg={{ stroke: '#6A5ACD', strokeWidth: 2 }}
-          contentInset={{ top: 20, bottom: 20 }}
-        /> */}
+
         <View style={styles.chart}>
-                    {chartData.map((line, index) => (
-                        <LineChart
-                            key={index}
-                            style={StyleSheet.absoluteFill}
-                            data={line.data}
-                            svg={{ stroke: line.color, strokeWidth: line.strokeWidth }}
-                            contentInset={{ top: 20, bottom: 20 }}
-                        />
-                    ))}
-                </View>
+          {chartData.map((line, index) => (
+            <LineChart
+              key={index}
+              style={StyleSheet.absoluteFill}
+              data={line.data}
+              svg={{ stroke: line.color, strokeWidth: line.strokeWidth }}
+              contentInset={{ top: 20, bottom: 20 }}
+            />
+          ))}
+        </View>
       </View>
     )
   }
 
   const MockTestss = () => {
-    
+
 
     return (
-      <View style={[styles.performanceCard, { backgroundColor: theme.conbk, marginTop: 20,height:windowHeight * .4 }]}>
+      <View style={[styles.performanceCard, { backgroundColor: theme.conbk, marginTop: 20, height:windowHeight * .4 }]}>
         <Text style={[styles.performanceTitle, { color: theme.textColor }]}>Mock Tests</Text>
         <Text style={styles.subText}>Select your preferred exam and start practicing</Text>
         <View style={{ marginLeft: 10, flexDirection: 'row', marginTop: 10, marginBottom: 10 }}>
@@ -329,7 +333,7 @@ const DashboardContent = ({ route }) => {
 
   const Leaderboard = () => {
     return (
-      <View style={[styles.performanceCard, { backgroundColor: theme.conbk, marginTop: 20 ,height:windowHeight * .4}]}>
+      <View style={[styles.performanceCard, { backgroundColor: theme.conbk, marginTop: 20, height: windowHeight * .4 }]}>
         <Text style={[styles.performanceTitle, { color: theme.textColor }]}>LeaderBoard</Text>
         <Text style={[styles.subText, { marginBottom: 10 }]}>Checkout your leader board score</Text>
         <FlatList
@@ -371,7 +375,11 @@ const DashboardContent = ({ route }) => {
       </View>
 
       {/* Welcome Message */}
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.textColor} />
+        }
+      >
         <Text style={[styles.welcome, { color: theme.textColor }]}>Good morning 🔥</Text>
         <Text style={[styles.username, { color: theme.textColor }]}>Welcome {name},</Text>
 
@@ -379,7 +387,7 @@ const DashboardContent = ({ route }) => {
         <MockTestss />
         <Achievements />
         <Leaderboard />
-        <View style={styles.tabScreen}><Text>Performance</Text></View>
+        {/* <View style={styles.tabScreen}><Text>Performance</Text></View> */}
       </ScrollView>
     </View>
   );

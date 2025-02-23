@@ -16,9 +16,12 @@ import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Text as SvgText }
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
-export default function Instruction({ navigation }) {
+export default function Instruction({ navigation,route }) {
     const colorScheme = useColorScheme();
     const theme = colorScheme === "dark" ? darkTheme : lightTheme;
+    const obj = route?.params?.obj;
+    console.log("mocktest1", obj );
+
 
     return (
         <LinearGradient
@@ -188,7 +191,7 @@ export default function Instruction({ navigation }) {
                                         fill="url(#grad)"
                                         fontSize="16"
                                         fontWeight="bold"
-                                        x="95"
+                                        x="105"
                                         y="20"
                                         textAnchor="middle"
                                         alignmentBaseline="middle"
@@ -236,7 +239,7 @@ export default function Instruction({ navigation }) {
                                     fill="url(#grad)"
                                     fontSize="16"
                                     fontWeight="bold"
-                                    x="105"
+                                    x="125"
                                     y="20"
                                     textAnchor="middle"
                                     alignmentBaseline="middle"
@@ -283,7 +286,7 @@ export default function Instruction({ navigation }) {
                                     fill="url(#grad)"
                                     fontSize="16"
                                     fontWeight="bold"
-                                    x="130"
+                                    x="140"
                                     y="20"
                                     textAnchor="middle"
                                     alignmentBaseline="middle"
@@ -335,7 +338,7 @@ export default function Instruction({ navigation }) {
                             </View>
 
                             <TouchableOpacity activeOpacity={0.8} onPress={() => {
-                                navigation.navigate("MockTest")
+                                navigation.navigate("MockTest",{obj : obj})
                             }}> 
                                 <LinearGradient
                                     colors={[theme.tx1, theme.tx2]}

@@ -36,7 +36,7 @@ export default function Form({ navigation }) {
     const [selectedDuration, setSelectedDuration] = useState(null);
 
     useEffect(() => {
-        getExam();
+        // getExam();
         loadStoredData();
     }, []);
 

@@ -9,13 +9,15 @@ import {
     Image,
     ScrollView,
     ActivityIndicator,
-    Modal  // Import Modal
+    Modal,
+    Alert 
 } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import { darkTheme, lightTheme } from "../theme/theme";
 import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Text as SvgText } from "react-native-svg";
-import { getPreExam } from "../core/CommonService";
+import { getPatternSelection, getPreExam } from "../core/CommonService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from '@react-navigation/native'; 
 
 const windowWidth = Dimensions.get("window").width;
 
@@ -27,9 +29,19 @@ const REMAINING_TIME_KEY = 'remainingTime';
 
 const removeHtmlTags = (html) => {
     if (!html) return "";
-    let cleanedHtml = html.replace(/<p[^>]*>/g, '').replace(/<\/p>/g, '\n');
-    cleanedHtml = cleanedHtml.replace(/<img[^>]*src="[^"]*"[^>]*>/g, '');
-    cleanedHtml = cleanedHtml.replace(/ /g, " ");
+
+    let cleanedHtml = html
+        .replace(/<p[^>]*>/g, '')
+        .replace(/<\/p>/g, '\n')
+        .replace(/<img[^>]*src="[^"]*"[^>]*>/g, '')
+        .replace(/ /g, " ")      
+        .replace(/<br\s*[\/]?>/gi, "\n") 
+        .replace(/<table[^>]*>/g, '')   
+        .replace(/<\/table>/g, '')  
+        .replace(/&nbsp;/g, " ") 
+        .replace(/<span[^>]*style="[^"]*font-size:\s*11\.*[^;]*;[^"]*"[^>]*>/gi, '')
+        .replace(/<\/span>/gi, '');
+
     return cleanedHtml;
 };
 
@@ -81,7 +93,7 @@ const extractContent = (html) => {
 
     html = html.replace(/<\/?p[^>]*>/g, '')
         .replace(/\/>?>/g, '>')
-        .replace(/ /g, ' ')
+        .replace(/ /g, ' ')
         .trim();
     while ((match = imageRegex.exec(html)) !== null) {
         const textBeforeImage = html.slice(lastIndex, match.index).trim();
@@ -101,11 +113,11 @@ const extractContent = (html) => {
     return contentArray;
 };
 
-export default function MockTest({ navigation }) {
+export default function MockTest({ navigation, route }) {
     const colorScheme = useColorScheme();
     const theme = colorScheme === "dark" ? darkTheme : lightTheme;
 
-    const [selectedSubject, setSelectedSubject] = useState("Physics");
+    const [selectedSubject, setSelectedSubject] = useState();
     const [selectedNumber, setSelectedNumber] = useState(1);
     const scrollRef = useRef(null);
     const [exams, setExams] = useState([]);
@@ -119,19 +131,136 @@ export default function MockTest({ navigation }) {
     const [selectedAnswers, setSelectedAnswers] = useState({});
     const [selectedOption, setSelectedOption] = useState(null);
     const [filteredQuestionNumbers, setFilteredQuestionNumbers] = useState([]);
+    const [pattern, setPattern] = useState([]);
+    const [expand,setExpand] = useState(false);
+    const [isFirstLoad, setIsFirstLoad] = useState(true); 
     const timerInterval = useRef(null);
+    const obj = route?.params?.obj;
+    console.log("mocktest11", obj);
 
-    // New state for the submit modal
     const [submitModalVisible, setSubmitModalVisible] = useState(false);
 
-    const handleSubjectSelect = (subject) => {
-        setSelectedSubject(subject);
+    const handleSubjectSelect = (sub) => {
+        setSelectedSubject(sub);
+        setSelectedSubjectId(sub.id);
+        setSelectedNumber(sub.starting_no); 
+        console.log("setSelectedSubject",sub)
+
     };
+
+
+
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        Alert.alert(
+          "Reset Test?",
+          "Do you want to reset the test progress?",
+          [
+            {
+              text: "Cancel",
+              style: "cancel"
+            },
+            {
+              text: "Yes",
+              onPress: async () => {
+                try {
+                  await AsyncStorage.removeItem(ANSWERED_QUESTIONS_KEY);
+                  await AsyncStorage.removeItem(SKIPPED_QUESTIONS_KEY);
+                  await AsyncStorage.removeItem(TAGGED_QUESTIONS_KEY);
+                  await AsyncStorage.removeItem(REVIEWED_QUESTIONS_KEY);
+                  await AsyncStorage.removeItem(REMAINING_TIME_KEY);
+
+                  for (let i = 1; i <= exams.length; i++) {
+                    await AsyncStorage.removeItem(`questionStartTime_${i}`);
+                  }
+                } catch (error) {
+                  console.error("Error resetting AsyncStorage:", error);
+                }
+                setAnsweredQuestions({});
+                setSkippedQuestions({});
+                setTaggedQuestions({});
+                setReviewedQuestions({});
+                setRemainingTime(0);
+                setSelectedNumber(1); 
+                setSelectedOption(null);
+              }
+            }
+          ],
+          { cancelable: false }
+        );
+      };
+    }, [exams.length]) 
+  );
 
     useEffect(() => {
         loadStoredData();
-        getExam();
+        getExamPattern();
+        if (obj) {
+            getExam();
+        }
     }, []);
+
+    useEffect(() => {
+        const loadStoredData = async () => {
+            try {
+                if (isFirstLoad) { // Only clear data on the first load
+                    await AsyncStorage.removeItem(ANSWERED_QUESTIONS_KEY);
+                    await AsyncStorage.removeItem(SKIPPED_QUESTIONS_KEY);
+                    await AsyncStorage.removeItem(REVIEWED_QUESTIONS_KEY);
+                    await AsyncStorage.removeItem(TAGGED_QUESTIONS_KEY);
+                    await AsyncStorage.removeItem(REMAINING_TIME_KEY);
+
+
+                     for (let i = 1; i <= exams?.length; i++) {
+                        await AsyncStorage.removeItem(`questionStartTime_${i}`);
+                    }
+                    setIsFirstLoad(false); // Prevent clearing on subsequent loads
+                }
+
+
+                const answered = await AsyncStorage.getItem(ANSWERED_QUESTIONS_KEY);
+                const skipped = await AsyncStorage.getItem(SKIPPED_QUESTIONS_KEY);
+                const reviewed = await AsyncStorage.getItem(REVIEWED_QUESTIONS_KEY);
+                const tagged = await AsyncStorage.getItem(TAGGED_QUESTIONS_KEY);
+
+                setAnsweredQuestions(answered ? JSON.parse(answered) : {});
+                setSkippedQuestions(skipped ? JSON.parse(skipped) : {});
+                setReviewedQuestions(reviewed ? JSON.parse(reviewed) : {});
+                setTaggedQuestions(tagged ? JSON.parse(tagged) : {});
+
+
+
+
+                const savedTime = await AsyncStorage.getItem(REMAINING_TIME_KEY);
+
+               if (savedTime) {
+                    setRemainingTime(parseInt(savedTime, 10));
+                }
+            } catch (error) {
+                console.error('Error loading stored data:', error);
+            }
+        };
+
+        loadStoredData();
+    }, []);
+    
+
+    const getExamPattern = async () => {
+        setIsLoading(true);
+        const data = {
+            exam_pattern_id: obj.exam_pattern_id,
+        }
+        try {
+            const examPattern = await getPatternSelection(data);
+            console.log("examPatternexamPattern", examPattern)
+            setPattern(examPattern.data);
+        } catch (error) {
+            console.error("Error examPattern:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
         const loadRemainingTime = async () => {
@@ -163,11 +292,11 @@ export default function MockTest({ navigation }) {
     useEffect(() => {
         const handleSubjectByQuestion = () => {
             if (selectedNumber >= 1 && selectedNumber <= 20) {
-                setSelectedSubjectId(2); // Physics
+                setSelectedSubjectId(2);
             } else if (selectedNumber >= 21 && selectedNumber <= 40) {
-                setSelectedSubjectId(3); // Chemistry
+                setSelectedSubjectId(3);
             } else {
-                setSelectedSubjectId(4); // Maths
+                setSelectedSubjectId(4);
             }
         };
 
@@ -301,7 +430,6 @@ export default function MockTest({ navigation }) {
             await AsyncStorage.setItem(ANSWERED_QUESTIONS_KEY, JSON.stringify(updatedAnswers));
             await AsyncStorage.setItem(REVIEWED_QUESTIONS_KEY, JSON.stringify(updatedReviewed));
 
-            // Move to the next question after skipping
             moveToNextQuestion();
 
         } catch (error) {
@@ -338,10 +466,37 @@ export default function MockTest({ navigation }) {
 
     const getExam = async () => {
         setIsLoading(true);
+        const datas = {
+            exam_paper_id: obj.exam_paper_id,
+            exam_session_id: 0,
+            type: "schedule_exam",
+        };
+
         try {
-            const examsResponse = await getPreExam();
+            const examsResponse = await getPreExam(datas);
             setExams(examsResponse.data);
-            // console.log("1234", examsResponse)
+
+            const subjectCounts = {};
+
+            examsResponse.data.forEach(exam => {
+                const subjectValue = exam.subject !== undefined ? exam.subject : "Unknown Subject";
+
+                if (subjectCounts[subjectValue]) {
+                    subjectCounts[subjectValue]++;
+                } else {
+                    subjectCounts[subjectValue] = 1;
+                }
+            });
+
+            for (const subjectValue in subjectCounts) {
+                if (subjectCounts.hasOwnProperty(subjectValue)) {
+                    console.log(`Subject Value: ${subjectValue}, Object Count: ${subjectCounts[subjectValue]}`);
+                }
+            }
+
+            console.log("Subject Counts:", subjectCounts);
+            console.log("Exams Response:", examsResponse);
+
         } catch (error) {
             console.error("Error fetching exams:", error);
         } finally {
@@ -361,24 +516,25 @@ export default function MockTest({ navigation }) {
         const filterNumbers = () => {
             let start, end;
 
-            switch (selectedSubjectId) {
-                case 2: // Physics
-                    start = 1;
-                    end = 20;
-                    break;
-                case 3: // Chemistry
-                    start = 21;
-                    end = 40;
-                    break;
-                case 4: // Maths
-                    start = 41;
-                    end = 60;
-                    break;
-                default:
-                    start = 1;
-                    end = exams.length;
-                    break;
-            }
+            if (selectedSubjectId) {
+                const selectedSubjectData = pattern.find(item => item.id === selectedSubjectId);
+                if (selectedSubjectData) {
+                    start = selectedSubjectData.starting_no;
+                    end = selectedSubjectData.ending_no;
+                } else {
+            // switch (selectedSubjectId) {
+            //     default:
+            //         start = 1;
+            //         end = exams.length;
+            //         break;
+            // }
+            start = 1;
+            end = exams.length;
+        }
+    } else {
+        start = 1;
+        end = exams.length;
+    }
 
             const numbers = [];
             for (let i = start; i <= end && i <= exams.length; i++) {
@@ -388,7 +544,7 @@ export default function MockTest({ navigation }) {
         };
 
         filterNumbers();
-    }, [selectedSubjectId, exams]);
+    }, [selectedSubjectId, exams,pattern]);
 
     const questionHtml = exams.length > 0 ? exams[selectedNumber - 1]?.question : "";
     const questionHtml1 = exams.length > 0 ? exams[selectedNumber - 1]?.compquestion : "";
@@ -478,7 +634,6 @@ export default function MockTest({ navigation }) {
         }
     };
 
-    // Function to handle Submit Test press
     const handleSubmitTest = () => {
         setSubmitModalVisible(true);
     };
@@ -490,7 +645,6 @@ export default function MockTest({ navigation }) {
             </View>
         );
     }
-
     return (
         <LinearGradient
             colors={theme.back}
@@ -501,126 +655,219 @@ export default function MockTest({ navigation }) {
             <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', marginTop: 10 }}>
                     <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>EAMCET Mock Test</Text>
-                    <Text style={[styles.mockSubtitle, { color: theme.textColor, marginLeft: 35 }]}>Remaining Time</Text>
+                    <Text style={[styles.mockSubtitle, { color: theme.textColor, marginLeft: 40 }]}>Remaining Time</Text>
                     <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>{formatTime(remainingTime)}</Text>
                 </View>
+                <ScrollView>
 
-                <View style={{ paddingHorizontal: 20 }}>
-                    <LinearGradient
-                        colors={theme.mcb1}
-                        start={{ x: 0, y: 1 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.header}
+               <View style={{ paddingHorizontal: 20 }}>
+    <LinearGradient
+        colors={theme.mcb1}
+        start={{ x: 0, y: 1 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}
+    >
+        <View style={styles.headerline}>
+            {[...new Set(pattern.map(item => item.subject))].map((subject, index) => {
+                const sub = pattern.find(item => item.subject === subject);
+                if (!sub) {
+                    return null;
+                }
+
+                return (
+                    <TouchableOpacity key={index} 
+                    onPress={() => { handleSubjectSelect(sub); setSelectedSubjectId(sub.id); }}>
+                        <LinearGradient
+                            colors={selectedSubjectId === sub.id ? [theme.bg1, theme.bg2] : theme.bmc}
+                            style={[
+                                styles.headerline1,
+                                {
+                                    borderWidth: selectedSubjectId === sub.id ? 0 : 1,
+                                    borderColor: selectedSubjectId === sub.id ? theme.textColor1 : theme.textColor,
+                                },
+                            ]}
+                            start={{ x: 0, y: 1 }}
+                            end={{ x: 1, y: 1 }}
+                        >
+                            <Text style={[styles.headtext, { color: selectedSubjectId === sub.id ? theme.textColor1 : theme.textColor }]}>
+                                {sub.subject}
+                            </Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
+                
+            )})}
+        
+        </View>
+{!expand &&(
+    <View style={{flexDirection:'column',paddingStart:20,paddingEnd:20}}>
+<View style={{ flexDirection: 'row', marginTop: 15,marginLeft:15 }}>
+            <Text style={[styles.mockSubtitle, { color: theme.textColor, marginRight: 100 }]}>Section A</Text>
+            <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>Total Questions :</Text>
+            <Text style={[styles.mockSubtitle, { color: theme.textColor, marginLeft: -8 }]}>{exams.length}</Text>
+        </View>
+
+        <View style={styles.numberContainer}>
+            <TouchableOpacity onPress={scrollLeft}>
+                <Image
+                    style={[styles.img, { tintColor: theme.textColor, marginRight: 10 }]}
+                    source={require("../images/to.png")}
+                />
+            </TouchableOpacity>
+
+            <ScrollView
+                horizontal
+                ref={scrollRef}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.numberScrollView}
+                onContentSizeChange={() => {
+                    if (selectedNumber && scrollRef.current) {
+                        const index = filteredQuestionNumbers.indexOf(selectedNumber);
+                        if (index !== -1) {
+                            scrollRef.current.scrollTo({
+                                x: index * 45, 
+                                animated: true,
+                            });
+                        }
+                    }
+                }}
+            >
+                {filteredQuestionNumbers.map((num) => {
+                   let backgroundColor = theme.gray;
+                   let borderColor = 'transparent';
+                   let borderWidth = 0;        
+
+                   if (answeredQuestions[num]) backgroundColor = "#04A953";
+                   else if (skippedQuestions[num]) backgroundColor = "#DE6C00";
+                   else if (reviewedQuestions[num]) backgroundColor = "#36A1F5";
+
+                   if (num === selectedNumber) { 
+                       borderColor = "#fff"; 
+                       borderWidth = 1;
+                   }
+                    return (
+                        <TouchableOpacity key={num} onPress={() => {
+                            if (filteredQuestionNumbers.includes(num)) {
+                                setSelectedNumber(num);
+                            }
+                        }}>
+                            <View style={[styles.numberCircle, { backgroundColor ,borderColor,borderWidth}]}>
+                                <Text style={{ color: "#FFF", fontSize: 16 }}>{num}</Text>
+                            </View>
+                        </TouchableOpacity>
+                    );
+                })}
+            </ScrollView>
+
+            <TouchableOpacity onPress={scrollRight}>
+                <Image
+                    style={[styles.img, { tintColor: theme.textColor, marginLeft: 10 }]}
+                    source={require("../images/fro.png")}
+                />
+            </TouchableOpacity>
+        </View>
+</View>
+)}
+
+{expand &&(
+    <View style={{flexDirection:'column',paddingStart:10,paddingEnd:20}}>
+<View style={{ flexDirection: 'row', marginTop: 15,marginLeft:15 }}>
+            <Text style={[styles.mockSubtitle, { color: theme.textColor, marginRight: 100 }]}>Section A</Text>
+            <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>Total Questions :</Text>
+            <Text style={[styles.mockSubtitle, { color: theme.textColor, marginLeft: -8 }]}>{exams.length}</Text>
+        </View>
+
+        <View style={{width:windowWidth*0.9,paddingStart:30,marginTop:10}}>
+
+        <View style={styles.gridContainer}>
+            {filteredQuestionNumbers.map((num) => {
+                             let backgroundColor = theme.gray;
+                             let borderColor = 'transparent'; 
+                             let borderWidth = 0;         
+         
+                             if (answeredQuestions[num]) backgroundColor = "#04A953";
+                             else if (skippedQuestions[num]) backgroundColor = "#DE6C00";
+                             else if (reviewedQuestions[num]) backgroundColor = "#36A1F5";
+         
+                             if (num === selectedNumber) { 
+                                 borderColor = "#fff"; 
+                                 borderWidth = 1;
+                             }
+                return (
+                    <TouchableOpacity
+                        key={num}
+                        onPress={() => {
+                            setSelectedNumber(num);
+                            setExpand(false)
+                        }}
+                        style={styles.gridItem}
                     >
-                        <View style={styles.headerline}>
-                            {[{ subject: "Physics", id: 2 }, { subject: "Chemistry", id: 3 }, { subject: "Maths", id: 4 }].map((sub) => (
-                                <TouchableOpacity key={sub.subject} onPress={() => { handleSubjectSelect(sub.subject); setSelectedSubjectId(sub.id); }}>
-                                    <LinearGradient
-                                        colors={selectedSubjectId === sub.id ? [theme.bg1, theme.bg2] : theme.bmc}
-                                        style={[
-                                            styles.headerline1,
-                                            {
-                                                borderWidth: selectedSubjectId === sub.id ? 0 : 1,
-                                                borderColor: selectedSubjectId === sub.id ? theme.textColor1 : theme.textColor,
-                                            },
-                                        ]}
-                                        start={{ x: 0, y: 1 }}
-                                        end={{ x: 1, y: 1 }}
-                                    >
-                                        <Text style={[styles.headtext, { color: selectedSubjectId === sub.id ? theme.textColor1 : theme.textColor }]}>
-                                            {sub.subject}
-                                        </Text>
-                                    </LinearGradient>
-                                </TouchableOpacity>
-                            ))}
+                        <View style={[styles.numberCircle1, { backgroundColor,borderColor,borderWidth }]}>
+                            <Text style={[styles.numberText,{ color: "#FFF"}]}>{num}</Text>
                         </View>
+                    </TouchableOpacity>
+                );
+            })}
+        </View>
+        </View>
+</View>
+)}
+      
 
-                        <View style={{ flexDirection: 'row', marginTop: 15 }}>
-                            <Text style={[styles.mockSubtitle, { color: theme.textColor, marginRight: 100 }]}>Section A</Text>
-                            <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>Total Questions :</Text>
-                            <Text style={[styles.mockSubtitle, { color: theme.textColor, marginLeft: -8 }]}>{exams.length}</Text>
-                        </View>
+        <View style={{ marginTop: 15, flexDirection: 'row', marginBottom: 5 }}>
+            <View style={{ alignItems: 'center' }}>
+                <Text style={[styles.res, { color: theme.textColor }]}>
+                    Not Seen
+                </Text>
+                <Text style={[styles.res, { color: theme.textColor }]}>
+                    {exams.length - Object.keys(answeredQuestions).length - Object.keys(skippedQuestions).length}
+                </Text>
+            </View>
+            <View style={{ alignItems: 'center' }}>
+                <Text style={[styles.res, { color: "#04A953" }]}>
+                    Answered
+                </Text>
+                <Text style={[styles.res, { color: "#04A953" }]}>
+                    {Object.keys(answeredQuestions).length}
+                </Text>
+            </View>
+            <View style={{ alignItems: 'center' }}>
+                <Text style={[styles.res, { color: "#DE6C00" }]}>
+                    Skipped
+                </Text>
+                <Text style={[styles.res, { color: "#DE6C00" }]}>
+                    {Object.keys(skippedQuestions).length}
+                </Text>
+            </View>
+            <View style={{ alignItems: 'center' }}>
+                <Text style={[styles.res, { color: "#36A1F5" }]}>
+                    Review
+                </Text>
+                <Text style={[styles.res, { color: "#36A1F5" }]}>
+                    {Object.keys(reviewedQuestions).length}
+                </Text>
+            </View>
+        </View>
 
-                        <View style={styles.numberContainer}>
-                            <TouchableOpacity onPress={scrollLeft}>
-                                <Image
-                                    style={[styles.img, { tintColor: theme.textColor, marginRight: 10 }]}
-                                    source={require("../images/to.png")}
-                                />
-                            </TouchableOpacity>
+        <TouchableOpacity onPress={()=>{
+            setExpand(!expand)
+        }}>
+            {!expand &&(
+  <Image
+  source={require("../images/down.png")}
+  style={{ height: 30, width: 30, resizeMode: 'contain',tintColor:theme.textColor }}
+                     />
+            )}
+       {expand &&(
+  <Image
+  source={require("../images/up.png")}
+  style={{ height: 30, width: 30, resizeMode: 'contain',tintColor:theme.textColor }}
+                     />
+            )}
+        </TouchableOpacity>
+    </LinearGradient>
+</View>
 
-                            <ScrollView
-                                horizontal
-                                ref={scrollRef}
-                                showsHorizontalScrollIndicator={false}
-                            >
-                                {filteredQuestionNumbers.map((num) => {
-                                    let backgroundColor = theme.gray;
-
-                                    if (answeredQuestions[num]) backgroundColor = "#04A953";
-                                    else if (skippedQuestions[num]) backgroundColor = "#DE6C00";
-                                    else if (reviewedQuestions[num]) backgroundColor = "#36A1F5";
-
-                                    return (
-                                        <TouchableOpacity key={num} onPress={() => {
-                                            if (filteredQuestionNumbers.includes(num)) {
-                                                setSelectedNumber(num);
-                                            }
-                                        }}>
-                                            <View style={[styles.numberCircle, { backgroundColor }]}>
-                                                <Text style={{ color: "#FFF", fontSize: 16 }}>{num}</Text>
-                                            </View>
-                                        </TouchableOpacity>
-                                    );
-                                })}
-                            </ScrollView>
-
-                            <TouchableOpacity onPress={scrollRight}>
-                                <Image
-                                    style={[styles.img, { tintColor: theme.textColor, marginLeft: 10 }]}
-                                    source={require("../images/fro.png")}
-                                />
-                            </TouchableOpacity>
-                        </View>
-
-                        <View style={{ marginTop: 15, flexDirection: 'row', marginBottom: 15 }}>
-                            <View style={{ alignItems: 'center' }}>
-                                <Text style={[styles.res, { color: theme.textColor }]}>
-                                    Not Seen
-                                </Text>
-                                <Text style={[styles.res, { color: theme.textColor }]}>
-                                    {exams.length - Object.keys(answeredQuestions).length - Object.keys(skippedQuestions).length}
-                                </Text>
-                            </View>
-                            <View style={{ alignItems: 'center' }}>
-                                <Text style={[styles.res, { color: "#04A953" }]}>
-                                    Answered
-                                </Text>
-                                <Text style={[styles.res, { color: "#04A953" }]}>
-                                    {Object.keys(answeredQuestions).length}
-                                </Text>
-                            </View>
-                            <View style={{ alignItems: 'center' }}>
-                                <Text style={[styles.res, { color: "#DE6C00" }]}>
-                                    Skipped
-                                </Text>
-                                <Text style={[styles.res, { color: "#DE6C00" }]}>
-                                    {Object.keys(skippedQuestions).length}
-                                </Text>
-                            </View>
-                            <View style={{ alignItems: 'center' }}>
-                                <Text style={[styles.res, { color: "#36A1F5" }]}>
-                                    Review
-                                </Text>
-                                <Text style={[styles.res, { color: "#36A1F5" }]}>
-                                    {Object.keys(reviewedQuestions).length}
-                                </Text>
-                            </View>
-                        </View>
-                    </LinearGradient>
-                </View>
-
-                <ScrollView style={{ paddingHorizontal: 20, marginTop: 10 }}>
+                <View style={{ paddingHorizontal: 20, marginTop: 10 }}>
                     <LinearGradient
                         colors={theme.mcb1}
                         start={{ x: 0, y: 1 }}
@@ -639,7 +886,7 @@ export default function MockTest({ navigation }) {
                                     fill="url(#grad)"
                                     fontSize="16"
                                     fontWeight="bold"
-                                    x="50"
+                                    x="55"
                                     y="15"
                                     textAnchor="middle"
                                     alignmentBaseline="middle"
@@ -710,7 +957,7 @@ export default function MockTest({ navigation }) {
                                             ) : (
                                                 <Text style={[
                                                     styles.option,
-                                                    { color: theme.textColor }
+                                                    { color: theme.textColor,width:220 }
                                                 ]}>
                                                     {cleanedOptionText || "Option not available"}
                                                 </Text>
@@ -750,53 +997,70 @@ export default function MockTest({ navigation }) {
                                         source={require("../images/eye.png")}
                                     />
                                 </TouchableOpacity>
-                                <TouchableOpacity onPress={() => {
+                                {/* <TouchableOpacity onPress={() => {
                                     handleSkipQuestion();
                                     setSelectedOption(null);
                                 }} style={{ width: 130, height: 36, borderWidth: 1, borderColor: theme.textColor, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginLeft: 15 }}>
                                     <Text style={[styles.ans, { color: theme.textColor, }]}>
                                         Skip Question
                                     </Text>
-                                </TouchableOpacity>
+                                </TouchableOpacity> */}
+                                <TouchableOpacity style={{  marginLeft: 15, marginTop: 5 }} onPress={() => navigation.navigate("Instruction")}>
+                        <Text style={[styles.ans, { color: theme.textColor, fontWeight: '700', textDecorationLine: "underline" }]}>
+                            View Test Rules
+                        </Text>
+                    </TouchableOpacity>
                             </View>
 
                         </View>
                     </LinearGradient>
 
                   
+                </View>
                 </ScrollView>
 
-                <View style={{ marginTop: 20, flexDirection: 'row', justifyContent: 'center' }}>
-                        <TouchableOpacity style={{ width: 130, height: 36, borderWidth: 1, borderColor: theme.textColor, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginLeft: 15 }}
-                            onPress={handleSubmitTest} 
+<View >
+<View style={{ marginTop: 10, flexDirection: 'row', justifyContent: 'center',marginBottom:15}}>
+                        <TouchableOpacity style={{ height: 36, borderWidth: 1, borderColor: theme.textColor, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginLeft: 15 }}
+                            onPress={()=>{
+                                handleSkipQuestion();
+                                setSelectedOption(null);
+                            }} 
                         >
                             <Text style={[styles.ans, { color: theme.textColor, fontWeight: '700' }]}>
-                                Submit Test
+                                Skip Question
                             </Text>
                         </TouchableOpacity>
-
-                        <TouchableOpacity onPress={() => {
-                            if (selectedOption) {
-                                handleSelectAndNext(selectedNumber, selectedOption);
-                            }
-                        }}>
+                        <TouchableOpacity style={{ height: 36, borderWidth: 1, borderColor: theme.textColor, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginLeft: 15 }}
+                            onPress={() => {
+                                if (selectedOption) {
+                                    handleSelectAndNext(selectedNumber, selectedOption);
+                                }
+                            }}
+                        >
+                            <Text style={[styles.ans, { color: theme.textColor, fontWeight: '700' }]}>
+                                Submit Selection
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={handleSubmitTest} >
                             <LinearGradient
                                 colors={theme.background}
-                                style={{ width: 150, height: 36, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginLeft: 15 }} start={{ x: 0, y: 1 }}
+                                style={{  height: 36, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginLeft: 15 }} start={{ x: 0, y: 1 }}
                                 end={{ x: 1, y: 1 }}
                             >
                                 <Text style={[styles.ans, { color: theme.textColor1, fontWeight: '700' }]}>
-                                    Submit Selection
+                                    Submit
                                 </Text>
                             </LinearGradient>
                         </TouchableOpacity>
                     </View>
-
-                    <TouchableOpacity style={{ alignItems: 'flex-start', marginLeft: 15, marginTop: 15 }} onPress={() => navigation.navigate("Instruction")}>
-                        <Text style={[styles.ans, { color: theme.textColor, fontWeight: '700', textDecorationLine: "underline" }]}>
-                            View Test Rules
-                        </Text>
-                    </TouchableOpacity>
+                    {/* <View style={{ marginTop: 10, flexDirection: 'row', justifyContent: 'center',marginBottom:5}}>
+                  
+                    
+                    </View> */}
+                   
+</View>
+                
             </View>
 
             {/* Submit Test Modal */}
@@ -869,16 +1133,17 @@ const styles = StyleSheet.create({
         marginTop: 10
     },
     headtext: {
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: "700",
         fontFamily: "CustomFont",
+        paddingStart:6,
+        paddingEnd:6
     },
     headerline1: {
-        width: 100,
         height: 30,
         alignItems: "center",
         borderRadius: 20,
-        marginHorizontal: 6,
+        marginHorizontal: 4,
         justifyContent: 'center'
     },
     mockSubtitle: {
@@ -892,12 +1157,19 @@ const styles = StyleSheet.create({
         marginTop: 15,
     },
     numberCircle: {
-        width: 60,
-        height: 36,
-        borderRadius: 20,
+        width: 40,
+        height: 40,
+        borderRadius: 10,
         marginHorizontal: 5,
         justifyContent: "center",
         alignItems: "center",
+    },
+    numberCircle1: {
+        width: 35, 
+        height: 35,
+        borderRadius: 5, 
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     img: {
         height: 20,
@@ -919,6 +1191,8 @@ const styles = StyleSheet.create({
     ans: {
         fontWeight: '400',
         fontSize: 16,
+        paddingStart:10,
+        paddingEnd:10
     },
     option: {
         fontWeight: '400',
@@ -1008,4 +1282,12 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         textAlign: 'center',
       },
+      gridContainer: {
+        flexDirection: 'row', 
+        flexWrap: 'wrap',    
+        justifyContent: 'flex-start',
+    },
+    gridItem: {
+        margin:5,
+    },
 });
