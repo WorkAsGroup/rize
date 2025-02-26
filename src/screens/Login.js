@@ -23,7 +23,7 @@ import { useNavigation } from '@react-navigation/native';
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
-export default function Login({ route }) { // Receive route prop
+export default function Login({ route }) {
 
     const colorScheme = useColorScheme();
     const [check, setCheck] = useState(false);

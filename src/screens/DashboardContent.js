@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, useColorScheme, FlatList, ActivityIndicator, ScrollView, RefreshControl, Alert } from 'react-native';
-import { LineChart } from 'react-native-svg-charts';
+// import { LineChart } from 'react-native-svg-charts';
 import { useNavigation } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { getAutoLogin, getYearsData, getMockExams, getAchievements, getLeaderBoards, getPreviousPapers } from '../core/CommonService';
 import { darkTheme, lightTheme } from '../theme/theme';
 import LinearGradient from "react-native-linear-gradient";
+import { LineChart } from "react-native-gifted-charts";
 
 const Tab = createBottomTabNavigator();
 
@@ -29,13 +30,11 @@ const DashboardContent = ({ route }) => {
   const [ach, setAch] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
-  const data = [50, 70, 60, 90, 80];
+  const data1=[ {value:20}, {value:180}, {value:140}, {value:150} ]
+  const data2=[ {value:10}, {value:18}, {value:80}, {value:110} ]
+  const data3=[ {value:90}, {value:60}, {value:30}, {value:200} ]
+
   const [selectedType, setSelectedType] = useState('mock');
-  const chartData = [
-    { data: [50, 70, 60, 90, 80], color: '#6A5ACD', strokeWidth: 2 },
-    { data: [90, 50, 20, 50, 50], color: 'green', strokeWidth: 2 },
-    { data: [10, 90, 20, 80, 50], color: 'red', strokeWidth: 2 },
-  ];
   const handleSetMockType = (type) => {
     setSelectedType(type);
 
@@ -267,16 +266,29 @@ const DashboardContent = ({ route }) => {
 
         {/* Graph */}
 
-        <View style={styles.chart}>
-          {chartData.map((line, index) => (
-            <LineChart
-              key={index}
-              style={StyleSheet.absoluteFill}
-              data={line.data}
-              svg={{ stroke: line.color, strokeWidth: line.strokeWidth }}
-              contentInset={{ top: 20, bottom: 20 }}
-            />
-          ))}
+        <View style={[styles.chart,{backgroundColor:"#FFF"}]}>
+        <LineChart 
+        data = {data1} 
+        color={theme.textColor}
+        sectionColors={theme.textColor}
+        color1='red' 
+        dataPointsColor1='red'
+        data2={data2} 
+        color2='blue'
+        dataPointsColor2='blue'
+        data3={data3}
+        color3='green'
+        dataPointsColor3='green'
+        width={200}
+        height={150}
+        noOfSections={4}
+        stepValue={50}
+        dashWidth={2}
+        dashGap={20}
+        noOfVerticalLines={5}
+        spacing={50}
+        />
+
         </View>
       </View>
     )
@@ -433,8 +445,8 @@ const styles = StyleSheet.create({
   performanceCard: { padding: 20, borderRadius: 10, elevation: 1 },
   performanceTitle: { fontSize: 18, fontWeight: 'bold' },
   subText: { color: 'gray' },
-  bigText: { fontSize: 30, fontWeight: 'bold', marginTop: 5 },
-  chart: { height: 150, marginTop: 10 },
+  bigText: { fontSize: 30, fontWeight: 'bold'},
+  chart: { padding:20, marginTop: 10, },
   tabScreen: {
     flex: 1,
     justifyContent: 'center',

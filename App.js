@@ -17,6 +17,8 @@ import OTPScreen from './src/screens/OTPScreen';
 import DashboardDrawer from './src/screens/DashboardDrawer'; 
 import Instruction from './src/screens/Instruction';
 import MockTest from './src/screens/MockTest';
+import Instruct from './src/screens/Instruct';
+import EmailVerification from './src/screens/EmailVerification';
 
 const Stack = createStackNavigator();
 
@@ -30,13 +32,15 @@ const AuthNavigator = ({ onChangeAuth }) => (
     <Stack.Screen name="ResetLink" component={ResetLink} />
     <Stack.Screen name="AccountCreated" component={AccountCreated} />
     <Stack.Screen name="Instruction" component={Instruction} />
+    <Stack.Screen name="Instruct" component={Instruct} />
     <Stack.Screen name="MockTest" component={MockTest} />
-    <Stack.Screen name="Form" component={Form} />
+    <Stack.Screen name="Form" component={Form} /> 
   </Stack.Navigator>
 );
 
 const AppNavigator = ({ onChangeAuth }) => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Screen name="EmailVerification" component={EmailVerification} />
     <Stack.Screen name="DashboardContent" >
        {(props) => <DashboardDrawer {...props} route={{ params: { onChangeAuth: onChangeAuth } }} />}
     </Stack.Screen>
