@@ -3,10 +3,15 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, useColorSc
 // import { LineChart } from 'react-native-svg-charts';
 import { useNavigation } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { getAutoLogin, getYearsData, getMockExams, getAchievements, getLeaderBoards, getPreviousPapers } from '../core/CommonService';
+import { getAutoLogin, getYearsData, getMockExams, getAchievements, getLeaderBoards, getPreviousPapers, getDashboardExamResult } from '../core/CommonService';
 import { darkTheme, lightTheme } from '../theme/theme';
 import LinearGradient from "react-native-linear-gradient";
-import { LineChart } from "react-native-gifted-charts";
+import RNPickerSelect from 'react-native-picker-select';
+import { AreaChart, Grid, XAxis, YAxis } from "react-native-svg-charts";
+import * as shape from "d3-shape";
+import { LineChart } from "react-native-chart-kit";
+import { Defs, LinearGradient as SvgLinearGradient, Stop } from "react-native-svg";
+
 
 const Tab = createBottomTabNavigator();
 
@@ -18,7 +23,7 @@ const DashboardContent = ({ route }) => {
   const { onChangeAuth } = route.params;
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
-
+  const [examResults, setExamResults] = useState([]);
   const [name, setName] = useState("");
   const [studentId, setStudentId] = useState("");
   const [studentExamId, setStudentExamId] = useState("");
@@ -29,16 +34,28 @@ const DashboardContent = ({ route }) => {
   const [loading, setLoading] = useState(true);
   const [ach, setAch] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-
-  const data1=[ {value:20}, {value:180}, {value:140}, {value:150} ]
-  const data2=[ {value:10}, {value:18}, {value:80}, {value:110} ]
-  const data3=[ {value:90}, {value:60}, {value:30}, {value:200} ]
-
+  const [totalExamCount, setTotalExamCount] = useState(0)
+  const [dateRange, setDateRange] = useState("-")
+  const data = [50, 70, 60, 90, 80];
   const [selectedType, setSelectedType] = useState('mock');
+  const [selectedPerformanceType, setSelectedPerformanceType] = useState('score');
+  const chartData = [
+    { data: [50, 70, 60, 90, 80], color: '#6A5ACD', strokeWidth: 2 },
+    { data: [90, 50, 20, 50, 50], color: 'green', strokeWidth: 2 },
+    { data: [10, 90, 20, 80, 50], color: 'red', strokeWidth: 2 },
+  ];
+  const [selectedValue, setSelectedValue] = useState(1);
+
+  const options = [
+    { label: 'Last 30 Days', value: 1 },
+    { label: 'Last 2 Months', value: 2 },
+  ];
   const handleSetMockType = (type) => {
     setSelectedType(type);
 
   };
+
+  
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -46,9 +63,13 @@ const DashboardContent = ({ route }) => {
       await getUser();
       await getYears();
       await getMock();
+     
       await getAchieve();
       await getLeaders();
       await getPrevious();
+      if(studentExamId) {
+        await getExamResults();
+      }
     } catch (error) {
       console.error("Error fetching data in useEffect:", error);
       Alert.alert("Error", "Failed to refresh data. Please check your connection and try again.");  // More user-friendly error handling
@@ -166,6 +187,23 @@ const DashboardContent = ({ route }) => {
       Alert.alert("Error", "Failed to get mock exams. Please check your connection and try again.");
     }
   };
+  const getExamResults = async () => {
+    const data = {
+      student_user_exam_id: studentExamId,
+      duration_id: 1
+    };
+   
+    try {
+      const response = await getDashboardExamResult(data);
+      console.log("exam response", response);
+      setTotalExamCount(response.data.total_test_count)
+      setExamResults(response.data.periods);
+      setDateRange(response.data.duration_dates)
+    } catch (error) {
+      console.error("Error fetching mock exams:", error);
+      Alert.alert("Error", "Failed to get mock exams. Please check your connection and try again.");
+    }
+  };
 
   const renderItem = ({ item }) => {
     return (
@@ -258,41 +296,139 @@ const DashboardContent = ({ route }) => {
   }
 
   const WeeklyPerformance = () => {
+    console.log(examResults, "results");
+
+    if (!examResults || !Array.isArray(examResults)) {
+      return <Text>No data available</Text>;
+    }
+  
+    const periods = examResults || [];
+    const allSubjects = [...new Set(periods.flatMap((period) => period.subjects?.map((s) => s.subject_name) || []))];
+    const uniqueDates = [...new Set(periods.map((period) => period.date))];
+    const chartData = allSubjects.map((subject) => ({
+      name: subject,
+      data: periods.map((period) => {
+        const subjectData = period.subjects?.find((s) => s.subject_name === subject);
+        return subjectData
+          ? selectedPerformanceType === "score"
+            ? Number(subjectData.obtained_marks) || 0
+            : Number(subjectData.average_time_spent) || 0
+          : 0;
+      }),
+    }));
+  
+    const xLabels = uniqueDates
+  
+    const subjectColors = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#A133FF"];
+  
     return (
-      <View style={[styles.performanceCard, { backgroundColor: theme.conbk }]}>
-        <Text style={[styles.performanceTitle, { color: theme.textColor }]}>Weekly performance</Text>
-        <Text style={styles.subText}>Total tests this week</Text>
-        <Text style={[styles.bigText, { color: theme.textColor }]}>02</Text>
-
-        {/* Graph */}
-
-        <View style={[styles.chart,{backgroundColor:"#FFF"}]}>
-        <LineChart 
-        data = {data1} 
-        color={theme.textColor}
-        sectionColors={theme.textColor}
-        color1='red' 
-        dataPointsColor1='red'
-        data2={data2} 
-        color2='blue'
-        dataPointsColor2='blue'
-        data3={data3}
-        color3='green'
-        dataPointsColor3='green'
-        width={200}
-        height={150}
-        noOfSections={4}
-        stepValue={50}
-        dashWidth={2}
-        dashGap={20}
-        noOfVerticalLines={5}
-        spacing={50}
-        />
-
+      <View style={{ backgroundColor: theme.conbk, padding: 10, borderRadius: 10 }}>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+          <View>
+            <Text style={{ fontSize: 18, fontWeight: "bold", color: theme.textColor }}>Weekly Performance</Text>
+            <Text style={{ fontSize: 14 }}>Total tests this week</Text>
+            <Text style={{ fontSize: 24, fontWeight: "bold", color: theme.textColor }}>
+              {totalExamCount ? totalExamCount : 0}
+            </Text>
+          </View>
+  
+          <View>
+            <Text>{dateRange}</Text>
+            <RNPickerSelect
+              onValueChange={(value) => setSelectedValue(value)}
+              items={options}
+              value={selectedValue}
+              style={{
+                inputAndroid: { color: theme.textColor },
+                inputIOS: { color: theme.textColor },
+              }}
+            />
+          </View>
+        </View>
+  
+        <View style={{ flexDirection: "row", marginTop: 10 }}>
+          <TouchableOpacity
+            style={{
+              padding: 8,
+              borderBottomWidth: selectedPerformanceType === "score" ? 2 : 0,
+              borderBottomColor: selectedPerformanceType === "score" ? theme.tx1 : "transparent",
+            }}
+            onPress={() => setSelectedPerformanceType("score")}
+          >
+            <Text style={{ color: selectedPerformanceType === "score" ? theme.tx1 : theme.textColor }}>Scoring</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{
+              padding: 8,
+              marginLeft: 10,
+              borderBottomWidth: selectedPerformanceType === "avgtime" ? 2 : 0,
+              borderBottomColor: selectedPerformanceType === "avgtime" ? theme.tx1 : "transparent",
+            }}
+            onPress={() => setSelectedPerformanceType("avgtime")}
+          >
+            <Text style={{ color: selectedPerformanceType === "avgtime" ? theme.tx1 : theme.textColor }}>
+              Avg Time Spent
+            </Text>
+          </TouchableOpacity>
+        </View>
+  
+        {/* Line Chart */}
+        {chartData && chartData.length > 0 && xLabels && xLabels.length > 0 ? (
+  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+    <LineChart
+      data={{
+        labels: xLabels,
+        datasets: chartData.map((subject, index) => ({
+          data: subject.data || [], // Ensure data is never undefined
+          color: () => subjectColors[index % subjectColors.length],
+          strokeWidth: 2,
+        })),
+      }}
+      width={Dimensions.get("window").width}
+      height={250}
+      yAxisLabel=""
+      chartConfig={{
+        backgroundColor: theme.conbk,
+        backgroundGradientFrom: theme.conbk,
+        backgroundGradientTo: theme.conbk,
+        decimalPlaces: 0,
+        color: (opacity = 1) => ⁠ rgba(0, 0, 0, ${opacity}) ⁠,
+        labelColor: (opacity = 1) => ⁠ rgba(0, 0, 0, ${opacity}) ⁠,
+        propsForDots: {
+          r: "4",
+          strokeWidth: "2",
+          stroke: "#ffa726",
+        },
+      }}
+      bezier
+      style={{
+        marginVertical: 8,
+        borderRadius: 10,
+      }}
+    />
+  </ScrollView>
+) : (
+  <Text>No data available</Text>
+)}
+        {/* Subject Legends */}
+        <View style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 10 }}>
+          {chartData.map((subject, index) => (
+            <View key={index} style={{ flexDirection: "row", alignItems: "center", marginRight: 10 }}>
+              <View
+                style={{
+                  width: 10,
+                  height: 10,
+                  backgroundColor: subjectColors[index % subjectColors.length],
+                  marginRight: 5,
+                }}
+              />
+              <Text style={{ color: "black" }}>{subject.name}</Text>
+            </View>
+          ))}
         </View>
       </View>
-    )
-  }
+    );
+  };
 
   const MockTestss = () => {
 
@@ -301,37 +437,67 @@ const DashboardContent = ({ route }) => {
       <View style={[styles.performanceCard, { backgroundColor: theme.conbk, marginTop: 20, height:windowHeight * .4 }]}>
         <Text style={[styles.performanceTitle, { color: theme.textColor }]}>Mock Tests</Text>
         <Text style={styles.subText}>Select your preferred exam and start practicing</Text>
-        <View style={{ marginLeft: 10, flexDirection: 'row', marginTop: 10, marginBottom: 10 }}>
-          <TouchableOpacity
-            style={{
-              backgroundColor: theme.textColor1,
-              padding: 8,
-              borderBottomWidth: selectedType === 'mock' ? 1 : 0,
-              borderBottomColor: selectedType === 'mock' ? theme.tx1 : "transparent"
-            }}
-            onPress={() => {
-              setMock(mocklist);
-              handleSetMockType('mock');
-            }}
-          >
-            <Text style={{ color: selectedType === 'mock' ? theme.tx1 : theme.textColor }}>Mock Tests</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={{
-              backgroundColor: theme.textColor1,
-              padding: 8,
-              marginLeft: 10,
-              borderBottomWidth: selectedType === 'previous' ? 1 : 0,
-              borderBottomColor: selectedType === 'previous' ? theme.tx1 : "transparent"
-            }}
-            onPress={() => {
-              handleSetMockType('previous');
-              setMock(pre);
-            }}
-          >
-            <Text style={{ color: selectedType === 'previous' ? theme.tx1 : theme.textColor }}>Previous years exam</Text>
-          </TouchableOpacity>
-        </View>
+        <ScrollView 
+  horizontal={true} 
+  showsHorizontalScrollIndicator={false} 
+  contentContainerStyle={{ flexGrow: 1, flexDirection: 'row', paddingHorizontal: 10, height: 100, }}
+>
+  <View 
+    style={{ 
+      flexDirection: 'row', 
+      minWidth: '100%', 
+      alignItems: 'center' 
+    }}
+  >
+    <TouchableOpacity
+      style={{
+        backgroundColor: theme.textColor1,
+        padding: 8,
+        borderBottomWidth: selectedType === 'mock' ? 1 : 0,
+        borderBottomColor: selectedType === 'mock' ? theme.tx1 : "transparent"
+      }}
+      onPress={() => {
+        setMock(mocklist);
+        handleSetMockType('mock');
+      }}
+    >
+      <Text style={{ color: selectedType === 'mock' ? theme.tx1 : theme.textColor }}>Mock Tests</Text>
+    </TouchableOpacity>
+
+    <TouchableOpacity
+      style={{
+        backgroundColor: theme.textColor1,
+        padding: 8,
+        marginLeft: 10,
+        borderBottomWidth: selectedType === 'previous' ? 1 : 0,
+        borderBottomColor: selectedType === 'previous' ? theme.tx1 : "transparent"
+      }}
+      onPress={() => {
+        handleSetMockType('previous');
+        setMock(pre);
+      }}
+    >
+      <Text style={{ color: selectedType === 'previous' ? theme.tx1 : theme.textColor }}>Previous years exam</Text>
+    </TouchableOpacity>
+
+    <TouchableOpacity
+      style={{
+        backgroundColor: theme.textColor1,
+        padding: 8,
+        marginLeft: 10,
+        borderBottomWidth: selectedType === 'custom' ? 1 : 0,
+        borderBottomColor: selectedType === 'custom' ? theme.tx1 : "transparent"
+      }}
+      onPress={() => {
+        handleSetMockType('custom');
+        setMock(pre);
+      }}
+    >
+      <Text style={{ color: selectedType === 'custom' ? theme.tx1 : theme.textColor }}>Custom Tests</Text>
+    </TouchableOpacity>
+  </View>
+</ScrollView>
+
         <FlatList
           data={mock}
           renderItem={renderItemMock}
@@ -445,8 +611,8 @@ const styles = StyleSheet.create({
   performanceCard: { padding: 20, borderRadius: 10, elevation: 1 },
   performanceTitle: { fontSize: 18, fontWeight: 'bold' },
   subText: { color: 'gray' },
-  bigText: { fontSize: 30, fontWeight: 'bold'},
-  chart: { padding:20, marginTop: 10, },
+  bigText: { fontSize: 30, fontWeight: 'bold', marginTop: 5 },
+  chart: { height: 150, marginTop: 10 },
   tabScreen: {
     flex: 1,
     justifyContent: 'center',
@@ -469,6 +635,79 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: 'black'
   },
+  containertext: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between', // Pushes text & dropdown to opposite sides
+
+  },
+  textContainer: {
+    flex: 1, // Takes up available space
+  },
+  dropdownContainer: {
+    width: 150, // Set width for dropdown to avoid shrinking
+  },
+  performanceTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  subText: {
+    fontSize: 14,
+    color: 'gray',
+  },
+  bigText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
 });
+const pickerSelectStyles = {
+  inputIOS: {
+    fontSize: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 5,
+    color: 'black',
+    width: 150, // Ensure width remains consistent
+  },
+  inputAndroid: {
+    fontSize: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 5,
+    color: 'black',
+    width: 150,
+  },
+  chartContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 20,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  subText: {
+    fontSize: 14,
+    color: "gray",
+  },
+  bigText: {
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  performanceCard: { backgroundColor: "#fff", padding: 15, borderRadius: 10, margin: 10 },
+  containertext: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  textContainer: {},
+  performanceTitle: { fontSize: 16, fontWeight: "bold" },
+  subText: { fontSize: 14, color: "#888" },
+  bigText: { fontSize: 22, fontWeight: "bold", marginTop: 5 },
+  dropdownContainer: { borderWidth: 1, borderColor: "#ccc", borderRadius: 5, padding: 5 },
+  toggleContainer: { flexDirection: "row", marginTop: 10 },
+  toggleButton: { flex: 1, padding: 10, alignItems: "center", borderRadius: 5, borderWidth: 1, borderColor: "#ddd" },
+  selectedToggle: { backgroundColor: "#ddd" },
+};
 
 export default DashboardContent;

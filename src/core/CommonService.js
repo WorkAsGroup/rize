@@ -20,7 +20,8 @@ export const endPoint = {
 	achievements:"/api/v1/general/achievements",
 	leaderBoard:"/api/v1/general/leaderboards",
 	previousPapers:"/api/v1/previousPapers",
-	pattern:"/api/v1/exams/pattern-sections"
+	pattern:"/api/v1/exams/pattern-sections",
+	dashboardGraph: "/api/v1/reports/dashboard"
   };
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -127,6 +128,24 @@ export const getYearsData = async (fields) => {
 		return error;
 	  }); 
   };
+
+  export const getDashboardExamResult = async (fields) => {
+	const API_URL = "https://mocktestapi.rizee.in/api/v1/reports/dashboard";
+	
+	try {
+	  const response = await axios.post(API_URL, fields, {
+		headers: { "Content-Type": "application/json" },
+		timeout: 10000, // 10s timeout
+	  });
+  
+	  console.log("✅ Success:", response.data);
+	  return response.data;
+	} catch (error) {
+	  console.error("❌ API Error:", error.response?.data || error.message);
+	  return null;
+	}
+  };
+  
 
 export const getAutoLogin = async (fields) => {
 	const headers = {
@@ -339,3 +358,49 @@ export const myConstituencyData = async (fields) => {
 			return error;
 		});
 };
+
+// Perfomance analasys Tab API's
+
+export const avgScoringTime = async (fields) => {
+	try {
+
+	  const headers = {
+		"content-type": "application/json",
+		"X-Content-Type-Options": "nosniff",
+		"X-Frame-Options": "SAMEORIGIN",
+		token: fields.token,
+	  };
+  
+	 
+	  return await axios.post(
+		apiurl +"/api/v1/reports/preformance/avgScoringTime",
+		fields,
+		{ headers }
+	  );
+	} catch (error) {
+	  console.error("API Error:", error.response?.data || error.message);
+	  return error;
+	}
+  };
+  export const weekAvgScoringTime = async (fields) => {
+	try {
+
+	  const headers = {
+		"content-type": "application/json",
+		"X-Content-Type-Options": "nosniff",
+		"X-Frame-Options": "SAMEORIGIN",
+		token: fields.token,
+	  };
+  
+	 
+	  return await axios.post(
+		apiurl +"/api/v1/reports/preformance/weekTestActivity",
+		fields,
+		{ headers }
+	  );
+	} catch (error) {
+	  console.error("API Error:", error.response?.data || error.message);
+	  return error;
+	}
+  };
+  

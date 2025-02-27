@@ -5,6 +5,7 @@ import DashboardContent from './DashboardContent';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { darkTheme, lightTheme } from '../theme/theme';
 import Intro from './Intro';
+import PerformanceAnalasys from './PerformanceAnalasys';
 
 const Drawer = createDrawerNavigator();
 
@@ -28,6 +29,8 @@ const CustomDrawerContent = (props) => {
         return require('../images/dashboard.png');
       case 'MockTests':
         return require('../images/test.png');
+        case 'Performance':
+          return require('../images/performance.png');
       case 'Settings':
         return require('../images/settings.png');
       default:
@@ -55,7 +58,20 @@ const CustomDrawerContent = (props) => {
         />
         <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Dashboard</Text>
       </TouchableOpacity>
-
+      <TouchableOpacity style={[styles.drawerItem, currentRouteName === 'Performance' && styles.selectedDrawerItem]} onPress={() => handleNavigation('PerformanceAnalasys')}>
+        <Image
+          source={getIconSource('Performance')}
+          style={[styles.drawerIcon, { tintColor: theme.textColor }]}
+        />
+        <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Performance Analysys</Text>
+      </TouchableOpacity>
+      {/* <TouchableOpacity style={[styles.drawerItem, currentRouteName === 'Settings' && styles.selectedDrawerItem]} onPress={() => handleNavigation('Settings')}>
+        <Image
+          source={getIconSource('Settings')}
+          style={[styles.drawerIcon, { tintColor: theme.textColor }]}
+        />
+        <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Settings</Text>
+      </TouchableOpacity> */}
       {/* <TouchableOpacity style={[styles.drawerItem, currentRouteName === 'MockTests' && styles.selectedDrawerItem]} onPress={() => handleNavigation('MockTests')}>
         <Image
           source={getIconSource('MockTests')}
@@ -89,7 +105,7 @@ const DashboardDrawer = ({ route }) => {
         drawerStyle: {
           backgroundColor: theme.background,
         },
-      }}
+      }} 
     >
       <Drawer.Screen name="Dashboard" >
         {(props) => (
@@ -99,8 +115,15 @@ const DashboardDrawer = ({ route }) => {
           />
         )}
       </Drawer.Screen>
-      {/* <Drawer.Screen name="Introv2" component={Intro} />
-      <Drawer.Screen name="Settings" component={Settings} /> */}
+      {/* <Drawer.Screen name="Introv2" component={Intro} /> */}
+      <Drawer.Screen name="Performance"> 
+      {(props) => (
+          <PerformanceAnalasys
+            {...props}
+            route={{ params: { onChangeAuth: onChangeAuth } }}
+          />
+        )}
+      </Drawer.Screen>
     </Drawer.Navigator>
   );
 };

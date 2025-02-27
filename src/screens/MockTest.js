@@ -470,6 +470,24 @@ export default function MockTest({ navigation, route }) {
     };
 
     const handleAnswerSelect = async (questionId, option) => {
+        const currentSubject = pattern.find(subject => 
+            questionId >= subject.starting_no && questionId <= subject.ending_no
+        );
+    
+        if (!currentSubject) {
+            console.error("Question doesn't belong to any subject in the pattern.");
+            return; 
+        }
+    
+        const answeredCountForSubject = Object.keys(answeredQuestions).filter(qId => 
+            qId >= currentSubject.starting_no && qId <= currentSubject.ending_no
+        ).length;
+    
+        if (answeredCountForSubject >= currentSubject.no_of_qus_answer) {
+            Alert.alert("Answer Limit Reached", `You have already answered the maximum allowed questions for ${currentSubject.subject}.`);
+            return; 
+        }
+    
         try {
             const updatedAnswers = { ...answeredQuestions, [questionId]: { selected_ans: option, submit_ans: option } };
             setAnsweredQuestions(updatedAnswers);
@@ -759,6 +777,35 @@ setAllNum(allNumbers);
             </View>
         );
     }
+
+    const ClearResponseData = async () => {
+        try {
+            if (selectedNumber) {
+                const updatedAnswers = { ...answeredQuestions };
+                delete updatedAnswers[selectedNumber];
+                setAnsweredQuestions(updatedAnswers);
+    
+                const updatedSelectedAnswers = { ...selectedAnswers };
+                delete updatedSelectedAnswers[selectedNumber];
+                setSelectedAnswers(updatedSelectedAnswers);
+    
+                setSelectedOption(null);
+    
+                const updatedReviewed = { ...reviewedQuestions };
+                delete updatedReviewed[selectedNumber];
+                setReviewedQuestions(updatedReviewed);
+    
+    
+                await AsyncStorage.setItem(ANSWERED_QUESTIONS_KEY, JSON.stringify(updatedAnswers));
+                await AsyncStorage.setItem(REVIEWED_QUESTIONS_KEY, JSON.stringify(updatedReviewed));
+                
+            }
+        } catch (error) {
+            console.error("Error clearing response data:", error);
+        }
+    };
+    
+    
     return (
         <LinearGradient
             colors={theme.back}
@@ -1208,10 +1255,10 @@ setAllNum(allNumbers);
                                             source={require("../images/tag.png")}
                                         />
                                     </TouchableOpacity>
-                                    <TouchableOpacity style={[styles.ins, { backgroundColor: theme.textColor1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]}>
+                                    <TouchableOpacity style={[styles.ins, { backgroundColor: theme.textColor1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]} onPress={() => navigation.navigate("Instruct")}>
                                         <Image
                                             style={{ height: 20, width: 20, resizeMode: 'contain', tintColor: theme.textColor }}
-                                            source={require("../images/eye.png")}
+                                            source={require("../images/info.png")}
                                         />
                                     </TouchableOpacity>
                                     {/* <TouchableOpacity onPress={() => {
@@ -1222,9 +1269,9 @@ setAllNum(allNumbers);
                                         Skip Question
                                     </Text>
                                 </TouchableOpacity> */}
-                                    <TouchableOpacity style={{ marginLeft: 15, marginTop: 5 }} onPress={() => navigation.navigate("Instruct")}>
-                                        <Text style={[styles.ans, { color: theme.textColor, fontWeight: '700', textDecorationLine: "underline" }]}>
-                                            View Test Rules
+                                    <TouchableOpacity style={{ marginLeft: 15, marginTop: 5 }} onPress={ClearResponseData}>
+                                        <Text style={[styles.ans, { color: "red", fontWeight: '700', textDecorationLine: "underline" }]}>
+                                           Clear Response
                                         </Text>
                                     </TouchableOpacity>
                                 </View>
