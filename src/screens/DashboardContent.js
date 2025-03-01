@@ -82,6 +82,11 @@ const DashboardContent = ({ route }) => {
 
 
 const submitTestResult = async () => {
+  if (!preExamResults){
+    if(route.params.exam){
+      setPreExamResults(route.params.exam);
+    }
+  }
   const data = {
     exam_paper_id: preExamResults.exam_paper_id,
     exam_session_id: 0,
