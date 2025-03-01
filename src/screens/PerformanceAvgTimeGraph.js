@@ -27,10 +27,13 @@ const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData,  type })
       setLoading(false);
       return;
     }
- 
+    const updatedData = performanceSubOptions.map(item => ({
+      ...item,
+      label: item.label.toLowerCase()
+  }));
 
     const performanceCategories = data.periods.map((entry) => entry.day || "N/A");
-    const selectedSubjectLabel = subjects.find((sub) => sub.value === type)?.label;
+    const selectedSubjectLabel = updatedData.find((sub) => sub.value === type)?.label;
 
     const studentData = data.periods.map((entry) => {
       const subjectData = entry.subjects?.find(

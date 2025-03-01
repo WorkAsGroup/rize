@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, useColorScheme, FlatList, ActivityIndicator, ScrollView, RefreshControl, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, useColorScheme, FlatList, ActivityIndicator, ScrollView, RefreshControl, Alert, Modal, Pressable } from 'react-native';
+import {SafeAreaView, SafeAreaProvider} from 'react-native-safe-area-context';
 // import { LineChart } from 'react-native-svg-charts';
 import { useNavigation } from '@react-navigation/native';
+import pieChartIcon from "../images/pie-chart.png"
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { getAutoLogin, getYearsData, getMockExams, getAchievements, getLeaderBoards, getPreviousPapers, getDashboardExamResult } from '../core/CommonService';
+import { getAutoLogin, getYearsData, getMockExams, getAchievements, getLeaderBoards, getPreviousPapers,getCustomExams, getDashboardExamResult, getSubmitExamResults } from '../core/CommonService';
 import { darkTheme, lightTheme } from '../theme/theme';
 import LinearGradient from "react-native-linear-gradient";
 import RNPickerSelect from 'react-native-picker-select';
@@ -11,7 +13,8 @@ import { AreaChart, Grid, XAxis, YAxis } from "react-native-svg-charts";
 import * as shape from "d3-shape";
 import { LineChart } from "react-native-chart-kit";
 import { Defs, LinearGradient as SvgLinearGradient, Stop } from "react-native-svg";
-
+import CustomExamCreation from './CustomExamCreation';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Tab = createBottomTabNavigator();
 
@@ -30,7 +33,8 @@ const DashboardContent = ({ route }) => {
   const [champ, setChamp] = useState([]);
   const [mocklist, setMocklist] = useState([]);
   const [pre, setPre] = useState([]);
-  const [mock, setMock] = useState([]); // This will hold the filtered/displayed mock tests
+  const [customExams, setCustomExams] = useState([]);
+  const [mock, setMock] = useState([]); 
   const [loading, setLoading] = useState(true);
   const [ach, setAch] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -39,13 +43,16 @@ const DashboardContent = ({ route }) => {
   const data = [50, 70, 60, 90, 80];
   const [selectedType, setSelectedType] = useState('mock');
   const [selectedPerformanceType, setSelectedPerformanceType] = useState('score');
+  const [showCustom, setShowCustom] = useState(false);
+  const [preExamResults, setPreExamResults] = useState(null);
+  const [hasLoadedResults, setHasLoadedResults] = useState(false);
   const chartData = [
     { data: [50, 70, 60, 90, 80], color: '#6A5ACD', strokeWidth: 2 },
     { data: [90, 50, 20, 50, 50], color: 'green', strokeWidth: 2 },
     { data: [10, 90, 20, 80, 50], color: 'red', strokeWidth: 2 },
   ];
   const [selectedValue, setSelectedValue] = useState(1);
-
+  console.log("99999999",preExamResults);
   const options = [
     { label: 'Last 30 Days', value: 1 },
     { label: 'Last 2 Months', value: 2 },
@@ -55,7 +62,55 @@ const DashboardContent = ({ route }) => {
 
   };
 
-  
+  useEffect(() => {
+    const retrieveExam = async () => {
+        try {
+            const examData = await AsyncStorage.getItem('exam');
+            if (examData !== null) {
+              setPreExamResults(JSON.parse(examData)); 
+              console.error("999 AsyncStorage:", preExamResults);
+              submitTestResult();
+            } 
+
+        } catch (error) {
+            console.error("Error retrieving exam from AsyncStorage:", error);
+        }
+    };
+
+    retrieveExam();
+}, []); 
+
+
+const submitTestResult = async () => {
+  const data = {
+    exam_paper_id: preExamResults.exam_paper_id,
+    exam_session_id: 0,
+    student_user_exam_id: studentExamId,
+    questions: preExamResults.questions.map(question => ({
+      question_id: question.question_id,
+      status: question.status,
+      question_time: question.question_time,
+      attempt_answer: question.attempt_answer,
+      reason_for_wrong: question.reason_for_wrong,
+      comments: question.comments,
+      slno: question.slno,
+      subject_id: question.subject_id,
+      review: question.review,
+      is_disabled: question.is_disabled
+    }))
+  };
+
+  console.log("Submit Data:", JSON.stringify(data));
+  try {
+    const response = await getSubmitExamResults(data);
+    console.log("Submit Response:", response);
+    setPreExamResults(null);
+  } catch (error) {
+    console.error("Error submitting results:", error);
+    // ... handle error
+  }
+};
+
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -69,6 +124,7 @@ const DashboardContent = ({ route }) => {
       await getPrevious();
       if(studentExamId) {
         await getExamResults();
+        await getCustomeExam();
       }
     } catch (error) {
       console.error("Error fetching data in useEffect:", error);
@@ -76,7 +132,7 @@ const DashboardContent = ({ route }) => {
     } finally {
       setLoading(false);
     }
-  }, [studentExamId]);  // Add studentExamId as a dependency - important!
+  }, [studentExamId]);  
 
   useEffect(() => {
     fetchData();
@@ -85,12 +141,22 @@ const DashboardContent = ({ route }) => {
   useEffect(() => {
 
     setMock(mocklist);
-
   }, [mocklist, pre]);
+
 
   const handleLogout = async () => {
     onChangeAuth(null);
   };
+
+  const getCustomeExam = async() => {
+    const data = {
+      student_user_exam_id: studentExamId,
+      
+    };
+    const response = await getCustomExams(data)
+    setCustomExams(response.data)
+    console.log(response, "custom")
+  }
 
   const getUser = async () => {
     try {
@@ -163,12 +229,12 @@ const DashboardContent = ({ route }) => {
       if (response.data && Array.isArray(response.data)) {
         setChamp(response.data);
       } else {
-        setChamp([]);
+        setChamp();
         console.warn("No leaderboard data received or data is not an array.");
       }
     } catch (error) {
       console.error("Error fetching leaderboard data:", error);
-      setChamp([]);
+      setChamp();
       Alert.alert("Error", "Failed to get leaderboard data. Please check your connection and try again.");
     }
   };
@@ -187,6 +253,9 @@ const DashboardContent = ({ route }) => {
       Alert.alert("Error", "Failed to get mock exams. Please check your connection and try again.");
     }
   };
+
+  
+
   const getExamResults = async () => {
     const data = {
       student_user_exam_id: studentExamId,
@@ -242,30 +311,110 @@ const DashboardContent = ({ route }) => {
     );
   };
 
+  const handleStartTest = (item) => {
+    console.log("itsm", item)
+    navigation.navigate("InstructionAuth", { obj: item });
+  };
+
+  const handleCheckResults = (data, type) => {
+    const examObject = {
+        ...data,
+        type: type
+    }
+    // dispatch(setExamSessionId(data.exam_session_id));
+    navigation.navigate("resultsPage", { state: examObject });
+};
+
   const renderItemMock = ({ item }) => {
+    console.log(item, "exam status")
     return (
-      <View style={{ width: "98%", margin: 5, flexDirection: 'row', padding: 5, backgroundColor: theme.textColor1, borderRadius: 15 }}>
-        <View style={{ flexDirection: 'row', padding: 8, width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
+      <View style={[styles.itemContainer, { backgroundColor: theme.textColor1 }]} key={item?.exam_paper_id}>
+        {/* Exam Details */}
+        <View style={styles.detailsContainer}>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: theme.textColor, fontSize: 12, marginBottom: 3 }}>
-              {item.exam_name}
-            </Text>
-            <View style={{ flexDirection: 'row' }}>
-              <Image
-                style={{ height: 18, width: 18, tintColor: theme.textColor, resizeMode: 'contain', marginRight: 5 }}
-                source={require("../images/clock.png")}
-              />
-              <Text style={[styles.sectionTitle, { color: theme.textColor, fontSize: 12 }]}>3 Hours 0 minutes</Text>
+            <Text style={[styles.examName, { color: theme.textColor }]}>{item.exam_name}</Text>
+            <View style={styles.timeContainer}>
+              <Image source={require("../images/clock.png")} style={[styles.clockIcon, { tintColor: theme.textColor }]} />
+              <Text style={[styles.timeText, { color: theme.textColor }]}>3 Hours 0 minutes</Text>
             </View>
           </View>
-          <TouchableOpacity style={{ alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.tx1, borderRadius: 10, width: 70, height: 30 }}>
-            <Text style={{ color: theme.textColor, fontWeight: '500', fontSize: 12 }}>
-              Start
-            </Text>
+          {/* Start Button */}
+          <View style={{ marginTop: 10 }}>
+      {item.exam_session_id === 0 && item.auto_save_id === 0 ? (
+        // Start Button
+        <TouchableOpacity
+          style={[styles.startExamBtn, { marginRight: 10 }]}
+          // onPress={() => handleStartExam(item, "mockTest")}
+          onPress={() => handleStartTest(item)} 
+        >
+          <LinearGradient
+            colors={["#B465DA", "#CF6CC9", "#EE609C", "#EE609C"]}
+            style={styles.gradientButton}
+          >
+            <Text style={styles.textExamBtn}>Start ➡</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      ) : item.exam_session_id !== 0 && item.auto_save_id === 0 ? (
+        // Replay & Results Button
+        <View style={[styles.startExamBtn, { flexDirection: "row", marginRight: 10 }]}>
+          <TouchableOpacity
+            onPress={() => handleStartTest(item, "mockTest")}
+            style={[styles.textExamBtn, styles.replayButton]}
+          >
+            <Text style={styles.buttonText}>🔄</Text>
           </TouchableOpacity>
-
+          <TouchableOpacity
+            onPress={() => handleCheckResults(item, "schedule_exam")}
+            style={[styles.textExamBtn, styles.resultsButton]}
+          >
+            <Text style={styles.buttonText}>Results</Text>
+            <Image source={pieChartIcon} style={styles.icon} />
+          </TouchableOpacity>
         </View>
-
+      ) : item.exam_session_id !== 0 && item.auto_save_id !== 0 ? (
+        // Resume & Results Button
+        <View style={[styles.startExamBtn, { flexDirection: "row", marginRight: 10 }]}>
+          <LinearGradient
+            colors={["#B465DA", "#CF6CC9", "#EE609C", "#EE609C"]}
+            style={[styles.gradientButton, { marginRight: 10 }]}
+          >
+            <TouchableOpacity onPress={() => handleStartTest(item, "mockTest")}>
+              <Text style={styles.textExamBtn}>Resume</Text>
+            </TouchableOpacity>
+          </LinearGradient>
+          <TouchableOpacity
+            onPress={() => handleCheckResults(item, "schedule_exam")}
+            style={[styles.textExamBtn, styles.resultsButton]}
+          >
+            <Text style={styles.buttonText}>Results</Text>
+            <Image source={pieChartIcon} style={styles.icon} />
+          </TouchableOpacity>
+        </View>
+      ) : (
+        // Resume Button Only
+        <LinearGradient
+          colors={["#B465DA", "#CF6CC9", "#EE609C", "#EE609C"]}
+          style={[styles.gradientButton, { marginRight: 10 }]}
+        >
+          <TouchableOpacity           onPress={() => handleStartTest(item)}          >
+            <Text style={styles.textExamBtn}>Resume</Text>
+          </TouchableOpacity>
+        </LinearGradient>
+      )}
+    </View>
+        </View>
+  
+        {/* Exam Marks List */}
+        {item.marks?.length > 0 && (          <ScrollView  showsHorizontalScrollIndicator={false} 
+        
+         horizontal  contentContainerStyle={styles.marksContainer} >
+            {item.marks.map((mark, index) => (
+              <TouchableOpacity key={index} style={[styles.markButton, styles[`bgColor${index}`], styles[`borderColor${index}`]]}>
+                <Text style={[styles.markText,{color:theme.textColor}]}>{mark.subject}: {mark.subject_score}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
       </View>
     );
   };
@@ -326,14 +475,14 @@ const DashboardContent = ({ route }) => {
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
           <View>
             <Text style={{ fontSize: 18, fontWeight: "bold", color: theme.textColor }}>Weekly Performance</Text>
-            <Text style={{ fontSize: 14 }}>Total tests this week</Text>
+            <Text style={{ fontSize: 14,color: theme.textColor }}>Total tests this week</Text>
             <Text style={{ fontSize: 24, fontWeight: "bold", color: theme.textColor }}>
               {totalExamCount ? totalExamCount : 0}
             </Text>
           </View>
   
           <View>
-            <Text>{dateRange}</Text>
+            <Text style={{color: theme.textColor}}>{dateRange}</Text>
             <RNPickerSelect
               onValueChange={(value) => setSelectedValue(value)}
               items={options}
@@ -375,25 +524,25 @@ const DashboardContent = ({ route }) => {
         {/* Line Chart */}
         {chartData && chartData.length > 0 && xLabels && xLabels.length > 0 ? (
   <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-    <LineChart
+   <LineChart
       data={{
         labels: xLabels,
         datasets: chartData.map((subject, index) => ({
-          data: subject.data || [], // Ensure data is never undefined
+          data: subject.data || [], 
           color: () => subjectColors[index % subjectColors.length],
           strokeWidth: 2,
         })),
       }}
-      width={Dimensions.get("window").width}
+      width={Dimensions.get("window").width*0.85}
       height={250}
       yAxisLabel=""
       chartConfig={{
         backgroundColor: theme.conbk,
-        backgroundGradientFrom: theme.conbk,
-        backgroundGradientTo: theme.conbk,
+        backgroundGradientFrom: theme.white,
+        backgroundGradientTo: theme.white,
         decimalPlaces: 0,
-        color: (opacity = 1) => ⁠ rgba(0, 0, 0, ${opacity}) ⁠,
-        labelColor: (opacity = 1) => ⁠ rgba(0, 0, 0, ${opacity}) ⁠,
+        color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+        labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
         propsForDots: {
           r: "4",
           strokeWidth: "2",
@@ -408,7 +557,7 @@ const DashboardContent = ({ route }) => {
     />
   </ScrollView>
 ) : (
-  <Text>No data available</Text>
+  <Text style={{color:theme.textColor}}>No data available</Text>
 )}
         {/* Subject Legends */}
         <View style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 10 }}>
@@ -422,7 +571,7 @@ const DashboardContent = ({ route }) => {
                   marginRight: 5,
                 }}
               />
-              <Text style={{ color: "black" }}>{subject.name}</Text>
+              <Text style={{ color: theme.textColor }}>{subject.name}</Text>
             </View>
           ))}
         </View>
@@ -437,10 +586,11 @@ const DashboardContent = ({ route }) => {
       <View style={[styles.performanceCard, { backgroundColor: theme.conbk, marginTop: 20, height:windowHeight * .4 }]}>
         <Text style={[styles.performanceTitle, { color: theme.textColor }]}>Mock Tests</Text>
         <Text style={styles.subText}>Select your preferred exam and start practicing</Text>
+       
         <ScrollView 
   horizontal={true} 
   showsHorizontalScrollIndicator={false} 
-  contentContainerStyle={{ flexGrow: 1, flexDirection: 'row', paddingHorizontal: 10, height: 100, }}
+  contentContainerStyle={{ flexGrow: 1, flexDirection: 'row', paddingHorizontal: -5, height: 60,paddingBottom: 15,}}
 >
   <View 
     style={{ 
@@ -461,7 +611,7 @@ const DashboardContent = ({ route }) => {
         handleSetMockType('mock');
       }}
     >
-      <Text style={{ color: selectedType === 'mock' ? theme.tx1 : theme.textColor }}>Mock Tests</Text>
+      <Text style={{ color: selectedType === 'mock' ? theme.tx1 : theme.textColor,fontSize:13 }}>Mock Tests</Text>
     </TouchableOpacity>
 
     <TouchableOpacity
@@ -477,7 +627,7 @@ const DashboardContent = ({ route }) => {
         setMock(pre);
       }}
     >
-      <Text style={{ color: selectedType === 'previous' ? theme.tx1 : theme.textColor }}>Previous years exam</Text>
+      <Text style={{ color: selectedType === 'previous' ? theme.tx1 : theme.textColor,fontSize:13 }}>Previous years exam</Text>
     </TouchableOpacity>
 
     <TouchableOpacity
@@ -490,14 +640,34 @@ const DashboardContent = ({ route }) => {
       }}
       onPress={() => {
         handleSetMockType('custom');
-        setMock(pre);
+        setMock(customExams);
       }}
     >
-      <Text style={{ color: selectedType === 'custom' ? theme.tx1 : theme.textColor }}>Custom Tests</Text>
+      <Text style={{ color: selectedType === 'custom' ? theme.tx1 : theme.textColor ,fontSize:13}}>Custom Tests</Text>
     </TouchableOpacity>
   </View>
 </ScrollView>
-
+        {selectedType==="custom" &&  <TouchableOpacity
+                        style={{display: "flex", justifyContent: "flex-end", alignItems: "flex-end",  width:"100%" }}
+                        activeOpacity={0.8}
+                        onPress={() =>setShowCustom(true)}
+                      >
+                        <LinearGradient
+                          colors={[theme.tx1, theme.tx2]}
+                          start={{ x: 0, y: 1 }}
+                          end={{ x: 1, y: 1 }}
+                          style={styles.startButtonGradients}
+                        >
+                          <Text
+                            style={[
+                              styles.startButtonTexts,
+                              { color: theme.textColor1, fontFamily: "CustomFont" },
+                            ]}
+                          >
+                            + CREATE CUSTOM
+                          </Text>
+                        </LinearGradient>
+                      </TouchableOpacity>}
         <FlatList
           data={mock}
           renderItem={renderItemMock}
@@ -542,7 +712,7 @@ const DashboardContent = ({ route }) => {
   return (
     <View style={[styles.container, { backgroundColor: theme.textbgcolor }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, {alignItems: "center"}]}>
         <TouchableOpacity onPress={() => navigation.openDrawer()}>
           <Image source={{ uri: 'https://cdn-icons-png.flaticon.com/512/1828/1828859.png' }} style={[styles.icon, { tintColor: theme.textColor }]} />
         </TouchableOpacity>
@@ -560,7 +730,35 @@ const DashboardContent = ({ route }) => {
       >
         <Text style={[styles.welcome, { color: theme.textColor }]}>Good morning 🔥</Text>
         <Text style={[styles.username, { color: theme.textColor }]}>Welcome {name},</Text>
+        
+     
+      <SafeAreaView style={styles.centeredView}>
+        <Modal
+          animationType="slide"
+          transparent={false} // Ensures full screen
+          visible={showCustom}
+          onRequestClose={() => setShowCustom(false)}
+        >
+          <View style={styles.modalContainer}>
+            {/* Header Section */}
+            <View style={[styles.header, {paddingHorizontal: 20}]}>
+              <Text style={styles.headerText}>Custom Exam</Text>
+              <Pressable onPress={() => setShowCustom(false)}>
+                <Image source={require("../images/delete.png")} style={{height: 30, width: 30}} />
+              </Pressable>
+            </View>
 
+            {/* Separator Line */}
+            <View style={styles.separator} />
+
+            {/* Modal Content */}
+  
+             <CustomExamCreation id={studentExamId} onClose={setShowCustom} />
+          
+          </View>
+        </Modal>
+      </SafeAreaView>
+  
         <WeeklyPerformance />
         <MockTestss />
         <Achievements />
@@ -608,7 +806,7 @@ const styles = StyleSheet.create({
   selectedExam: { color: 'black', fontWeight: 'bold' },
   welcome: { marginTop: 10, fontSize: 16 },
   username: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
-  performanceCard: { padding: 20, borderRadius: 10, elevation: 1 },
+  performanceCard: { padding: 10, borderRadius: 10, elevation: 1 },
   performanceTitle: { fontSize: 18, fontWeight: 'bold' },
   subText: { color: 'gray' },
   bigText: { fontSize: 30, fontWeight: 'bold', marginTop: 5 },
@@ -659,6 +857,196 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
   },
+  startButtonGradients: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 25,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 10,
+    width: 150,
+    fontWeight: "700",
+  },
+  startButtonTexts: {
+    color: "#FFF",
+    fontWeight: "bold",
+    fontSize: 14,
+    alignSelf: "center",
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: "white",
+    paddingTop: 30,
+    // paddingHorizontal: 25,
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  button: {
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2,
+  },
+  buttonOpen: {
+    backgroundColor: '#F194FF',
+  },
+  buttonClose: {
+    backgroundColor: '#2196F3',
+  },
+  textStyle: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    // alignItems: "center",
+    // paddingHorizontal: 20,
+    paddingBottom: 10,
+  },
+  headerText: {
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  separator: {
+    height: 1,
+    backgroundColor: "#ccc",
+    width: "100%",
+  },
+  content: {
+    flex: 1,
+    // justifyContent: "center",
+    // alignItems: "center",
+  },  
+  itemContainer: {
+    width: "98%",
+    margin: 5,
+    padding: 5,
+    borderRadius: 15,
+  },
+  detailsContainer: {
+    flexDirection: "row",
+    padding: 8,
+    width: "100%",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  examName: {
+    fontSize: 12,
+    marginBottom: 3,
+  },
+  timeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  clockIcon: {
+    height: 18,
+    width: 18,
+    resizeMode: "contain",
+    marginRight: 5,
+  },
+  timeText: {
+    fontSize: 12,
+  },
+  startButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderRadius: 10,
+    width: 70,
+    height: 30,
+  },
+  startText: {
+    fontWeight: "500",
+    fontSize: 12,
+  },
+  marksContainer: {
+    flexDirection: "row",
+    marginTop: 5,
+    marginLeft: 8,
+  },
+  markButton: {
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    marginRight: 5,
+  },
+  markText: {
+    fontWeight: "600",
+    fontSize: 11,
+    color: "#000004",
+  },
+  // Dynamic Colors for Mark Buttons
+  borderColor0: { borderColor: "#1ABE1733" },
+  borderColor1: { borderColor: "#2A42A533" },
+  borderColor2: { borderColor: "#DCAA0933" },
+  borderColor3: { borderColor: "#F0F8FF" },
+  bgColor0: { backgroundColor: "#1ABE171A" },
+  bgColor1: { backgroundColor: "#2A42A51A" },
+  bgColor2: { backgroundColor: "#DCAA091A" },
+  bgColor3: { backgroundColor: "#F0F8FF" },
+  startExamBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gradientButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  textExamBtn: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  replayButton: {
+    backgroundColor: "rgb(240, 235, 242)",
+    padding: 10,
+    borderRadius: 8,
+    marginRight: 10,
+  },
+  resultsButton: {
+    borderWidth: 2,
+    borderColor: "#B465DA",
+    padding: 10,
+    borderRadius: 8,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#B465DA",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  icon: {
+    width: 17,
+    height: 17,
+    marginLeft: 5,
+  },
 });
 const pickerSelectStyles = {
   inputIOS: {
@@ -708,6 +1096,7 @@ const pickerSelectStyles = {
   toggleContainer: { flexDirection: "row", marginTop: 10 },
   toggleButton: { flex: 1, padding: 10, alignItems: "center", borderRadius: 5, borderWidth: 1, borderColor: "#ddd" },
   selectedToggle: { backgroundColor: "#ddd" },
+
 };
 
 export default DashboardContent;

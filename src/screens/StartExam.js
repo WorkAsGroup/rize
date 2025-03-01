@@ -124,7 +124,7 @@ const extractContent = (html) => {
     return contentArray;
 };
 
-export default function MockTest({ navigation, route }) {
+export default function StartExam({ navigation, route }) {
     const colorScheme = useColorScheme();
     const theme = colorScheme === "dark" ? darkTheme : lightTheme;
 
@@ -227,7 +227,7 @@ export default function MockTest({ navigation, route }) {
          if (selectedNumber < sub.starting_no || selectedNumber > sub.ending_no) {
             setSelectedNumber(sub.starting_no);
         } else {
-            scrollToQuestion(selectedNumber);  // Scroll to the selected number if within range
+            scrollToQuestion(selectedNumber);  
         }
          console.log("setSelectedSubject", sub)
  
@@ -824,7 +824,7 @@ setAllNum(allNumbers);
 
         console.log("Submit Data:", JSON.stringify(data)); 
         setExam(data)
-        navigation.navigate("Login",{exam :data});
+        navigation.navigate("DashboardContent",{exam :data});
 
     };
 
@@ -1409,9 +1409,9 @@ setAllNum(allNumbers);
                     </TouchableOpacity>
                     <View style={[styles.modalView, { backgroundColor: theme.bmc1 }]}>
                         <Text style={[styles.modalText, { color: theme.textColor }]}>
-                            In order to get the results, you need to either login or register.
+                            Do you want to submit the exam.
                         </Text>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-around', width: '100%' }}>
+                        <View style={{ flexDirection: 'row', width: '100%' }}>
                             <TouchableOpacity
                                 style={[styles.button, { backgroundColor: theme.background[0] }]}
                                 onPress={() => {
@@ -1421,7 +1421,7 @@ setAllNum(allNumbers);
                                    
                                 }}
                             >
-                                <Text style={[styles.textStyle, { color: theme.textColor1 }]}>Login</Text>
+                                <Text style={[styles.textStyle, { color: theme.textColor1 }]}>Ok</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.button, { backgroundColor: theme.background[1] }]}
@@ -1638,9 +1638,9 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+        backgroundColor: 'rgba(0, 0, 0, 0.5)', 
         justifyContent: 'center',
         alignItems: 'center',
-        zIndex: 10, // Ensure it's on top
+        zIndex: 10, 
     },
 });

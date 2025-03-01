@@ -87,14 +87,27 @@ export default function Login({ route }) {
             console.log("Response", response);
 
             if(response.statusCode == 200){
-                 //Trigger the parent components state change
 
-                 if (route.params && route.params.onChangeAuth) {
-                  route.params.onChangeAuth(response.data.token);
-                 } else {
-                  console.log("onChangeAuth not found")
-                 }
-
+                 if (response.statusCode == 200) {
+                    if (route.params && route.params.onChangeAuth) {
+                        console.log("Exam Parameter:", route.params.exam);
+                        if(route.params.exam){
+                            const examValue = JSON.stringify(route.params.exam);
+                            await AsyncStorage.setItem("exam", examValue);
+            
+                        }
+                       
+                        navigation.navigate("EmailVerification", {
+                            token: response.data.token,
+                            onChangeAuth: route.params.onChangeAuth,
+                            exam: route.params.exam
+                        });
+                    } else {
+                        console.log("onChangeAuth not found");
+                    }
+                } else {
+                    Alert.alert("Login failed. Please check your credentials.");
+                }
 
             } else {
                  Alert.alert("Login failed. Please check your credentials.");

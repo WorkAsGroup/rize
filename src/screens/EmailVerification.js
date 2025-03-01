@@ -13,6 +13,7 @@ import {
 import LinearGradient from "react-native-linear-gradient";
 import Svg, { Path } from "react-native-svg";
 import { darkTheme, lightTheme } from "../theme/theme";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
@@ -21,7 +22,7 @@ export default function EmailVerification({navigation,route}) {
   const colorScheme = useColorScheme();
   const [check, setCheck] = useState(false);
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
-  const mobile = route?.params?.mobile;
+  const token = route?.params?.token;
   const scrollRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -32,6 +33,18 @@ export default function EmailVerification({navigation,route}) {
     "Access exclusive resources",
     "Personalised Dashboard"
   ];
+
+ 
+
+  const handleSkip = () => {
+    if (route.params?.onChangeAuth && typeof route.params.onChangeAuth === 'function') {
+        console.log("888888888",route.params.exam)
+        route.params.onChangeAuth(token);
+    } else {
+      console.warn("onChangeAuth function not provided in navigation params.");
+    //  navigation.navigate('Dashboard'); 
+    }
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -129,7 +142,7 @@ export default function EmailVerification({navigation,route}) {
                         </TouchableOpacity>
 
          <View style={{justifyContent:'center',alignItems:'center',marginBottom:120,marginTop:30}}>
-         <TouchableOpacity style={{flexDirection:'row'}} onPress={()=>navigation.navigate("DashboardContent")}>
+         <TouchableOpacity style={{flexDirection:'row'}} onPress={handleSkip}>
          <Text style={[styles.welcomeText, { color: theme.white,textDecorationLine: "underline",fontSize:18,top:-3,left:-3 }]}>
                 Skip
             </Text>

@@ -19,12 +19,38 @@ export const endPoint = {
 	mocktest: "/api/v1/mocktests",
 	achievements:"/api/v1/general/achievements",
 	leaderBoard:"/api/v1/general/leaderboards",
+	resultExamData: "/api/v1/exams/examResult",
+	attempts: "/api/v1/exams/attempts",
 	previousPapers:"/api/v1/previousPapers",
 	pattern:"/api/v1/exams/pattern-sections",
-	dashboardGraph: "/api/v1/reports/dashboard"
+	dashboardGraph: "/api/v1/reports/dashboard",
+	customExams: "/api/v1/customExam",
+	subjects: "/api/v1/general/subjects",
+	chapters: "/api/v1/general/chapters",
+	createCustomExam: "/api/v1/customExam/createExam",
+	submitExam:"/api/v1/exams/finishExam"
   };
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+
+export const getSubmitExamResults = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.leaderBoard, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.submitExam, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in submit exam:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
 
 export const getPreviousPapers = async (fields) => {
 	const headers = {
@@ -93,6 +119,43 @@ export const getAchievements = async (fields) => {
 	  }); 
   };
 
+  
+  export const getExamResult = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.resultExamData, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.resultExamData, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in exam result:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
+
+  export const getAttempts = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.attempts, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.attempts, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in attempts:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
+
 export const getYearsData = async (fields) => {
 	const headers = {
 	  "content-type": "application/json",
@@ -129,6 +192,77 @@ export const getYearsData = async (fields) => {
 	  }); 
   };
 
+  export const getCustomExams = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.customExams, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.customExams, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in mock exam:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
+
+  export const getSubjects = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.subjects, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.subjects, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in mock exam:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
+
+  export const getChapters = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.chapters, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.chapters, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in mock exam:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
+
+  export const createCustomExams = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.createCustomExam, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.createCustomExam, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in mock exam:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
   export const getDashboardExamResult = async (fields) => {
 	const API_URL = "https://mocktestapi.rizee.in/api/v1/reports/dashboard";
 	

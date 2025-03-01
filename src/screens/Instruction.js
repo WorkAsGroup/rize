@@ -39,7 +39,7 @@ export default function Instruction({ navigation,route }) {
                         />
                     </TouchableOpacity>
 
-                    <View style={{ flexDirection: 'row', alignItems: "flex-end", width: windowWidth / 1.12, justifyContent: 'flex-end', paddingEnd: 15 }}>
+                    {/* <View style={{ flexDirection: 'row', alignItems: "flex-end", width: windowWidth / 1.12, justifyContent: 'flex-end', paddingEnd: 15 }}>
                         <Image
                             style={{ height: 36, width: 36 }}
                             source={require("../images/bell.png")}
@@ -52,7 +52,7 @@ export default function Instruction({ navigation,route }) {
                             style={{ height: 36, width: 36, marginLeft: 10 }}
                             source={require("../images/option.png")}
                         />
-                    </View>
+                    </View> */}
                 </View>
                 <ScrollView style={{marginBottom:10}}>
                     <View style={[styles.mockTestWrapper, { borderColor: theme.tx1 }]}>
