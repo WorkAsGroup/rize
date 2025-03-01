@@ -30,8 +30,9 @@ console.log(reportData, "as;foiefowief")
                         <View style={styles.row}>
                             <Image source={celebrateIcon} style={styles.icon} />
                             <View>
-                                <Text style={styles.congratsText}>🥳 Wow, what a moment to celebrate! 🥳</Text>
-                                <Text style={styles.messageText}>Your highest-ever score is a testament to your perseverance and genius! 🌟 Keep pushing boundaries!</Text>
+                                <Text style={styles.congratsText}>🥳 Wow, what a moment to                celebrate! 🥳</Text>
+                               
+                                <Text style={styles.messageText}>Your highest-ever score is a testament to your perseverance and genius! 🌟 Keep pushing            boundaries!, and remember, the sky's the limit! 🌌</Text>
                             </View>
                         </View>
                     </View>
@@ -42,6 +43,12 @@ console.log(reportData, "as;foiefowief")
                             <View style={styles.statBox}><Text style={styles.statValue}>{reportDetails.total_marks}</Text><Text style={styles.statLabel}>Total Marks</Text></View>
                             <View style={styles.statBox}><Text style={styles.statValue}>{reportDetails.score}</Text><Text style={styles.statLabel}>Your Score</Text></View>
                             <View style={styles.statBox}><Text style={styles.statValue}>{reportDetails.accuracy}%</Text><Text style={styles.statLabel}>Accuracy</Text></View>
+                        </View>
+                        <View style={[styles.statsRow, {marginTop: 10}]}>
+                            {/* <View style={styles.statBox}><Text style={styles.statValue}></Text><Text style={styles.statLabel}></Text></View> */}
+                            <View style={styles.statBox}><Text style={styles.statValue}>{reportDetails.averageTimePerQuestion}s</Text><Text style={styles.statLabel}>Avg time per question</Text></View>
+                            <View style={styles.statBox}><Text style={styles.statValue}>{`${Math.floor(reportDetails.subjectWiseOverAllTime / 60)}:${reportDetails.subjectWiseOverAllTime % 60}`}s</Text><Text style={styles.statLabel}>Avg time per subject</Text></View>
+
                         </View>
                     </View>
                     

@@ -39,7 +39,7 @@ const CustomDrawerContent = (props) => {
   };
 
   const handleNavigation = (routeName) => {
-    navigation.navigate(routeName);
+    props.navigation.navigate(routeName);
     props.navigation.closeDrawer(); 
   };
 
@@ -58,7 +58,7 @@ const CustomDrawerContent = (props) => {
         />
         <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Dashboard</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.drawerItem, currentRouteName === 'Performance' && styles.selectedDrawerItem]} onPress={() => handleNavigation('PerformanceAnalasys')}>
+      <TouchableOpacity style={[styles.drawerItem, currentRouteName === 'PerformanceAnalasys' && styles.selectedDrawerItem]} onPress={() => handleNavigation('PerformanceAnalasys')}>
         <Image
           source={getIconSource('Performance')}
           style={[styles.drawerIcon, { tintColor: theme.textColor }]}
@@ -116,7 +116,7 @@ const DashboardDrawer = ({ route }) => {
         )}
       </Drawer.Screen>
       {/* <Drawer.Screen name="Introv2" component={Intro} /> */}
-      <Drawer.Screen name="Performance"> 
+      <Drawer.Screen name="PerformanceAnalasys"> 
       {(props) => (
           <PerformanceAnalasys
             {...props}

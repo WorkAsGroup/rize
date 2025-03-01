@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect,useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
     View,
     Text,
@@ -11,14 +11,12 @@ import {
     ActivityIndicator,
     Modal,
     Alert,
-    TextInput,
-    BackHandler,
+    TextInput
 } from "react-native";
-import {StaticRenderer} from "react-native-render-html";
 import LinearGradient from "react-native-linear-gradient";
 import { darkTheme, lightTheme } from "../theme/theme";
 import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Text as SvgText } from "react-native-svg";
-import { getPatternSelection, getPreExam, getPreExamdata, getSubmitExamResults } from "../core/CommonService";
+import { getPatternSelection, getPreExam } from "../core/CommonService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -49,7 +47,6 @@ const removeHtmlTags = (html) => {
         .replace(/<td[^>]*>/g, "")
         .replace(/<\/td>/g, "")
         .replace(/style="[^"]*"/g, "")
-        
         .replace(/valign="[^"]*"/g, "")
         .replace(/width="[^"]*"/g, "")
         .trim()
@@ -126,40 +123,35 @@ const extractContent = (html) => {
     return contentArray;
 };
 
-export default function StartExam({ navigation, route }) {
+export default function MockTests({ navigation, route }) {
     const colorScheme = useColorScheme();
     const theme = colorScheme === "dark" ? darkTheme : lightTheme;
 
     const [selectedSubject, setSelectedSubject] = useState();
     const [selectedNumber, setSelectedNumber] = useState(1);
     const scrollRef = useRef(null);
-    const numberCircleRef = useRef(null);
-    const [scrollViewWidth, setScrollViewWidth] = useState(0);
-    const [numberCircleWidth, setNumberCircleWidth] = useState(0);
     const [exams, setExams] = useState([]);
     const [answeredQuestions, setAnsweredQuestions] = useState({});
     const [skippedQuestions, setSkippedQuestions] = useState({});
     const [taggedQuestions, setTaggedQuestions] = useState({});
     const [reviewedQuestions, setReviewedQuestions] = useState({});
-    const [selectedSubjectId, setSelectedSubjectId] = useState(null);
+    const [selectedSubjectId, setSelectedSubjectId] = useState(2);
     const [remainingTime, setRemainingTime] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedAnswers, setSelectedAnswers] = useState({});
     const [selectedOption, setSelectedOption] = useState(null);
     const [filteredQuestionNumbers, setFilteredQuestionNumbers] = useState([]);
-    const [allNum,setAllNum] = useState([]);
     const [pattern, setPattern] = useState([]);
     const [expand, setExpand] = useState(false);
     const [isFirstLoad, setIsFirstLoad] = useState(true);
     const timerInterval = useRef(null);
     const obj = route?.params?.obj;
-    // console.log("mocktest11", obj);
-    const [subjectName,setSubjectName] = useState([]);
+    console.log("mocktest11", obj);
+
     const [submitModalVisible, setSubmitModalVisible] = useState(false);
     const [textInputValues, setTextInputValues] = useState({});
-    const [exam, setExam] = useState([]); 
-    const numberCircleRefs = useRef({});
-    const [questionsLoading, setQuestionsLoading] = useState(true);
+
+
     const handleTextInputChange = (text, questionNumber) => {
         setTextInputValues(prevValues => ({
             ...prevValues,
@@ -167,124 +159,61 @@ export default function StartExam({ navigation, route }) {
         }));
     };
 
-    const scrollToQuestion = useCallback((questionNumber) => {
-        if (scrollRef.current && numberCircleRefs.current[questionNumber]) {
-            numberCircleRefs.current[questionNumber].measureLayout(
-                scrollRef.current,
-                (x, y, width, height) => {
-                    scrollRef.current.scrollTo({ x: x - 10, animated: true }); 
-                }
-            );
-        }
-    }, []);
+    const handleSubjectSelect = (sub) => {
+        setSelectedSubject(sub);
+        setSelectedSubjectId(sub.id);
+        setSelectedNumber(sub.starting_no);
+        console.log("setSelectedSubject", sub)
 
-    useEffect(() => {
-        scrollToQuestion(selectedNumber); 
-    }, [selectedNumber, scrollToQuestion,filteredQuestionNumbers]);
+    };
 
-    const handleBackPress = React.useCallback(() => {
-        if(!isFirstLoad){
-        Alert.alert(
-            "Exit Test?",
-            "Are you sure you want to exit the test? Your progress will be saved.",
-            [
-                {
-                    text: "Cancel",
-                    style: "cancel"
-                },
-                {
-                    text: "Yes",
-                    onPress: () => {
-                      setIsFirstLoad(true)
-                      navigation.goBack();
-                    }
-                }
-            ],
-            { cancelable: false }
-        );
-    }else{
-        navigation.goBack()
-    }
-        return true; 
-    }, [navigation,isFirstLoad]);
 
-    useEffect(() => {
-        if(!isFirstLoad){
-         BackHandler.addEventListener("hardwareBackPress", handleBackPress);
-        }
- 
-         return () => {
-           if(!isFirstLoad){
- 
-             BackHandler.removeEventListener("hardwareBackPress", handleBackPress);
-           }
-         };
-     }, [handleBackPress,isFirstLoad]);
- 
-      const handleSubjectSelect = (sub) => {
-             setExpand(false); 
-          setSelectedSubjectId(sub.id);
-         setSelectedSubject(sub);
-        //  setSelectedNumber(sub.starting_no);
-         if (selectedNumber < sub.starting_no || selectedNumber > sub.ending_no) {
-            setSelectedNumber(sub.starting_no);
-        } else {
-            scrollToQuestion(selectedNumber);  
-        }
-         console.log("setSelectedSubject", sub)
- 
-     };
 
-     useEffect(() => {
-        if (!expand) {  
-            scrollToQuestion(selectedNumber); 
-        }
-    }, [expand, selectedNumber, scrollToQuestion]); 
- 
-    //  useFocusEffect(
-    //     React.useCallback(() => {
-    //         return () => {
-    //             if(!isFirstLoad){
-    //             Alert.alert(
-    //                 "Reset Test?",
-    //                 "Do you want to reset the test progress?",
-    //                 [
-    //                     {
-    //                         text: "Cancel",
-    //                         style: "cancel"
-    //                     },
-    //                     {
-    //                         text: "Yes",
-    //                         onPress: async () => {
-    //                             try {
-    //                                 await AsyncStorage.removeItem(ANSWERED_QUESTIONS_KEY);
-    //                                 await AsyncStorage.removeItem(SKIPPED_QUESTIONS_KEY);
-    //                                 await AsyncStorage.removeItem(TAGGED_QUESTIONS_KEY);
-    //                                 await AsyncStorage.removeItem(REVIEWED_QUESTIONS_KEY);
-    //                                 await AsyncStorage.removeItem(REMAINING_TIME_KEY);
+    useFocusEffect(
+        React.useCallback(() => {
+            return () => {
+                if(!isFirstLoad){
 
-    //                                 for (let i = 1; i <= exams.length; i++) {
-    //                                     await AsyncStorage.removeItem(`questionStartTime_${i}`);
-    //                                 }
-    //                             } catch (error) {
-    //                                 console.error("Error resetting AsyncStorage:", error);
-    //                             }
-    //                             setAnsweredQuestions({});
-    //                             setSkippedQuestions({});
-    //                             setTaggedQuestions({});
-    //                             setReviewedQuestions({});
-    //                             setRemainingTime(0);
-    //                             setSelectedNumber(1);
-    //                             setSelectedOption(null);
-    //                         }
-    //                     }
-    //                 ],
-    //                 { cancelable: false }
-    //             );
-    //         }
-    //         };
-    //     }, [exams.length,isFirstLoad])
-    // );
+                Alert.alert(
+                    "Reset Test?",
+                    "Do you want to reset the test progress?",
+                    [
+                        {
+                            text: "Cancel",
+                            style: "cancel"
+                        },
+                        {
+                            text: "Yes",
+                            onPress: async () => {
+                                try {
+                                    await AsyncStorage.removeItem(ANSWERED_QUESTIONS_KEY);
+                                    await AsyncStorage.removeItem(SKIPPED_QUESTIONS_KEY);
+                                    await AsyncStorage.removeItem(TAGGED_QUESTIONS_KEY);
+                                    await AsyncStorage.removeItem(REVIEWED_QUESTIONS_KEY);
+                                    await AsyncStorage.removeItem(REMAINING_TIME_KEY);
+
+                                    for (let i = 1; i <= exams.length; i++) {
+                                        await AsyncStorage.removeItem(`questionStartTime_${i}`);
+                                    }
+                                } catch (error) {
+                                    console.error("Error resetting AsyncStorage:", error);
+                                }
+                                setAnsweredQuestions({});
+                                setSkippedQuestions({});
+                                setTaggedQuestions({});
+                                setReviewedQuestions({});
+                                setRemainingTime(0);
+                                setSelectedNumber(1);
+                                setSelectedOption(null);
+                            }
+                        }
+                    ],
+                    { cancelable: false }
+                );
+            }
+            };
+        }, [exams.length])
+    );
 
     useEffect(() => {
         loadStoredData();
@@ -297,7 +226,7 @@ export default function StartExam({ navigation, route }) {
     useEffect(() => {
         const loadStoredData = async () => {
             try {
-                if (isFirstLoad) { 
+                if (isFirstLoad) { // Only clear data on the first load
                     await AsyncStorage.removeItem(ANSWERED_QUESTIONS_KEY);
                     await AsyncStorage.removeItem(SKIPPED_QUESTIONS_KEY);
                     await AsyncStorage.removeItem(REVIEWED_QUESTIONS_KEY);
@@ -308,7 +237,7 @@ export default function StartExam({ navigation, route }) {
                     for (let i = 1; i <= exams?.length; i++) {
                         await AsyncStorage.removeItem(`questionStartTime_${i}`);
                     }
-                    setIsFirstLoad(false); 
+                    setIsFirstLoad(false); // Prevent clearing on subsequent loads
                 }
 
 
@@ -348,17 +277,6 @@ export default function StartExam({ navigation, route }) {
             const examPattern = await getPatternSelection(data);
             console.log("examPatternexamPattern", examPattern)
             setPattern(examPattern.data);
-
-            if (examPattern.data && examPattern.data.length > 0) {
-                setSelectedSubjectId(examPattern.data[0].id);  
-                setSelectedSubject(examPattern.data[0]);
-                setSelectedNumber(examPattern.data[0].starting_no)
-            }
-            // const sub = [];
-            // for (let i = start; i <= end && i <= examPattern.data.length; i++) {
-            //     sub.push(i).section_name;
-            // }
-            // setSubjectName(sub);
         } catch (error) {
             console.error("Error examPattern:", error);
         } finally {
@@ -395,13 +313,13 @@ export default function StartExam({ navigation, route }) {
 
     useEffect(() => {
         const handleSubjectByQuestion = () => {
-            // if (selectedNumber >= 1 && selectedNumber <= 20) {
-            //     setSelectedSubjectId(2);
-            // } else if (selectedNumber >= 21 && selectedNumber <= 40) {
-            //     setSelectedSubjectId(3);
-            // } else {
-            //     setSelectedSubjectId(4);
-            // }
+            if (selectedNumber >= 1 && selectedNumber <= 20) {
+                setSelectedSubjectId(2);
+            } else if (selectedNumber >= 21 && selectedNumber <= 40) {
+                setSelectedSubjectId(3);
+            } else {
+                setSelectedSubjectId(4);
+            }
         };
 
         handleSubjectByQuestion();
@@ -446,11 +364,6 @@ export default function StartExam({ navigation, route }) {
         };
 
         loadStoredData();
-        getExamPattern();
-
-        if (obj) {
-            getExam();
-        }
     }, []);
 
     const loadStoredData = async () => {
@@ -473,24 +386,6 @@ export default function StartExam({ navigation, route }) {
     };
 
     const handleAnswerSelect = async (questionId, option) => {
-        const currentSubject = pattern.find(subject => 
-            questionId >= subject.starting_no && questionId <= subject.ending_no
-        );
-    
-        if (!currentSubject) {
-            console.error("Question doesn't belong to any subject in the pattern.");
-            return; 
-        }
-    
-        const answeredCountForSubject = Object.keys(answeredQuestions).filter(qId => 
-            qId >= currentSubject.starting_no && qId <= currentSubject.ending_no
-        ).length;
-    
-        if (answeredCountForSubject >= currentSubject.no_of_qus_answer) {
-            Alert.alert("Answer Limit Reached", `You have already answered the maximum allowed questions for ${currentSubject.subject}.`);
-            return; 
-        }
-    
         try {
             const updatedAnswers = { ...answeredQuestions, [questionId]: { selected_ans: option, submit_ans: option } };
             setAnsweredQuestions(updatedAnswers);
@@ -582,47 +477,27 @@ export default function StartExam({ navigation, route }) {
     const scrollX = useRef(0);
 
     const scrollLeft = () => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTo({
-                x: Math.max(0, scrollRef.current.scrollLeft - 45),
-                animated: true,
-            });
-        }
+        scrollX.current = Math.max(0, scrollX.current - exams.length);
+        scrollRef.current?.scrollTo({ x: scrollX.current, animated: true });
     };
 
     const scrollRight = () => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTo({
-                x: Math.min(
-                    scrollRef.current.scrollLeft + 45,
-                    scrollViewWidth - scrollRef.current.offsetWidth 
-                ),
-                animated: true,
-            });
-        }
+        scrollX.current += exams.length;
+        scrollRef.current?.scrollTo({ x: scrollX.current, animated: true });
     };
 
     const getExam = async () => {
-        setQuestionsLoading(true); 
+        setIsLoading(true);
         const datas = {
-        exam_paper_id: obj.exam_paper_id,
+            exam_paper_id: obj.exam_paper_id,
             exam_session_id: 0,
             type: "schedule_exam",
         };
 
         try {
             const examsResponse = await getPreExam(datas);
-            
-            if(examsResponse){
-                setExams(examsResponse.data);
-                console.log(examsResponse.data, "epojfowiejfwoine")
-            } else {
-                const examres = await getPreExamdata(datas);
-                setExams(examres.data);
-                console.log("res123", examres);
-            }
-           
-            setQuestionsLoading(false);
+            setExams(examsResponse.data);
+
             const subjectCounts = {};
 
             examsResponse.data.forEach(exam => {
@@ -647,7 +522,7 @@ export default function StartExam({ navigation, route }) {
         } catch (error) {
             console.error("Error fetching exams:", error);
         } finally {
-            setQuestionsLoading(false);
+            setIsLoading(false);
         }
     };
 
@@ -662,31 +537,34 @@ export default function StartExam({ navigation, route }) {
     useEffect(() => {
         const filterNumbers = () => {
             let start, end;
+
             if (selectedSubjectId) {
                 const selectedSubjectData = pattern.find(item => item.id === selectedSubjectId);
                 if (selectedSubjectData) {
-                    const numbers = [];
-                    for (let i = selectedSubjectData.starting_no; i <= selectedSubjectData.ending_no && i <= exams.length; i++) {
-                        numbers.push(i);
-                    }
-                    setFilteredQuestionNumbers(numbers);
-                } 
+                    start = selectedSubjectData.starting_no;
+                    end = selectedSubjectData.ending_no;
+                } else {
+                    // switch (selectedSubjectId) {
+                    //     default:
+                    //         start = 1;
+                    //         end = exams.length;
+                    //         break;
+                    // }
+                    start = 1;
+                    end = exams.length;
+                }
             } else {
-
-            const allNumbers = [];
-            for (let i = 1; i <= exams.length; i++) {
-                allNumbers.push(i);
+                start = 1;
+                end = exams.length;
             }
-            setFilteredQuestionNumbers(allNumbers);
-            setAllNum(allNumbers)
-            
-}
-const allNumbers = [];
-for (let i = 1; i <= exams.length; i++) {
-    allNumbers.push(i);
-}
-setAllNum(allNumbers);
+
+            const numbers = [];
+            for (let i = start; i <= end && i <= exams.length; i++) {
+                numbers.push(i);
+            }
+            setFilteredQuestionNumbers(numbers);
         };
+
         filterNumbers();
     }, [selectedSubjectId, exams, pattern]);
 
@@ -780,63 +658,6 @@ setAllNum(allNumbers);
 
     const handleSubmitTest = () => {
         setSubmitModalVisible(true);
-      
-    };
-    
-    const submitTestResult = async () => {
-        const data = {
-            "exam_paper_id": obj.exam_paper_id,
-            "exam_session_id": 0,
-            "student_user_exam_id": 0,
-            "questions": []
-        };
-
-        for (let i = 1; i <= exams.length; i++) { 
-            const questionId = exams[i - 1].id; 
-            const answeredQuestion = answeredQuestions[i];
-            const skippedQuestion = skippedQuestions[i];
-            const reviewedQuestion = reviewedQuestions[i];
-            const textInputAnswer = textInputValues[i];
-
-            let status = "0"; 
-            let attemptAnswer = ""; 
-            let questionTime = 0; 
-
-            if (answeredQuestion) {
-                status = "2";
-                attemptAnswer = answeredQuestion.selected_ans; 
-                try {
-                    const questionStartTime = await AsyncStorage.getItem(`questionStartTime_${i}`);
-                    if (questionStartTime) {
-                        questionTime = Math.floor((Date.now() - parseInt(questionStartTime, 10)) / 1000);
-                    }
-                  } catch (error) {
-                    console.error('Error fetching question start time:', error);
-                  }
-            } else if (skippedQuestion) {
-                status = "1"; 
-            }
-
-            const subject = pattern.find(sub => i >= sub.starting_no && i <= sub.ending_no);
-
-            data.questions.push({
-                "question_id": questionId, 
-                "status": exams?.qtype !== 8 ? status: "2",
-                "question_time": questionTime,
-                "attempt_answer": exams?.qtype == 8 ? textInputAnswer : attemptAnswer, 
-                "reason_for_wrong": 0,
-                "comments": "",
-                "slno": i,
-                "subject_id": subject?.id, 
-                "review": !!reviewedQuestion,
-                "is_disabled": false,
-            });
-        }
-
-        console.log("Submit Data:", JSON.stringify(data)); 
-        setExam(data)
-        navigation.navigate("DashboardContent",{exam :data});
-
     };
 
     if (isLoading) {
@@ -846,35 +667,6 @@ setAllNum(allNumbers);
             </View>
         );
     }
-
-    const ClearResponseData = async () => {
-        try {
-            if (selectedNumber) {
-                const updatedAnswers = { ...answeredQuestions };
-                delete updatedAnswers[selectedNumber];
-                setAnsweredQuestions(updatedAnswers);
-    
-                const updatedSelectedAnswers = { ...selectedAnswers };
-                delete updatedSelectedAnswers[selectedNumber];
-                setSelectedAnswers(updatedSelectedAnswers);
-    
-                setSelectedOption(null);
-    
-                const updatedReviewed = { ...reviewedQuestions };
-                delete updatedReviewed[selectedNumber];
-                setReviewedQuestions(updatedReviewed);
-    
-    
-                await AsyncStorage.setItem(ANSWERED_QUESTIONS_KEY, JSON.stringify(updatedAnswers));
-                await AsyncStorage.setItem(REVIEWED_QUESTIONS_KEY, JSON.stringify(updatedReviewed));
-                
-            }
-        } catch (error) {
-            console.error("Error clearing response data:", error);
-        }
-    };
-    
-    
     return (
         <LinearGradient
             colors={theme.back}
@@ -882,12 +674,6 @@ setAllNum(allNumbers);
             start={{ x: 0, y: 1 }}
             end={{ x: 1, y: 1 }}
         >
-
-{questionsLoading && (
-                <View style={styles.loadingOverlay}>
-                    <ActivityIndicator size="large" color={theme.textColor} />
-                </View>
-            )}
             <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', marginTop: 10 }}>
                     <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>EAMCET Mock Test</Text>
@@ -912,9 +698,9 @@ setAllNum(allNumbers);
 
                                     return (
                                         <TouchableOpacity key={index}
-                                            onPress={() => handleSubjectSelect(sub)}>
+                                            onPress={() => { handleSubjectSelect(sub); setSelectedSubjectId(sub.id); }}>
                                             <LinearGradient
-                                                colors={selectedSubjectId == sub.id ? [theme.bg1, theme.bg2] : theme.bmc}
+                                                colors={selectedSubjectId === sub.id ? [theme.bg1, theme.bg2] : theme.bmc}
                                                 style={[
                                                     styles.headerline1,
                                                     {
@@ -935,35 +721,40 @@ setAllNum(allNumbers);
                                 })}
 
                             </View>
-                            
-                            {!expand &&  (
+                            {!expand && (
                                 <View style={{ flexDirection: 'column', paddingStart: 20, paddingEnd: 20 }}>
-                                    <View style={{ alignItems:'flex-end', marginTop: 15, marginRight: 20, }}>
-                                        <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>Total Questions :{exams.length}</Text>
+                                    <View style={{ flexDirection: 'row', marginTop: 15, marginLeft: 15 }}>
+                                        <Text style={[styles.mockSubtitle, { color: theme.textColor, marginRight: 100 }]}>Section A</Text>
+                                        <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>Total Questions :</Text>
+                                        <Text style={[styles.mockSubtitle, { color: theme.textColor, marginLeft: -8 }]}>{exams.length}</Text>
                                     </View>
 
                                     <View style={styles.numberContainer}>
-                                        {/* <TouchableOpacity onPress={scrollLeft}> */}
+                                        <TouchableOpacity onPress={scrollLeft}>
                                             <Image
-                                                style={[styles.img, { tintColor: theme.textColor,}]}
+                                                style={[styles.img, { tintColor: theme.textColor, marginRight: 10 }]}
                                                 source={require("../images/to.png")}
                                             />
-                                        {/* </TouchableOpacity> */}
-                                
+                                        </TouchableOpacity>
+
                                         <ScrollView
                                             horizontal
                                             ref={scrollRef}
                                             showsHorizontalScrollIndicator={false}
-                                            contentContainerStyle={{ ...styles.numberScrollView, flexGrow: 1 }}                                             
-                                            onContentSizeChange={(contentWidth) => {
-                                                setScrollViewWidth(contentWidth);
+                                            contentContainerStyle={styles.numberScrollView}
+                                            onContentSizeChange={() => {
+                                                if (selectedNumber && scrollRef.current) {
+                                                    const index = filteredQuestionNumbers.indexOf(selectedNumber);
+                                                    if (index !== -1) {
+                                                        scrollRef.current.scrollTo({
+                                                            x: index * 45,
+                                                            animated: true,
+                                                        });
+                                                    }
+                                                }
                                             }}
-                                            onLayout={({ nativeEvent: { layout: { width } } }) => {
-                                                setScrollViewWidth(width);
-                                            }}
-                                       
                                         >
-                                            {allNum.map((num) => {
+                                            {filteredQuestionNumbers.map((num) => {
                                                 let backgroundColor = theme.gray;
                                                 let borderColor = 'transparent';
                                                 let borderWidth = 0;
@@ -977,14 +768,6 @@ setAllNum(allNumbers);
                                                     borderWidth = 1;
                                                 }
                                                 return (
-                                                    <View
-                                                    key={num}
-                                                    ref={el => (numberCircleRefs.current[num] = el)}                                                    onLayout={({ nativeEvent: { layout: { width } } }) => {
-                                                    //    if (numberCircleWidth === 0) {
-                                                    //         setNumberCircleWidth(width);
-                                                    //    }
-                                                    }}
-                                                >
                                                     <TouchableOpacity key={num} onPress={() => {
                                                         if (filteredQuestionNumbers.includes(num)) {
                                                             setSelectedNumber(num);
@@ -994,43 +777,32 @@ setAllNum(allNumbers);
                                                             <Text style={{ color: "#FFF", fontSize: 16 }}>{num}</Text>
                                                         </View>
                                                     </TouchableOpacity>
-                                                    </View>
                                                 );
                                             })}
                                         </ScrollView>
 
-                                        {/* <TouchableOpacity onPress={scrollRight}> */}
+                                        <TouchableOpacity onPress={scrollRight}>
                                             <Image
-                                                style={[styles.img, { tintColor: theme.textColor ,}]}
+                                                style={[styles.img, { tintColor: theme.textColor, marginLeft: 10 }]}
                                                 source={require("../images/fro.png")}
                                             />
-                                        {/* </TouchableOpacity> */}
+                                        </TouchableOpacity>
                                     </View>
                                 </View>
                             )}
 
                             {expand && (
                                 <View style={{ flexDirection: 'column', paddingStart: 10, paddingEnd: 20 }}>
-                                {pattern.map((subject, index) => {
-                                    const subjectNumbers = [];
-                                    if (selectedSubject && subject.subject === selectedSubject.subject) { 
-                                    for (let i = subject.starting_no; i <= subject.ending_no && i <= exams.length; i++) {
-                                            subjectNumbers.push(i);
-                                    }
-                                }
-                                if (subjectNumbers.length > 0) {
-                                    return (
-                                    <View key={index}>
-                                        <View style={{ flexDirection: 'row', marginTop: 15, marginLeft: 15 }}>
-                                            <Text style={[styles.mockSubtitle, { color: theme.textColor, marginRight: 100 }]}>{subject.section_name}</Text>
-                                            <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>Total Questions :</Text>
-                                            <Text style={[styles.mockSubtitle, { color: theme.textColor, marginLeft: -8 }]}>{subject.ending_no - subject.starting_no + 1}</Text> {/* Calculate total questions per subject */}
-                                        </View>
+                                    <View style={{ flexDirection: 'row', marginTop: 15, marginLeft: 15 }}>
+                                        <Text style={[styles.mockSubtitle, { color: theme.textColor, marginRight: 100 }]}>Section A</Text>
+                                        <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>Total Questions :</Text>
+                                        <Text style={[styles.mockSubtitle, { color: theme.textColor, marginLeft: -8 }]}>{exams.length}</Text>
+                                    </View>
 
                                     <View style={{ width: windowWidth * 0.9, paddingStart: 30, marginTop: 10 }}>
 
                                         <View style={styles.gridContainer}>
-                                            {subjectNumbers.map((num) => {
+                                            {filteredQuestionNumbers.map((num) => {
                                                 let backgroundColor = theme.gray;
                                                 let borderColor = 'transparent';
                                                 let borderWidth = 0;
@@ -1060,13 +832,6 @@ setAllNum(allNumbers);
                                             })}
                                         </View>
                                     </View>
-                                    </View>
-                                    )} else {
-                                        return null; 
-                                    }
-                                
-                                }
-                                      )}
                                 </View>
                             )}
 
@@ -1237,7 +1002,7 @@ setAllNum(allNumbers);
                             )} */}
                               {exams?.qtype !== 8 &&(
                                   <View>
-                                   {["A", "B", "C", "D"].map((option, index) => {
+                                  {["A", "B", "C", "D"].map((option, index) => {
                                       const optionText = index === 0 ? exams[selectedNumber - 1]?.option1 :
                                           index === 1 ? exams[selectedNumber - 1]?.option2 :
                                               index === 2 ? exams[selectedNumber - 1]?.option3 :
@@ -1330,10 +1095,10 @@ setAllNum(allNumbers);
                                             source={require("../images/tag.png")}
                                         />
                                     </TouchableOpacity>
-                                    <TouchableOpacity style={[styles.ins, { backgroundColor: theme.textColor1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]} onPress={() => navigation.navigate("Instruct")}>
+                                    <TouchableOpacity style={[styles.ins, { backgroundColor: theme.textColor1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]}>
                                         <Image
                                             style={{ height: 20, width: 20, resizeMode: 'contain', tintColor: theme.textColor }}
-                                            source={require("../images/info.png")}
+                                            source={require("../images/eye.png")}
                                         />
                                     </TouchableOpacity>
                                     {/* <TouchableOpacity onPress={() => {
@@ -1344,9 +1109,9 @@ setAllNum(allNumbers);
                                         Skip Question
                                     </Text>
                                 </TouchableOpacity> */}
-                                    <TouchableOpacity style={{ marginLeft: 15, marginTop: 5 }} onPress={ClearResponseData}>
-                                        <Text style={[styles.ans, { color: "red", fontWeight: '700', textDecorationLine: "underline" }]}>
-                                           Clear Response
+                                    <TouchableOpacity style={{ marginLeft: 15, marginTop: 5 }} onPress={() => navigation.navigate("Instruct")}>
+                                        <Text style={[styles.ans, { color: theme.textColor, fontWeight: '700', textDecorationLine: "underline" }]}>
+                                            View Test Rules
                                         </Text>
                                     </TouchableOpacity>
                                 </View>
@@ -1412,27 +1177,25 @@ setAllNum(allNumbers);
                 }}
             >
                 <View style={styles.centeredView}>
-                    {/* <TouchableOpacity>
+                    <TouchableOpacity>
                         <Image
                             style={{ tintColor: theme.textColor, marginRight: 10, height: 45, width: 45, left: 150, top: 40, position: 'absolute' }}
                             source={require("../images/delete.png")}
                         />
-                    </TouchableOpacity> */}
+                    </TouchableOpacity>
                     <View style={[styles.modalView, { backgroundColor: theme.bmc1 }]}>
                         <Text style={[styles.modalText, { color: theme.textColor }]}>
-                            Do you want to submit the exam.
+                            Submit the Result.
                         </Text>
-                        <View style={{ flexDirection: 'row', width: '100%' }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-around', width: '100%' }}>
                             <TouchableOpacity
                                 style={[styles.button, { backgroundColor: theme.background[0] }]}
                                 onPress={() => {
                                     setSubmitModalVisible(false);
-                                    submitTestResult();
-                                    setIsFirstLoad(true);
-                                   
+                                    navigation.navigate("Dashboard");
                                 }}
                             >
-                                <Text style={[styles.textStyle, { color: theme.textColor1 }]}>Ok</Text>
+                                <Text style={[styles.textStyle, { color: theme.textColor1 }]}>Submit</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.button, { backgroundColor: theme.background[1] }]}
@@ -1474,7 +1237,7 @@ const styles = StyleSheet.create({
         marginTop: 10
     },
     headtext: {
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: "700",
         fontFamily: "CustomFont",
         paddingStart: 6,
@@ -1638,34 +1401,5 @@ const styles = StyleSheet.create({
         borderRadius:15,
         width:300,
         marginTop:20
-    },
-    numberScrollView: {
-        paddingHorizontal: 10, 
-        alignItems:"center"
-    },
-    loadingOverlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)', 
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 10, 
-    },
-    htmlStyles: {
-        div: { 
-            flexWrap: 'wrap', 
-        },
-        p: {
-            fontSize: 16,
-        },
-        strong: {
-            fontWeight: 'bold',
-        },
-        em: {
-            fontStyle: 'italic',
-        },
     },
 });

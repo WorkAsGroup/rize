@@ -16,13 +16,13 @@ const ResultMainComponent = () => {
   const navigation = useNavigation();
   const route = useRoute();
   console.log(route, "routerer");
-  const { exam_session_id, isTimeUp, type, exam_name } = route.params.state || {};
+  const { exam_session_id, isTimeUp,studentExamUID,exam_paper_id,type, exam_name } = route.params.state || {};
 
   const [examResult, setExamResults] = useState([]);
   const [attemptsData, setAttemptsData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [finishTest, setFinishTest] = useState(false);
-
+  
   useEffect(() => {
     if (attemptsData.length > 0 && exam_session_id && state.attemptId === 0) {
       const attemptId = attemptsData.find((item) => item.id === exam_session_id)?.id;
@@ -37,10 +37,13 @@ const ResultMainComponent = () => {
     setLoading(true);
     try {
       const response = await getExamResult({
-        exam_session_id,
-        student_user_exam_id: 88866,
+        exam_session_id: state.attemptId ? state.attemptId : exam_session_id,
+        student_user_exam_id: studentExamUID,
       });
-      setExamResults(response.data);
+      const updated = JSON.parse(response.data)
+      setExamResults(updated);
+      console.log(updated, "wefwiefwoei")
+     
     } catch (error) {
       console.error("Error fetching exam results:", error);
     }
@@ -51,9 +54,9 @@ const ResultMainComponent = () => {
     if (!exam_session_id) return;
     try {
       const response = await getAttempts({
-        exam_paper_id: 1854,
+        exam_paper_id: exam_paper_id,
         previous_paper_id: 0,
-        student_user_exam_id: 88866,
+        student_user_exam_id: studentExamUID,
       });
       setAttemptsData(response.data);
     } catch (error) {
@@ -68,6 +71,13 @@ const ResultMainComponent = () => {
     }
   }, [exam_session_id]);
 
+  useEffect(() => {
+    if (exam_session_id) {
+        getExamAttempts();
+        getExamResults();
+      }
+  },[state.attemptId])
+
   const reportData = useMemo(() => {
     return examResult?.[0]?.report || [];
   }, [examResult]);
@@ -76,7 +86,7 @@ const ResultMainComponent = () => {
     return examResult?.[0]?.answers || [];
   }, [examResult]);
 
-  console.log(examResult[0].report, 'skfweknf')
+  console.log(questionAndAnswerData, 'skfweknf')
   
   const handleResultBack = () => navigation.navigate("Dashboard");
 
@@ -90,7 +100,7 @@ const ResultMainComponent = () => {
             <ActivityIndicator size="large" color="#2575FC" />
           ) : (
             <>
-              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 15 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 0 }}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.subHeading}>Test Results</Text>
                   <Text style={styles.heading}>{exam_name}</Text>
@@ -100,7 +110,7 @@ const ResultMainComponent = () => {
                   onValueChange={(value) => setState((prev) => ({ ...prev, attemptId: value }))}
                   style={styles.picker}
                 >
-                  {attemptsData.map((item) => (
+                  {attemptsData&&attemptsData.map((item) => (
                     <Picker.Item key={item.id} label={item.name} value={item.id} />
                   ))}
                 </Picker>
@@ -124,7 +134,7 @@ const ResultMainComponent = () => {
               {state.defaultActiveBlock === "1" ? (
                 <ReportComponent reportData={reportData} />
               ) : (
-                <QuestionAndAnswerComponent questionAndAnswerData={questionAndAnswerData} />
+                <QuestionAndAnswerComponent questionAndAnwerData={questionAndAnswerData} />
               )}
             </>
           )}

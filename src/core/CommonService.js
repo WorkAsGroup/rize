@@ -6,6 +6,7 @@ export const endPoint = {
 	examtype: "/api/v1/general/exams",
 	preExam: "/api/v1/mocktests/guest",
 	exmQuestions: "/api/v1/exams/questions",
+	startExam: "/api/v1/exams/startExam",
 	signup: "/api/v1/auth/register",
 	login: "/api/v1/auth/login",
 	verifyOtp: "/api/v1/auth/verify-otp",
@@ -29,10 +30,10 @@ export const endPoint = {
 	chapters: "/api/v1/general/chapters",
 	createCustomExam: "/api/v1/customExam/createExam",
 	submitExam:"/api/v1/exams/finishExam"
+	
   };
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
 
 export const getSubmitExamResults = async (fields) => {
 	const headers = {
@@ -133,7 +134,7 @@ export const getAchievements = async (fields) => {
 	  .post(apiurl + endPoint.resultExamData, fields, { headers: headers })
 	  .then((res) => res.data)
 	  .catch((error) => {
-		console.error("Error in exam result:", error.response?.data || error.message);
+		console.error("Error in leader board:", error.response?.data || error.message);
 		return error;
 	  }); 
   };
@@ -151,7 +152,7 @@ export const getAchievements = async (fields) => {
 	  .post(apiurl + endPoint.attempts, fields, { headers: headers })
 	  .then((res) => res.data)
 	  .catch((error) => {
-		console.error("Error in attempts:", error.response?.data || error.message);
+		console.error("Error in leader board:", error.response?.data || error.message);
 		return error;
 	  }); 
   };
@@ -333,6 +334,24 @@ export const getPreExam = async (fields) => {
 
 	return await axios
 		.post(apiurl +  endPoint.exmQuestions, fields, { headers: headers })
+		.then((res) => {
+			return res.data;
+		})
+		.catch((error) => {
+			return error;
+		});
+};
+
+export const getPreExamdata = async (fields) => {
+	const headers = {
+		"content-type": "application/json",
+		"X-Content-Type-Options": "nosniff",
+		"X-Frame-Options": "SAMEORIGIN",
+	};
+	console.log("Making request to pre exam:", apiurl + endPoint.startExam, "with data:", fields);
+
+	return await axios
+		.post(apiurl +  endPoint.startExam, fields, { headers: headers })
 		.then((res) => {
 			return res.data;
 		})

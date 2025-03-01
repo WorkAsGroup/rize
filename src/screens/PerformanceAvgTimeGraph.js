@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, Dimensions, ActivityIndicator } from "react-native";
+import { View, Text, ScrollView, Dimensions, ActivityIndicator, useColorScheme } from "react-native";
 import { LineChart } from "react-native-chart-kit";
-import { theme } from "../core/theme";
+import { darkTheme, lightTheme } from "../theme/theme";
 
 
 const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData,  type }) => {
@@ -16,7 +16,8 @@ const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData,  type })
     { label: "chemistry", value: 4 },
     { label: "zoology", value: 5 },
   ];
-
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   console.log(performanceSubOptions, "oiefowieh")
 
   useEffect(() => {
@@ -136,8 +137,8 @@ const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData,  type })
   console.log(weekChartData, "yooov")
   return (
 
-        <View style={[{display: "flex"}, {flexDirection: "column"},{ marginTop: 10 },
-        { backgroundColor: theme.conbk }, {color: theme.textColor }]} >
+        <View style={[{display: "flex", flexDirection: "column", marginTop: 10 ,
+         backgroundColor: theme.conbk , color: theme.textColor }]} >
         <View>
         <Text style={{ fontSize: 18, fontWeight: "bold", textAlign: "left",  color: theme.textColor  }}>
           Average Time Spent
@@ -146,10 +147,10 @@ const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData,  type })
   {overallScorePercent?.length > 0 &&
     overallScorePercent.map((item, index) => (
       <React.Fragment key={index}>
-        <Text style={{ fontSize: 32, fontWeight: "400" }}>
+        <Text style={{ fontSize: 32, fontWeight: "400",color: theme.textColor  }}>
           {item.overall_user_marks_percentage}%
         </Text>
-        <Text style={{ fontSize: 13, fontWeight: "400" }}>
+        <Text style={{ fontSize: 13, fontWeight: "400" ,color: theme.textColor}}>
           {item.overall_community_marks_percentage}% Score in community
         </Text>
       </React.Fragment>
@@ -163,7 +164,7 @@ const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData,  type })
         ) : (
           <LineChart
             data={chartData}
-            width={Dimensions.get("window").width - 20}
+            width={Dimensions.get("window").width*0.8}
             height={250}
             yAxisSuffix={type === "score" ? " marks" : " sec"}
             chartConfig={{
@@ -183,15 +184,15 @@ const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData,  type })
             style={{ marginVertical: 10, borderRadius: 10 }}
           />
         )}
-        <Text style={{ fontSize: 18, fontWeight: "bold", textAlign: "left" }}> Your Time</Text>
+        <Text style={{ fontSize: 18, fontWeight: "bold", textAlign: "left",color: theme.textColor }}> Your Time</Text>
         <View>
   {overallScorePercent?.length > 0 &&
     overallScorePercent.map((item, index) => (
       <React.Fragment key={index}>
-        <Text style={{ fontSize: 32, fontWeight: "400" }}>
+        <Text style={{ fontSize: 32, fontWeight: "400",color: theme.textColor }}>
           {item.overall_user_time}s
         </Text>
-        <Text style={{ fontSize: 13, fontWeight: "400" }}>
+        <Text style={{ fontSize: 13, fontWeight: "400",color: theme.textColor }}>
           {item.overall_community_time}s avg time in community
         </Text>
       </React.Fragment>
@@ -204,7 +205,7 @@ const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData,  type })
         ) : (
           <LineChart
             data={chartData}
-            width={Dimensions.get("window").width - 20}
+            width={Dimensions.get("window").width *0.8}
             height={250}
             yAxisSuffix={type === "score" ? " marks" : " sec"}
             chartConfig={{
@@ -228,7 +229,7 @@ const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData,  type })
    <View style={{marginTop: 50}}>
    <View>
        
-        <Text style={{ fontSize: 18, fontWeight: "bold", textAlign: "left" }}>Weekly Test Activity vs. Community
+        <Text style={{ fontSize: 18, fontWeight: "bold", textAlign: "left",color: theme.textColor }}>Weekly Test Activity vs. Community
 
 </Text>
 
@@ -236,11 +237,11 @@ const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData,  type })
 {loading ? (
         <ActivityIndicator size="large" color="#0000ff" style={{ marginTop: 20, height: 200 }} />
       ) : !weekChartData.datasets.length || weekChartData.datasets[0].data.length === 0 ? (
-        <Text style={{ textAlign: "center", marginTop: 20, color: "red" }}>No data available</Text>
+        <Text style={{ textAlign: "center", marginTop: 10, color: "red" }}>No data available</Text>
       ) : (
         <LineChart
           data={weekChartData}
-          width={Dimensions.get("window").width - 20}
+          width={Dimensions.get("window").width*0.8}
           height={250}
         //   yAxisSuffix=" marks"
           chartConfig={{

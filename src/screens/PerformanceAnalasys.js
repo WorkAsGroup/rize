@@ -80,7 +80,7 @@ const PerformanceAnalasys = ({ route }) => {
         <ScrollView 
   horizontal={true} 
   showsHorizontalScrollIndicator={false} 
-  contentContainerStyle={{ paddingHorizontal: 10 }}
+  contentContainerStyle={{ paddingHorizontal: 5 }}
 >
   <View
     style={{
@@ -95,7 +95,7 @@ const PerformanceAnalasys = ({ route }) => {
         style={{
           backgroundColor: theme.textColor1,
           padding: 8,
-          marginRight: 10, // Adds spacing between items
+          marginRight: 10,
           borderBottomWidth: selectedSubject === index + 1 ? 1 : 0,
           borderBottomColor:
             selectedSubject === index + 1 ? theme.tx1 : "transparent",
@@ -216,7 +216,7 @@ const PerformanceAnalasys = ({ route }) => {
         </TouchableOpacity>
       </View>
       <ScrollView>
-        <Text style={[styles.performanceTitle, { color: theme.textColor }]}>
+        <Text style={[styles.performanceTitle, { color: theme.textColor,marginBottom:10 }]}>
           Performance Analasys
         </Text>
         <WeeklyPerformance />

@@ -87,11 +87,9 @@ const submitTestResult = async () => {
       setPreExamResults(route.params.exam);
     }
   }
-  const data = {
-    exam_paper_id: preExamResults.exam_paper_id,
-    exam_session_id: 0,
-    student_user_exam_id: studentExamId,
-    questions: preExamResults.questions.map(question => ({
+
+  const questions = JSON.stringify(
+    preExamResults.questions.map(question => ({
       question_id: question.question_id,
       status: question.status,
       question_time: question.question_time,
@@ -103,6 +101,15 @@ const submitTestResult = async () => {
       review: question.review,
       is_disabled: question.is_disabled
     }))
+  );
+  
+  console.log(typeof questions, "questionaryr");
+  
+  const data = {
+    exam_paper_id: preExamResults.exam_paper_id,
+    exam_session_id: 0,
+    student_user_exam_id: studentExamId,
+    questions: questions,
   };
 
   console.log("Submit Data:", JSON.stringify(data));
@@ -316,6 +323,7 @@ const submitTestResult = async () => {
     );
   };
 
+ 
   const handleStartTest = (item) => {
     console.log("itsm", item)
     navigation.navigate("InstructionAuth", { obj: item });
@@ -324,7 +332,8 @@ const submitTestResult = async () => {
   const handleCheckResults = (data, type) => {
     const examObject = {
         ...data,
-        type: type
+        type: type,
+        studentExamUID: studentExamId,
     }
     // dispatch(setExamSessionId(data.exam_session_id));
     navigation.navigate("resultsPage", { state: examObject });

@@ -19,8 +19,12 @@ import Instruction from './src/screens/Instruction';
 import MockTest from './src/screens/MockTest';
 import Instruct from './src/screens/Instruct';
 import EmailVerification from './src/screens/EmailVerification';
+
+
+import ResultMainComponent from './src/screens/ResultsMainConponent';
 import InstructionAuth from './src/screens/InstructionAuth';
 import StartExam from './src/screens/StartExam';
+import PerformanceAnalasys from './src/screens/PerformanceAnalasys';
 
 const Stack = createStackNavigator();
 
@@ -57,6 +61,14 @@ const AppNavigator = ({ onChangeAuth }) => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="DashboardContent" >
        {(props) => <DashboardDrawer {...props} route={{ params: { onChangeAuth: onChangeAuth } }} />}
+    </Stack.Screen>
+    <Stack.Screen name="Instruction" component={Instruction} />
+    
+    <Stack.Screen name="resultsPage" >
+       {(props) => <ResultMainComponent {...props} route={{ params: { onChangeAuth: onChangeAuth } }} />}
+    </Stack.Screen>
+    <Stack.Screen name="PerformanceAnalasys" >
+       {(props) => <PerformanceAnalasys {...props} route={{ params: { onChangeAuth: onChangeAuth } }} />}
     </Stack.Screen>
     <Stack.Screen name="InstructionAuth" component={InstructionAuth} />
     <Stack.Screen name="StartExam" component={StartExam} /> 
