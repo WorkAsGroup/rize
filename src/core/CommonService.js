@@ -29,7 +29,8 @@ export const endPoint = {
 	subjects: "/api/v1/general/subjects",
 	chapters: "/api/v1/general/chapters",
 	createCustomExam: "/api/v1/customExam/createExam",
-	submitExam:"/api/v1/exams/finishExam"
+	submitExam:"/api/v1/exams/finishExam",
+	prevpap:"/api/v1/exams/start-previouspaper-session"
 	
   };
 
@@ -42,7 +43,7 @@ export const getSubmitExamResults = async (fields) => {
 	  "X-Frame-Options": "SAMEORIGIN",
 	};
   
-	console.log("Making request to:", apiurl + endPoint.leaderBoard, "with data:", fields);
+	console.log("Making request to:", apiurl + endPoint.submitExam, "with data:", fields);
 	
 	return await axios
 	  .post(apiurl + endPoint.submitExam, fields, { headers: headers })
@@ -53,12 +54,33 @@ export const getSubmitExamResults = async (fields) => {
 	  }); 
   };
 
+  export const getPreviousPapRes = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.prevpap, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.prevpap, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in prev exam:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
+
+
 export const getPreviousPapers = async (fields) => {
 	const headers = {
 	  "content-type": "application/json",
 	  "X-Content-Type-Options": "nosniff",
 	  "X-Frame-Options": "SAMEORIGIN",
 	};
+	console.log("Making request to previousPapers:", apiurl + endPoint.previousPapers, "with data:", fields);
+
 	return await axios
 	  .post(apiurl + endPoint.previousPapers, fields, { headers: headers })
 	  .then((res) => res.data)

@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, useColorScheme, FlatList, ActivityIndicator, ScrollView, RefreshControl, Alert, Modal, Pressable } from 'react-native';
-import {SafeAreaView, SafeAreaProvider} from 'react-native-safe-area-context';
+import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 // import { LineChart } from 'react-native-svg-charts';
 import { useNavigation } from '@react-navigation/native';
 import pieChartIcon from "../images/pie-chart.png"
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { getAutoLogin, getYearsData, getMockExams, getAchievements, getLeaderBoards, getPreviousPapers,getCustomExams, getDashboardExamResult, getSubmitExamResults } from '../core/CommonService';
+import { getAutoLogin, getYearsData, getMockExams, getAchievements, getLeaderBoards, getPreviousPapers, getCustomExams, getDashboardExamResult, getSubmitExamResults, getPreviousPapRes } from '../core/CommonService';
 import { darkTheme, lightTheme } from '../theme/theme';
 import LinearGradient from "react-native-linear-gradient";
 import RNPickerSelect from 'react-native-picker-select';
@@ -34,7 +34,7 @@ const DashboardContent = ({ route }) => {
   const [mocklist, setMocklist] = useState([]);
   const [pre, setPre] = useState([]);
   const [customExams, setCustomExams] = useState([]);
-  const [mock, setMock] = useState([]); 
+  const [mock, setMock] = useState([]);
   const [loading, setLoading] = useState(true);
   const [ach, setAch] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -52,7 +52,7 @@ const DashboardContent = ({ route }) => {
     { data: [10, 90, 20, 80, 50], color: 'red', strokeWidth: 2 },
   ];
   const [selectedValue, setSelectedValue] = useState(1);
-  console.log("99999999",preExamResults);
+  console.log("99999999", preExamResults);
   const options = [
     { label: 'Last 30 Days', value: 1 },
     { label: 'Last 2 Months', value: 2 },
@@ -64,64 +64,64 @@ const DashboardContent = ({ route }) => {
 
   useEffect(() => {
     const retrieveExam = async () => {
-        try {
-            const examData = await AsyncStorage.getItem('exam');
-            if (examData !== null) {
-              setPreExamResults(JSON.parse(examData)); 
-              console.error("999 AsyncStorage:", preExamResults);
-              submitTestResult();
-            } 
-
-        } catch (error) {
-            console.error("Error retrieving exam from AsyncStorage:", error);
+      try {
+        const examData = await AsyncStorage.getItem('exam');
+        if (examData !== null) {
+          setPreExamResults(JSON.parse(examData));
+          console.error("999 AsyncStorage:", preExamResults);
+          submitTestResult();
         }
+
+      } catch (error) {
+        console.error("Error retrieving exam from AsyncStorage:", error);
+      }
     };
 
     retrieveExam();
-}, []); 
+  }, []);
 
 
-const submitTestResult = async () => {
-  if (!preExamResults){
-    if(route.params.exam){
-      setPreExamResults(route.params.exam);
+  const submitTestResult = async () => {
+    if (!preExamResults) {
+      if (route.params.exam) {
+        setPreExamResults(route.params.exam);
+      }
     }
-  }
 
-  const questions = JSON.stringify(
-    preExamResults.questions.map(question => ({
-      question_id: question.question_id,
-      status: question.status,
-      question_time: question.question_time,
-      attempt_answer: question.attempt_answer,
-      reason_for_wrong: question.reason_for_wrong,
-      comments: question.comments,
-      slno: question.slno,
-      subject_id: question.subject_id,
-      review: question.review,
-      is_disabled: question.is_disabled
-    }))
-  );
-  
-  console.log(typeof questions, "questionaryr");
-  
-  const data = {
-    exam_paper_id: preExamResults.exam_paper_id,
-    exam_session_id: 0,
-    student_user_exam_id: studentExamId,
-    questions: questions,
+    const questions = JSON.stringify(
+      preExamResults.questions.map(question => ({
+        question_id: question.question_id,
+        status: question.status,
+        question_time: question.question_time,
+        attempt_answer: question.attempt_answer,
+        reason_for_wrong: question.reason_for_wrong,
+        comments: question.comments,
+        slno: question.slno,
+        subject_id: question.subject_id,
+        review: question.review,
+        is_disabled: question.is_disabled
+      }))
+    );
+
+    console.log(typeof questions, "questionaryr");
+
+    const data = {
+      exam_paper_id: preExamResults.exam_paper_id,
+      exam_session_id: 0,
+      student_user_exam_id: studentExamId,
+      questions: questions,
+    };
+
+    console.log("Submit Data:", JSON.stringify(data));
+    try {
+      const response = await getSubmitExamResults(data);
+      console.log("Submit Response:", response);
+      setPreExamResults(null);
+    } catch (error) {
+      console.error("Error submitting results:", error);
+      // ... handle error
+    }
   };
-
-  console.log("Submit Data:", JSON.stringify(data));
-  try {
-    const response = await getSubmitExamResults(data);
-    console.log("Submit Response:", response);
-    setPreExamResults(null);
-  } catch (error) {
-    console.error("Error submitting results:", error);
-    // ... handle error
-  }
-};
 
 
   const fetchData = useCallback(async () => {
@@ -130,11 +130,11 @@ const submitTestResult = async () => {
       await getUser();
       await getYears();
       await getMock();
-     
+
       await getAchieve();
       await getLeaders();
       await getPrevious();
-      if(studentExamId) {
+      if (studentExamId) {
         await getExamResults();
         await getCustomeExam();
       }
@@ -144,7 +144,7 @@ const submitTestResult = async () => {
     } finally {
       setLoading(false);
     }
-  }, [studentExamId]);  
+  }, [studentExamId]);
 
   useEffect(() => {
     fetchData();
@@ -160,10 +160,10 @@ const submitTestResult = async () => {
     onChangeAuth(null);
   };
 
-  const getCustomeExam = async() => {
+  const getCustomeExam = async () => {
     const data = {
       student_user_exam_id: studentExamId,
-      
+
     };
     const response = await getCustomExams(data)
     setCustomExams(response.data)
@@ -266,14 +266,14 @@ const submitTestResult = async () => {
     }
   };
 
-  
+
 
   const getExamResults = async () => {
     const data = {
       student_user_exam_id: studentExamId,
       duration_id: 1
     };
-   
+
     try {
       const response = await getDashboardExamResult(data);
       console.log("exam response", response);
@@ -323,21 +323,74 @@ const submitTestResult = async () => {
     );
   };
 
- 
-  const handleStartTest = (item) => {
-    console.log("itsm", item)
-    navigation.navigate("InstructionAuth", { obj: item , studentExamId : studentExamId});
+
+  const handleStartTest = async (item) => {
+    console.log("item", item);
+    const previousExam = pre.find((p) => p.exam_name === item.exam_name);
+
+    let previousPaperId = null;
+    if (previousExam) {
+      previousPaperId = previousExam.previous_paper_id;
+      console.log("previousPaperId:", previousPaperId);
+    } else {
+      console.log("No previous exam found for:", item.exam_name);
+    }
+
+    try { // Add a try/catch block for better error handling
+      const dat = {
+        previous_exam_paper_id: previousPaperId,
+        student_user_exam_id: studentExamId,
+      };
+
+      const response = await getPreviousPapRes(dat);
+      console.log("getLeaderBoards Response:", JSON.stringify(response));
+
+      let sessionId = null; // Initialize sessionId
+      if (response && response.data && response.data.exam_session_id) {
+        sessionId = response.data.exam_session_id;
+      }
+
+      navigation.navigate("InstructionAuth", { // Navigation after async operation
+        obj: item,
+        studentExamId: studentExamId,
+        examtype: selectedType,
+        session_id: sessionId, // Use potentially updated sessionId
+      });
+    } catch (error) {
+      console.error("Error in handleStartTest:", error);
+      // Handle the error appropriately, e.g., display an error message to the user.
+    }
   };
+
+  const handlePrv = async (item) => {
+    const previous_id = pre.filter((p) => p.exam_name === item.exam_name);
+    if(previous_id.length > 0){
+      console.log("previous_id", previous_id);
+    }
+   
+    const dat = {
+      "previous_exam_paper_id": previous_id,
+      "student_user_exam_id": studentExamId
+    };
+    console.log("getLeaderBoards", dat , item);
+
+    const response = await getPreviousPapRes(dat);
+    console.log("getLeaderBoards", JSON.stringify(response));
+    if (response) {
+      console.log("0000", response)
+    }
+
+  }
 
   const handleCheckResults = (data, type) => {
     const examObject = {
-        ...data,
-        type: type,
-        studentExamUID: studentExamId,
+      ...data,
+      type: type,
+      studentExamUID: studentExamId,
     }
     // dispatch(setExamSessionId(data.exam_session_id));
     navigation.navigate("resultsPage", { state: examObject });
-};
+  };
 
   const renderItemMock = ({ item }) => {
     console.log(item, "exam status")
@@ -354,80 +407,80 @@ const submitTestResult = async () => {
           </View>
           {/* Start Button */}
           <View style={{ marginTop: 10 }}>
-      {item.exam_session_id === 0 && item.auto_save_id === 0 ? (
-        // Start Button
-        <TouchableOpacity
-          style={[styles.startExamBtn, { marginRight: 10 }]}
-          // onPress={() => handleStartExam(item, "mockTest")}
-          onPress={() => handleStartTest(item)} 
-        >
-          <LinearGradient
-            colors={["#B465DA", "#CF6CC9", "#EE609C", "#EE609C"]}
-            style={styles.gradientButton}
-          >
-            <Text style={styles.textExamBtn}>Start ➡</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      ) : item.exam_session_id !== 0 && item.auto_save_id === 0 ? (
-        // Replay & Results Button
-        <View style={[styles.startExamBtn, { flexDirection: "row", marginRight: 10 }]}>
-          <TouchableOpacity
-            onPress={() => handleStartTest(item, "mockTest")}
-            style={[styles.textExamBtn, styles.replayButton]}
-          >
-            <Text style={styles.buttonText}>🔄</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => handleCheckResults(item, "schedule_exam")}
-            style={[styles.textExamBtn, styles.resultsButton]}
-          >
-            <Text style={styles.buttonText}>Results</Text>
-            <Image source={pieChartIcon} style={styles.icon} />
-          </TouchableOpacity>
-        </View>
-      ) : item.exam_session_id !== 0 && item.auto_save_id !== 0 ? (
-        // Resume & Results Button
-        <View style={[styles.startExamBtn, { flexDirection: "row", marginRight: 10 }]}>
-          <LinearGradient
-            colors={["#B465DA", "#CF6CC9", "#EE609C", "#EE609C"]}
-            style={[styles.gradientButton, { marginRight: 10 }]}
-          >
-            <TouchableOpacity onPress={() => handleStartTest(item, "mockTest")}>
-              <Text style={styles.textExamBtn}>Resume</Text>
-            </TouchableOpacity>
-          </LinearGradient>
-          <TouchableOpacity
-            onPress={() => handleCheckResults(item, "schedule_exam")}
-            style={[styles.textExamBtn, styles.resultsButton]}
-          >
-            <Text style={styles.buttonText}>Results</Text>
-            <Image source={pieChartIcon} style={styles.icon} />
-          </TouchableOpacity>
-        </View>
-      ) : (
-        // Resume Button Only
-        <LinearGradient
-          colors={["#B465DA", "#CF6CC9", "#EE609C", "#EE609C"]}
-          style={[styles.gradientButton, { marginRight: 10 }]}
-        >
-          <TouchableOpacity           onPress={() => handleStartTest(item)}          >
-            <Text style={styles.textExamBtn}>Resume</Text>
-          </TouchableOpacity>
-        </LinearGradient>
-      )}
-    </View>
-        </View>
-  
-        {/* Exam Marks List */}
-        {item.marks?.length > 0 && (          <ScrollView  showsHorizontalScrollIndicator={false} 
-        
-         horizontal  contentContainerStyle={styles.marksContainer} >
-            {item.marks.map((mark, index) => (
-              <TouchableOpacity key={index} style={[styles.markButton, styles[`bgColor${index}`], styles[`borderColor${index}`]]}>
-                <Text style={[styles.markText,{color:theme.textColor}]}>{mark.subject}: {mark.subject_score}</Text>
+            {item.exam_session_id === 0 && item.auto_save_id === 0 ? (
+              // Start Button
+              <TouchableOpacity
+                style={[styles.startExamBtn, { marginRight: 10 }]}
+                // onPress={() => handleStartExam(item, "mockTest")}
+                onPress={() => handleStartTest(item)}
+              >
+                <LinearGradient
+                  colors={["#B465DA", "#CF6CC9", "#EE609C", "#EE609C"]}
+                  style={styles.gradientButton}
+                >
+                  <Text style={styles.textExamBtn}>Start ➡</Text>
+                </LinearGradient>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+            ) : item.exam_session_id !== 0 && item.auto_save_id === 0 ? (
+              // Replay & Results Button
+              <View style={[styles.startExamBtn, { flexDirection: "row", marginRight: 10 }]}>
+                <TouchableOpacity
+                  onPress={() => handleStartTest(item, "mockTest")}
+                  style={[styles.textExamBtn, styles.replayButton]}
+                >
+                  <Text style={styles.buttonText}>🔄</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => handleCheckResults(item, "schedule_exam")}
+                  style={[styles.textExamBtn, styles.resultsButton]}
+                >
+                  <Text style={styles.buttonText}>Results</Text>
+                  <Image source={pieChartIcon} style={styles.icon} />
+                </TouchableOpacity>
+              </View>
+            ) : item.exam_session_id !== 0 && item.auto_save_id !== 0 ? (
+              // Resume & Results Button
+              <View style={[styles.startExamBtn, { flexDirection: "row", marginRight: 10 }]}>
+                <LinearGradient
+                  colors={["#B465DA", "#CF6CC9", "#EE609C", "#EE609C"]}
+                  style={[styles.gradientButton, { marginRight: 10 }]}
+                >
+                  <TouchableOpacity onPress={() => handleStartTest(item, "mockTest")}>
+                    <Text style={styles.textExamBtn}>Resume</Text>
+                  </TouchableOpacity>
+                </LinearGradient>
+                <TouchableOpacity
+                  onPress={() => handleCheckResults(item, "schedule_exam")}
+                  style={[styles.textExamBtn, styles.resultsButton]}
+                >
+                  <Text style={styles.buttonText}>Results</Text>
+                  <Image source={pieChartIcon} style={styles.icon} />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              // Resume Button Only
+              <LinearGradient
+                colors={["#B465DA", "#CF6CC9", "#EE609C", "#EE609C"]}
+                style={[styles.gradientButton, { marginRight: 10 }]}
+              >
+                <TouchableOpacity onPress={() => handleStartTest(item)}          >
+                  <Text style={styles.textExamBtn}>Resume</Text>
+                </TouchableOpacity>
+              </LinearGradient>
+            )}
+          </View>
+        </View>
+
+        {/* Exam Marks List */}
+        {item.marks?.length > 0 && (<ScrollView showsHorizontalScrollIndicator={false}
+
+          horizontal contentContainerStyle={styles.marksContainer} >
+          {item.marks.map((mark, index) => (
+            <TouchableOpacity key={index} style={[styles.markButton, styles[`bgColor${index}`], styles[`borderColor${index}`]]}>
+              <Text style={[styles.markText, { color: theme.textColor }]}>{mark.subject}: {mark.subject_score}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
         )}
       </View>
     );
@@ -464,7 +517,7 @@ const submitTestResult = async () => {
     if (!examResults || !Array.isArray(examResults)) {
       return <Text>No data available</Text>;
     }
-  
+
     const periods = examResults || [];
     const allSubjects = [...new Set(periods.flatMap((period) => period.subjects?.map((s) => s.subject_name) || []))];
     const uniqueDates = [...new Set(periods.map((period) => period.date))];
@@ -479,24 +532,24 @@ const submitTestResult = async () => {
           : 0;
       }),
     }));
-  
+
     const xLabels = uniqueDates
-  
+
     const subjectColors = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#A133FF"];
-  
+
     return (
       <View style={{ backgroundColor: theme.conbk, padding: 10, borderRadius: 10 }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
           <View>
             <Text style={{ fontSize: 18, fontWeight: "bold", color: theme.textColor }}>Weekly Performance</Text>
-            <Text style={{ fontSize: 14,color: theme.textColor }}>Total tests this week</Text>
+            <Text style={{ fontSize: 14, color: theme.textColor }}>Total tests this week</Text>
             <Text style={{ fontSize: 24, fontWeight: "bold", color: theme.textColor }}>
               {totalExamCount ? totalExamCount : 0}
             </Text>
           </View>
-  
+
           <View>
-            <Text style={{color: theme.textColor}}>{dateRange}</Text>
+            <Text style={{ color: theme.textColor }}>{dateRange}</Text>
             <RNPickerSelect
               onValueChange={(value) => setSelectedValue(value)}
               items={options}
@@ -508,7 +561,7 @@ const submitTestResult = async () => {
             />
           </View>
         </View>
-  
+
         <View style={{ flexDirection: "row", marginTop: 10 }}>
           <TouchableOpacity
             style={{
@@ -534,45 +587,45 @@ const submitTestResult = async () => {
             </Text>
           </TouchableOpacity>
         </View>
-  
+
         {/* Line Chart */}
         {chartData && chartData.length > 0 && xLabels && xLabels.length > 0 ? (
-  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-   <LineChart
-      data={{
-        labels: xLabels,
-        datasets: chartData.map((subject, index) => ({
-          data: subject.data || [], 
-          color: () => subjectColors[index % subjectColors.length],
-          strokeWidth: 2,
-        })),
-      }}
-      width={Dimensions.get("window").width*0.85}
-      height={250}
-      yAxisLabel=""
-      chartConfig={{
-        backgroundColor: theme.conbk,
-        backgroundGradientFrom: theme.white,
-        backgroundGradientTo: theme.white,
-        decimalPlaces: 0,
-        color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-        labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-        propsForDots: {
-          r: "4",
-          strokeWidth: "2",
-          stroke: "#ffa726",
-        },
-      }}
-      bezier
-      style={{
-        marginVertical: 8,
-        borderRadius: 10,
-      }}
-    />
-  </ScrollView>
-) : (
-  <Text style={{color:theme.textColor}}>No data available</Text>
-)}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <LineChart
+              data={{
+                labels: xLabels,
+                datasets: chartData.map((subject, index) => ({
+                  data: subject.data || [],
+                  color: () => subjectColors[index % subjectColors.length],
+                  strokeWidth: 2,
+                })),
+              }}
+              width={Dimensions.get("window").width * 0.85}
+              height={250}
+              yAxisLabel=""
+              chartConfig={{
+                backgroundColor: theme.conbk,
+                backgroundGradientFrom: theme.white,
+                backgroundGradientTo: theme.white,
+                decimalPlaces: 0,
+                color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                propsForDots: {
+                  r: "4",
+                  strokeWidth: "2",
+                  stroke: "#ffa726",
+                },
+              }}
+              bezier
+              style={{
+                marginVertical: 8,
+                borderRadius: 10,
+              }}
+            />
+          </ScrollView>
+        ) : (
+          <Text style={{ color: theme.textColor }}>No data available</Text>
+        )}
         {/* Subject Legends */}
         <View style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 10 }}>
           {chartData.map((subject, index) => (
@@ -597,91 +650,91 @@ const submitTestResult = async () => {
 
 
     return (
-      <View style={[styles.performanceCard, { backgroundColor: theme.conbk, marginTop: 20, height:windowHeight * .4 }]}>
+      <View style={[styles.performanceCard, { backgroundColor: theme.conbk, marginTop: 20, height: windowHeight * .4 }]}>
         <Text style={[styles.performanceTitle, { color: theme.textColor }]}>Mock Tests</Text>
         <Text style={styles.subText}>Select your preferred exam and start practicing</Text>
-       
-        <ScrollView 
-  horizontal={true} 
-  showsHorizontalScrollIndicator={false} 
-  contentContainerStyle={{ flexGrow: 1, flexDirection: 'row', paddingHorizontal: -5, height: 60,paddingBottom: 15,}}
->
-  <View 
-    style={{ 
-      flexDirection: 'row', 
-      minWidth: '100%', 
-      alignItems: 'center' 
-    }}
-  >
-    <TouchableOpacity
-      style={{
-        backgroundColor: theme.textColor1,
-        padding: 8,
-        borderBottomWidth: selectedType === 'mock' ? 1 : 0,
-        borderBottomColor: selectedType === 'mock' ? theme.tx1 : "transparent"
-      }}
-      onPress={() => {
-        setMock(mocklist);
-        handleSetMockType('mock');
-      }}
-    >
-      <Text style={{ color: selectedType === 'mock' ? theme.tx1 : theme.textColor,fontSize:13 }}>Mock Tests</Text>
-    </TouchableOpacity>
 
-    <TouchableOpacity
-      style={{
-        backgroundColor: theme.textColor1,
-        padding: 8,
-        marginLeft: 10,
-        borderBottomWidth: selectedType === 'previous' ? 1 : 0,
-        borderBottomColor: selectedType === 'previous' ? theme.tx1 : "transparent"
-      }}
-      onPress={() => {
-        handleSetMockType('previous');
-        setMock(pre);
-      }}
-    >
-      <Text style={{ color: selectedType === 'previous' ? theme.tx1 : theme.textColor,fontSize:13 }}>Previous years exam</Text>
-    </TouchableOpacity>
+        <ScrollView
+          horizontal={true}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ flexGrow: 1, flexDirection: 'row', paddingHorizontal: -5, height: 60, paddingBottom: 15, }}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              minWidth: '100%',
+              alignItems: 'center'
+            }}
+          >
+            <TouchableOpacity
+              style={{
+                backgroundColor: theme.textColor1,
+                padding: 8,
+                borderBottomWidth: selectedType === 'mock' ? 1 : 0,
+                borderBottomColor: selectedType === 'mock' ? theme.tx1 : "transparent"
+              }}
+              onPress={() => {
+                setMock(mocklist);
+                handleSetMockType('mock');
+              }}
+            >
+              <Text style={{ color: selectedType === 'mock' ? theme.tx1 : theme.textColor, fontSize: 13 }}>Mock Tests</Text>
+            </TouchableOpacity>
 
-    <TouchableOpacity
-      style={{
-        backgroundColor: theme.textColor1,
-        padding: 8,
-        marginLeft: 10,
-        borderBottomWidth: selectedType === 'custom' ? 1 : 0,
-        borderBottomColor: selectedType === 'custom' ? theme.tx1 : "transparent"
-      }}
-      onPress={() => {
-        handleSetMockType('custom');
-        setMock(customExams);
-      }}
-    >
-      <Text style={{ color: selectedType === 'custom' ? theme.tx1 : theme.textColor ,fontSize:13}}>Custom Tests</Text>
-    </TouchableOpacity>
-  </View>
-</ScrollView>
-        {selectedType==="custom" &&  <TouchableOpacity
-                        style={{display: "flex", justifyContent: "flex-end", alignItems: "flex-end",  width:"100%" }}
-                        activeOpacity={0.8}
-                        onPress={() =>setShowCustom(true)}
-                      >
-                        <LinearGradient
-                          colors={[theme.tx1, theme.tx2]}
-                          start={{ x: 0, y: 1 }}
-                          end={{ x: 1, y: 1 }}
-                          style={styles.startButtonGradients}
-                        >
-                          <Text
-                            style={[
-                              styles.startButtonTexts,
-                              { color: theme.textColor1, fontFamily: "CustomFont" },
-                            ]}
-                          >
-                            + CREATE CUSTOM
-                          </Text>
-                        </LinearGradient>
-                      </TouchableOpacity>}
+            <TouchableOpacity
+              style={{
+                backgroundColor: theme.textColor1,
+                padding: 8,
+                marginLeft: 10,
+                borderBottomWidth: selectedType === 'previous' ? 1 : 0,
+                borderBottomColor: selectedType === 'previous' ? theme.tx1 : "transparent"
+              }}
+              onPress={() => {
+                handleSetMockType('previous');
+                setMock(pre);
+              }}
+            >
+              <Text style={{ color: selectedType === 'previous' ? theme.tx1 : theme.textColor, fontSize: 13 }}>Previous years exam</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                backgroundColor: theme.textColor1,
+                padding: 8,
+                marginLeft: 10,
+                borderBottomWidth: selectedType === 'custom' ? 1 : 0,
+                borderBottomColor: selectedType === 'custom' ? theme.tx1 : "transparent"
+              }}
+              onPress={() => {
+                handleSetMockType('custom');
+                setMock(customExams);
+              }}
+            >
+              <Text style={{ color: selectedType === 'custom' ? theme.tx1 : theme.textColor, fontSize: 13 }}>Custom Tests</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+        {selectedType === "custom" && <TouchableOpacity
+          style={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-end", width: "100%" }}
+          activeOpacity={0.8}
+          onPress={() => setShowCustom(true)}
+        >
+          <LinearGradient
+            colors={[theme.tx1, theme.tx2]}
+            start={{ x: 0, y: 1 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.startButtonGradients}
+          >
+            <Text
+              style={[
+                styles.startButtonTexts,
+                { color: theme.textColor1, fontFamily: "CustomFont" },
+              ]}
+            >
+              + CREATE CUSTOM
+            </Text>
+          </LinearGradient>
+        </TouchableOpacity>}
         <FlatList
           data={mock}
           renderItem={renderItemMock}
@@ -726,7 +779,7 @@ const submitTestResult = async () => {
   return (
     <View style={[styles.container, { backgroundColor: theme.textbgcolor }]}>
       {/* Header */}
-      <View style={[styles.header, {alignItems: "center"}]}>
+      <View style={[styles.header, { alignItems: "center" }]}>
         <TouchableOpacity onPress={() => navigation.openDrawer()}>
           <Image source={{ uri: 'https://cdn-icons-png.flaticon.com/512/1828/1828859.png' }} style={[styles.icon, { tintColor: theme.textColor }]} />
         </TouchableOpacity>
@@ -744,35 +797,35 @@ const submitTestResult = async () => {
       >
         <Text style={[styles.welcome, { color: theme.textColor }]}>Good morning 🔥</Text>
         <Text style={[styles.username, { color: theme.textColor }]}>Welcome {name},</Text>
-        
-     
-      <SafeAreaView style={styles.centeredView}>
-        <Modal
-          animationType="slide"
-          transparent={false} // Ensures full screen
-          visible={showCustom}
-          onRequestClose={() => setShowCustom(false)}
-        >
-          <View style={styles.modalContainer}>
-            {/* Header Section */}
-            <View style={[styles.header, {paddingHorizontal: 20}]}>
-              <Text style={styles.headerText}>Custom Exam</Text>
-              <Pressable onPress={() => setShowCustom(false)}>
-                <Image source={require("../images/delete.png")} style={{height: 30, width: 30}} />
-              </Pressable>
+
+
+        <SafeAreaView style={styles.centeredView}>
+          <Modal
+            animationType="slide"
+            transparent={false} // Ensures full screen
+            visible={showCustom}
+            onRequestClose={() => setShowCustom(false)}
+          >
+            <View style={styles.modalContainer}>
+              {/* Header Section */}
+              <View style={[styles.header, { paddingHorizontal: 20 }]}>
+                <Text style={styles.headerText}>Custom Exam</Text>
+                <Pressable onPress={() => setShowCustom(false)}>
+                  <Image source={require("../images/delete.png")} style={{ height: 30, width: 30 }} />
+                </Pressable>
+              </View>
+
+              {/* Separator Line */}
+              <View style={styles.separator} />
+
+              {/* Modal Content */}
+
+              <CustomExamCreation id={studentExamId} onClose={setShowCustom} />
+
             </View>
+          </Modal>
+        </SafeAreaView>
 
-            {/* Separator Line */}
-            <View style={styles.separator} />
-
-            {/* Modal Content */}
-  
-             <CustomExamCreation id={studentExamId} onClose={setShowCustom} />
-          
-          </View>
-        </Modal>
-      </SafeAreaView>
-  
         <WeeklyPerformance />
         <MockTestss />
         <Achievements />
@@ -954,7 +1007,7 @@ const styles = StyleSheet.create({
     flex: 1,
     // justifyContent: "center",
     // alignItems: "center",
-  },  
+  },
   itemContainer: {
     width: "98%",
     margin: 5,

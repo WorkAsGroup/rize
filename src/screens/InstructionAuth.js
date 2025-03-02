@@ -18,9 +18,12 @@ const windowHeight = Dimensions.get("window").height;
 
 export default function InstructionAuth({ navigation,route }) {
     const colorScheme = useColorScheme();
+    const [session_id , setSessionid] = useState(route?.params?.session_id);
     const theme = colorScheme === "dark" ? darkTheme : lightTheme;
     const obj = route?.params?.obj;
     const studentExamId = route?.params?.studentExamId;
+    const examtype = route?.params?.examtype;
+
     console.log("mocktest1", obj );
 
 
@@ -316,7 +319,8 @@ export default function InstructionAuth({ navigation,route }) {
                             </View>
 
                             <TouchableOpacity activeOpacity={0.8} onPress={() => {
-                                navigation.navigate("StartExam",{obj : obj,studentExamId:studentExamId})
+                                // console.log("111111111",pre,route?.params?.pre)
+                                navigation.navigate("StartExam",{obj : obj,studentExamId:studentExamId,examtype:examtype,session_id:session_id})
                             }}> 
                                 <LinearGradient
                                     colors={[theme.tx1, theme.tx2]}

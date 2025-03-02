@@ -153,7 +153,9 @@ export default function StartExam({ navigation, route }) {
     const [isFirstLoad, setIsFirstLoad] = useState(true);
     const timerInterval = useRef(null);
     const obj = route?.params?.obj;
-    // console.log("mocktest11", obj);
+    const [session_id , setSessionid] = useState(route?.params?.session_id);
+    const examtype = route?.params?.examtype;
+
     const [subjectName,setSubjectName] = useState([]);
     const [submitModalVisible, setSubmitModalVisible] = useState(false);
     const [textInputValues, setTextInputValues] = useState({});
@@ -290,7 +292,12 @@ export default function StartExam({ navigation, route }) {
         loadStoredData();
         getExamPattern();
         if (obj) {
-            getExam();
+            if (examtype === "previous") {
+            getPrevExam()
+            } else {
+                getExam();
+            }
+            
         }
     }, []);
 
@@ -449,7 +456,11 @@ export default function StartExam({ navigation, route }) {
         getExamPattern();
 
         if (obj) {
-            getExam();
+            if (examtype === "previous") {
+                getPrevExam()
+                } else {
+                    getExam();
+                }
         }
     }, []);
 
@@ -603,63 +614,90 @@ export default function StartExam({ navigation, route }) {
     };
 
     const getExam = async () => {
-        setQuestionsLoading(true); 
-        const datas = {
-        exam_paper_id: obj.exam_paper_id,
-            exam_session_id: 0,
-            type: "schedule_exam",
-        };
-
-        const dats = {
-            exam_paper_id: obj.exam_paper_id,
+        console.log("objobjobj", obj);
+        setQuestionsLoading(true);
+      
+            const datas = {
+                exam_paper_id: obj.exam_paper_id,
                 exam_session_id: 0,
-                type: "previous_exam",
-            };
-
-        try {
+                type: "schedule_exam",
+              };
+        
+      
+          try {
             const examsResponse = await getPreExam(datas);
-            
-            if(examsResponse){
-                setExams(examsResponse.data);
-                console.log(examsResponse.data, "epojfowiejfwoine")
-            }
-            
-            if(examsResponse.data == []){
-                const examsResponse = await getPreExam(dats);
-                setExams(examsResponse.data);
-                console.log("res123", examsResponse);
-            }
-            
-           
-            setQuestionsLoading(false);
+            setExams(examsResponse.data);
+      
             const subjectCounts = {};
-
+      
             examsResponse.data.forEach(exam => {
-                const subjectValue = exam.subject !== undefined ? exam.subject : "Unknown Subject";
-
-                if (subjectCounts[subjectValue]) {
-                    subjectCounts[subjectValue]++;
-                } else {
-                    subjectCounts[subjectValue] = 1;
-                }
+              const subjectValue = exam.subject !== undefined ? exam.subject : "Unknown Subject";
+      
+              subjectCounts[subjectValue] = (subjectCounts[subjectValue] || 0) + 1; 
             });
-
+      
             for (const subjectValue in subjectCounts) {
-                if (subjectCounts.hasOwnProperty(subjectValue)) {
-                    console.log(`Subject Value: ${subjectValue}, Object Count: ${subjectCounts[subjectValue]}`);
-                }
+              if (subjectCounts.hasOwnProperty(subjectValue)) {
+                console.log(`Subject Value: ${subjectValue}, Object Count: ${subjectCounts[subjectValue]}`);
+              }
             }
-
+      
             console.log("Subject Counts:", subjectCounts);
             console.log("Exams Response:", examsResponse);
-
-
-        } catch (error) {
+      
+          } catch (error) {
             console.error("Error fetching exams:", error);
-        } finally {
+          } finally {
             setQuestionsLoading(false);
+          }
+         
+      
+         
         }
-    };
+
+    const getPrevExam = async () => {
+        console.log("objobjobj", obj);
+        setQuestionsLoading(true);
+      
+          const datas = {
+            exam_paper_id: obj.exam_paper_id,
+            exam_session_id: session_id,
+            type: "previous_exam",
+          };
+    
+        
+      
+          try {
+            const examsResponse = await getPreExam(datas);
+            setExams(examsResponse.data);
+      
+            const subjectCounts = {};
+      
+            examsResponse.data.forEach(exam => {
+              const subjectValue = exam.subject !== undefined ? exam.subject : "Unknown Subject";
+      
+              subjectCounts[subjectValue] = (subjectCounts[subjectValue] || 0) + 1; 
+            });
+      
+            for (const subjectValue in subjectCounts) {
+              if (subjectCounts.hasOwnProperty(subjectValue)) {
+                console.log(`Subject Value: ${subjectValue}, Object Count: ${subjectCounts[subjectValue]}`);
+              }
+            }
+      
+            console.log("Subject Counts:", subjectCounts);
+            console.log("Exams Response:", examsResponse);
+      
+          } catch (error) {
+            console.error("Error fetching exams:", error);
+          } finally {
+            setQuestionsLoading(false);
+          }
+         
+      
+         
+        }
+    
 
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
