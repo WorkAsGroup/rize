@@ -129,7 +129,7 @@ const extractContent = (html) => {
 export default function StartExam({ navigation, route }) {
     const colorScheme = useColorScheme();
     const theme = colorScheme === "dark" ? darkTheme : lightTheme;
-
+    const studentExamId = route?.params?.studentExamId;
     const [selectedSubject, setSelectedSubject] = useState();
     const [selectedNumber, setSelectedNumber] = useState(1);
     const scrollRef = useRef(null);
@@ -610,17 +610,26 @@ export default function StartExam({ navigation, route }) {
             type: "schedule_exam",
         };
 
+        const dats = {
+            exam_paper_id: obj.exam_paper_id,
+                exam_session_id: 0,
+                type: "previous_exam",
+            };
+
         try {
             const examsResponse = await getPreExam(datas);
             
             if(examsResponse){
                 setExams(examsResponse.data);
                 console.log(examsResponse.data, "epojfowiejfwoine")
-            } else {
-                const examres = await getPreExamdata(datas);
-                setExams(examres.data);
-                console.log("res123", examres);
             }
+            
+            if(examsResponse.data == []){
+                const examsResponse = await getPreExam(dats);
+                setExams(examsResponse.data);
+                console.log("res123", examsResponse);
+            }
+            
            
             setQuestionsLoading(false);
             const subjectCounts = {};
@@ -643,6 +652,7 @@ export default function StartExam({ navigation, route }) {
 
             console.log("Subject Counts:", subjectCounts);
             console.log("Exams Response:", examsResponse);
+
 
         } catch (error) {
             console.error("Error fetching exams:", error);

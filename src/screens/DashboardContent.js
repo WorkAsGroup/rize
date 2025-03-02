@@ -326,7 +326,7 @@ const submitTestResult = async () => {
  
   const handleStartTest = (item) => {
     console.log("itsm", item)
-    navigation.navigate("InstructionAuth", { obj: item });
+    navigation.navigate("InstructionAuth", { obj: item , studentExamId : studentExamId});
   };
 
   const handleCheckResults = (data, type) => {

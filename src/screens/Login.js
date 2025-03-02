@@ -82,33 +82,22 @@ export default function Login({ route }) {
             password: password
         };
 
+        if(route.params.exam){
+            const examValue = JSON.stringify(route.params.exam);
+            await AsyncStorage.setItem("exam", examValue);
+        }
+
         if (validateFields()) {
             const response = await getLoginDetails(data);
             console.log("Response", response);
 
             if(response.statusCode == 200){
 
-                 if (response.statusCode == 200) {
-                    if (route.params && route.params.onChangeAuth) {
-                        console.log("Exam Parameter:", route.params.exam);
-                        if(route.params.exam){
-                            const examValue = JSON.stringify(route.params.exam);
-                            await AsyncStorage.setItem("exam", examValue);
-            
-                        }
-                       
-                        navigation.navigate("EmailVerification", {
-                            token: response.data.token,
-                            onChangeAuth: route.params.onChangeAuth,
-                            exam: route.params.exam
-                        });
-                    } else {
-                        console.log("onChangeAuth not found");
-                    }
-                } else {
-                    Alert.alert("Login failed. Please check your credentials.");
-                }
-
+                navigation.navigate("EmailVerification", {
+                    token: response.data.token,
+                    onChangeAuth: route.params.onChangeAuth,
+                    exam: route.params.exam
+                });
             } else {
                  Alert.alert("Login failed. Please check your credentials.");
             }

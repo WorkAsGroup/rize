@@ -37,8 +37,7 @@ export default function EmailVerification({navigation,route}) {
  
 
   const handleSkip = () => {
-    if (route.params?.onChangeAuth && typeof route.params.onChangeAuth === 'function') {
-        console.log("888888888",route.params.exam)
+    if (route.params?.onChangeAuth ) {
         route.params.onChangeAuth(token);
     } else {
       console.warn("onChangeAuth function not provided in navigation params.");

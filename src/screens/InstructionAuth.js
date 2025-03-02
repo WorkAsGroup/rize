@@ -20,6 +20,7 @@ export default function InstructionAuth({ navigation,route }) {
     const colorScheme = useColorScheme();
     const theme = colorScheme === "dark" ? darkTheme : lightTheme;
     const obj = route?.params?.obj;
+    const studentExamId = route?.params?.studentExamId;
     console.log("mocktest1", obj );
 
 
@@ -42,7 +43,6 @@ export default function InstructionAuth({ navigation,route }) {
                             style={styles.mockTestContainer}
                         >
                             <View style={{ marginTop: 10 }}>
-                                <Text style={[styles.feature, { color: theme.textColor, marginBottom: 5, paddingStart: 10 }]}>Free Mock test</Text>
 
                                 <Svg height="50" width={windowWidth * 0.9}>
                                     <Defs>
@@ -316,7 +316,7 @@ export default function InstructionAuth({ navigation,route }) {
                             </View>
 
                             <TouchableOpacity activeOpacity={0.8} onPress={() => {
-                                navigation.navigate("StartExam",{obj : obj})
+                                navigation.navigate("StartExam",{obj : obj,studentExamId:studentExamId})
                             }}> 
                                 <LinearGradient
                                     colors={[theme.tx1, theme.tx2]}

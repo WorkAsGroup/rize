@@ -37,6 +37,7 @@ const AuthNavigator = ({ onChangeAuth }) => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
     return () => backHandler.remove();
   }, [handleBackPress]); 
+  
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -61,9 +62,7 @@ const AppNavigator = ({ onChangeAuth }) => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="DashboardContent" >
        {(props) => <DashboardDrawer {...props} route={{ params: { onChangeAuth: onChangeAuth } }} />}
-    </Stack.Screen>
-    <Stack.Screen name="Instruction" component={Instruction} />
-    
+    </Stack.Screen>    
     <Stack.Screen name="resultsPage" >
        {(props) => <ResultMainComponent {...props} route={{ params: { onChangeAuth: onChangeAuth } }} />}
     </Stack.Screen>
@@ -121,28 +120,33 @@ export default function App() {
     }
   }, []);
 
+
+
+
   useEffect(() => {
     const checkToken = async () => {
       try {
         const token = await AsyncStorage.getItem('authToken');
-        setAuthToken(token);
+        console.log("Token retrieved:", token); 
+
+        if (token) {
+          setAuthToken(token); 
+        } 
       } catch (e) {
         console.log(e);
       } finally {
-        setIsAppReady(true)
+        setIsAppReady(true); 
       }
     };
 
-    setTimeout(() => {
-      checkToken();
-    }, 1000);
-  }, [handleAuthChange]);
+    checkToken(); 
+  }, []);
 
   return (
     <NavigationContainer>
       {isAppReady ? (
         authToken ? (
-          <AppNavigator onChangeAuth={handleAuthChange} />
+          <AppNavigator onChangeAuth={handleAuthChange} initialRouteName={"DashboardContent"}/>
         ) : (
           <AuthNavigator onChangeAuth={handleAuthChange} />
         )
