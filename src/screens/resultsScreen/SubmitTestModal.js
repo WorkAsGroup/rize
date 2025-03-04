@@ -7,28 +7,37 @@ import { useNavigation } from "@react-navigation/native";
 import congratsLogo from "../../images/congratsLogo.png";
 import timeOverLogo from "../../images/timeOverLogo.png";
 
-const SubmitTestModal = ({ setFinishTest, finishTest, isTimeUp, examType }) => {
+const SubmitTestModal = ({studentExamId,data, setFinishTest, finishTest, isTimeUp, examType }) => {
   const navigation = useNavigation();
-
+console.log(studentExamId,data, finishTest, isTimeUp, examType, "yohova")
  const [loading, setLoading] = useState(false);
   // const examInstructionDetails = useSelector(getInstructions);
 
   const backToHome = () => {
-    if (examType === "guestMockTest") {
+    // if (examType === "guestMockTest") {
       // navigation.navigate(APP_ROUTES.GUEST_MOCKTEST);
-    } else {
-      // navigation.navigate(APP_ROUTES.DASHBOARD);
-    }
-   setFinishTest(false);
+    // } else {
+    //   // navigation.navigate(APP_ROUTES.DASHBOARD);
+    // }
+    setFinishTest(false);
+    navigation.navigate("DashboardContent")
+ 
   };
 
   const handleCheckScore = () => {
-    if (examType === "guestMockTest") {
+    // if (examType === "guestMockTest") {
       // navigation.navigate(APP_ROUTES.LOGIN);
+    // }
+    const examObject = {
+      ...data,
+      type: examType,
+      studentExamUID: studentExamId,
     }
+    // dispatch(setExamSessionId(data.exam_session_id));
+    navigation.navigate("resultsPage", { state: examObject });
     setFinishTest(false);
   };
-
+ 
   return (
     <Modal visible={finishTest} transparent animationType="slide">
       <View style={styles.modalContainer}>
@@ -44,15 +53,15 @@ const SubmitTestModal = ({ setFinishTest, finishTest, isTimeUp, examType }) => {
             <TouchableOpacity style={styles.backButton} onPress={backToHome}>
               <Text style={styles.backButtonText}>Back to home</Text>
             </TouchableOpacity>
-            {submitLoader && examInstructionDetails[0]?.exam_type === "guestMockTest" ? (
+            {/* {submitLoader && examInstructionDetails[0]?.exam_type === "guestMockTest" ? (
               <TouchableOpacity style={styles.disabledButton} disabled>
                 <ActivityIndicator size="small" color="#fff" />
               </TouchableOpacity>
-            ) : (
+            ) : ( */}
               <TouchableOpacity style={styles.scoreButton} onPress={handleCheckScore}>
                 <Text style={styles.scoreButtonText}>Check score →</Text>
               </TouchableOpacity>
-            )}
+            {/* // )} */}
           </View>
         </View>
       </View>

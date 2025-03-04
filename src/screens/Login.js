@@ -23,8 +23,21 @@ import { useNavigation } from '@react-navigation/native';
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
-export default function Login({ route }) {
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
+GoogleSignin.configure({
+	webClientId: "212625122753-o36nkar4vhepdof16e7ge3gmuaed2kio.apps.googleusercontent.com",
+});
+
+const GoogleLogin = async () => {
+	await GoogleSignin.hasPlayServices();
+	const userInfo = await GoogleSignin.signIn();
+	return userInfo;
+};
+
+export default function Login({ route }) {
+	const [error, setError] = useState('');
+	const [loading, setLoading] = useState(false);
     const colorScheme = useColorScheme();
     const [check, setCheck] = useState(false);
     const theme = colorScheme === "dark" ? darkTheme : lightTheme;
@@ -104,6 +117,28 @@ export default function Login({ route }) {
 
         }
     };
+
+    const handleGoogleLogin = async () => {
+		setLoading(true);
+		try {
+			const response = await GoogleLogin();
+			const { idToken, user } = response;
+
+			if (idToken) {
+				const resp = await authAPI.validateToken({
+					token: idToken,
+					email: user.email,
+				});
+				await handlePostLoginData(resp.data);
+			}
+		} catch (apiError) {
+			setError(
+				apiError?.response?.data?.error?.message || 'Something went wrong'
+			);
+		} finally {
+			setLoading(false);
+		}
+	};
 
     const validateEmailOrPhone = (input) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -261,10 +296,21 @@ export default function Login({ route }) {
                                 Forgot password?
                             </Text>
                         </TouchableOpacity>
+                        <View style={{justifyContent:'center',alignItems:'center'}}>
+                        <TouchableOpacity onPress={handleGoogleLogin}>
+                                <Image
+                        style={{ height:30,width:30 }}
+                        source={require("../images/google.png")}
+                    />
+                                </TouchableOpacity>
+                        </View>
+
+                      
 
                         {/* Footer Section */}
                         <View style={styles.footer}>
                             <View style={{ flexDirection: 'row' }}>
+                             
                                 <Text
                                     style={[styles.newHereText, { color: theme.wb }]}
                                 >

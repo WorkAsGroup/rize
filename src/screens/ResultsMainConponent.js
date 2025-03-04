@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView, BackHandler, Image } from "react-native";
 import { getExamResult, getAttempts } from "../core/CommonService";
 import { Picker } from "@react-native-picker/picker";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -71,6 +71,23 @@ const ResultMainComponent = () => {
     }
   }, [exam_session_id]);
 
+
+   const handleBackPress = React.useCallback(() => {
+          navigation.navigate("DashboardContent")
+      }, [navigation]);
+     useEffect(() => {
+          
+           BackHandler.addEventListener("hardwareBackPress", handleBackPress);
+          
+   
+           return () => {
+          
+   
+               BackHandler.removeEventListener("hardwareBackPress", handleBackPress);
+             
+           };
+       }, [handleBackPress]);
+
   useEffect(() => {
     if (exam_session_id) {
         getExamAttempts();
@@ -88,7 +105,7 @@ const ResultMainComponent = () => {
 
   console.log(questionAndAnswerData, 'skfweknf')
   
-  const handleResultBack = () => navigation.navigate("Dashboard");
+  const handleResultBack = () => navigation.navigate("DashboardContent");
 
   return (
     <View>
@@ -100,6 +117,7 @@ const ResultMainComponent = () => {
             <ActivityIndicator size="large" color="#2575FC" />
           ) : (
             <>
+            <View><TouchableOpacity onPress={handleResultBack}><Image style={{height: 25, width: 25}} source={require("../images/arrow.png")}/></TouchableOpacity></View>
               <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 0 }}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.subHeading}>Test Results</Text>

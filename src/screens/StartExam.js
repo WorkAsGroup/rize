@@ -15,10 +15,11 @@ import {
     BackHandler,
 } from "react-native";
 import {StaticRenderer} from "react-native-render-html";
+import SubmitTestModal from "./resultsScreen/SubmitTestModal";
 import LinearGradient from "react-native-linear-gradient";
 import { darkTheme, lightTheme } from "../theme/theme";
 import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Text as SvgText } from "react-native-svg";
-import { getPatternSelection, getPreExam, getPreExamdata, getSubmitExamResults } from "../core/CommonService";
+import { getPatternSelection, getPreExam, getPreExamdata, getPreviousPapRes, getSubmitExamResults } from "../core/CommonService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -128,12 +129,14 @@ const extractContent = (html) => {
 
 export default function StartExam({ navigation, route }) {
     const colorScheme = useColorScheme();
+    const [data, setData] = useState([])
     const theme = colorScheme === "dark" ? darkTheme : lightTheme;
     const studentExamId = route?.params?.studentExamId;
     const [selectedSubject, setSelectedSubject] = useState();
     const [selectedNumber, setSelectedNumber] = useState(1);
     const scrollRef = useRef(null);
     const numberCircleRef = useRef(null);
+    const [finishTest, setFinishTest] = useState(false)
     const [scrollViewWidth, setScrollViewWidth] = useState(0);
     const [numberCircleWidth, setNumberCircleWidth] = useState(0);
     const [exams, setExams] = useState([]);
@@ -153,6 +156,7 @@ export default function StartExam({ navigation, route }) {
     const [isFirstLoad, setIsFirstLoad] = useState(true);
     const timerInterval = useRef(null);
     const obj = route?.params?.obj;
+    const [uid, setUid] = useState("")
     const [session_id , setSessionid] = useState(route?.params?.session_id);
     const examtype = route?.params?.examtype;
 
@@ -168,7 +172,7 @@ export default function StartExam({ navigation, route }) {
             [questionNumber]: text,
         }));
     };
-
+// console.log(route?.params, "qeojdpiej")
     const scrollToQuestion = useCallback((questionNumber) => {
         if (scrollRef.current && numberCircleRefs.current[questionNumber]) {
             numberCircleRefs.current[questionNumber].measureLayout(
@@ -292,11 +296,11 @@ export default function StartExam({ navigation, route }) {
         loadStoredData();
         getExamPattern();
         if (obj) {
-            if (examtype === "previous") {
+            // ifgetPrevExam (examtype === "previous") {
             getPrevExam()
-            } else {
-                getExam();
-            }
+            // } else {
+            //     getExam();
+            // }
             
         }
     }, []);
@@ -456,11 +460,11 @@ export default function StartExam({ navigation, route }) {
         getExamPattern();
 
         if (obj) {
-            if (examtype === "previous") {
+            // if (examtype === "previous") {
                 getPrevExam()
-                } else {
-                    getExam();
-                }
+                // } else {
+                //     getExam();
+                // }
         }
     }, []);
 
@@ -618,8 +622,8 @@ export default function StartExam({ navigation, route }) {
         setQuestionsLoading(true);
       
             const datas = {
-                exam_paper_id: obj.exam_paper_id,
-                exam_session_id: 0,
+                exam_paper_id: parseInt(obj.exam_paper_id),
+                exam_session_id: session_id?session_id:0,
                 type: "schedule_exam",
               };
         
@@ -630,7 +634,7 @@ export default function StartExam({ navigation, route }) {
       
             const subjectCounts = {};
       
-            examsResponse.data.forEach(exam => {
+            examsResponse?.data?.forEach(exam => {
               const subjectValue = exam.subject !== undefined ? exam.subject : "Unknown Subject";
       
               subjectCounts[subjectValue] = (subjectCounts[subjectValue] || 0) + 1; 
@@ -660,20 +664,44 @@ export default function StartExam({ navigation, route }) {
         setQuestionsLoading(true);
       
           const datas = {
-            exam_paper_id: obj.exam_paper_id,
-            exam_session_id: session_id,
-            type: "previous_exam",
+            exam_paper_id:parseInt(obj.exam_paper_id),
+            exam_session_id: session_id?session_id:0,
+            type: examtype==="previous"? "previous_exam": examtype==="mock" ? "schedule_exam" :"custom_exam",
           };
+    console.log(obj, "hoisefoue")
+         const startPrevSession = {
+            "previous_exam_paper_id":obj.previous_paper_id,
+            "student_user_exam_id":studentExamId
+         }
+         const startSession = {
+            "exam_paper_id":parseInt(obj.exam_paper_id),
+            "student_user_exam_id":studentExamId
+         }
     
-        
-      
           try {
+console.log(examtype, "weoihewouh")
+var sessionStart="";
+           if(examtype==="previous") {
+            sessionStart= await getPreviousPapRes(examtype==="previous" ?startPrevSession: startSession)
+            console.log(sessionStart, "weoihfiweufhweiu")
+            setSessionid(sessionStart?.data?.exam_session_id);
+           }
+           const startExm = {
+            "student_user_exam_id":studentExamId,
+            "exam_paper_id":parseInt(obj.exam_paper_id),
+            "exam_session_id":sessionStart?.data?.exam_session_id ? sessionStart?.data?.exam_session_id: session_id? session_id :0
+        }
+    
+            const startExamResponse = await getPreExamdata(startExm);
+            setUid(startExamResponse?.data?.uid);
+            console.log( startExamResponse?.data?.uid,startExm, "wrfhwiufwe", startExamResponse)
+           if(startExamResponse) {
             const examsResponse = await getPreExam(datas);
             setExams(examsResponse.data);
       
             const subjectCounts = {};
       
-            examsResponse.data.forEach(exam => {
+            examsResponse?.data.forEach(exam => {
               const subjectValue = exam.subject !== undefined ? exam.subject : "Unknown Subject";
       
               subjectCounts[subjectValue] = (subjectCounts[subjectValue] || 0) + 1; 
@@ -687,6 +715,8 @@ export default function StartExam({ navigation, route }) {
       
             console.log("Subject Counts:", subjectCounts);
             console.log("Exams Response:", examsResponse);
+           }
+         
       
           } catch (error) {
             console.error("Error fetching exams:", error);
@@ -833,10 +863,12 @@ setAllNum(allNumbers);
     
     const submitTestResult = async () => {
         const data = {
-            "exam_paper_id": obj.exam_paper_id,
-            "exam_session_id": 0,
-            "student_user_exam_id": 0,
-            "questions": []
+            "exam_paper_id": parseInt(obj.exam_paper_id),
+            "exam_session_id": session_id ? session_id:0,
+            "student_user_exam_id": studentExamId,
+            "questions": [],
+            "uid": uid,
+            "type": examtype==="previous"? "previous_exam": examtype==="mock" ? "schedule_exam" :"custom_exam",
         };
 
         for (let i = 1; i <= exams.length; i++) { 
@@ -883,7 +915,53 @@ setAllNum(allNumbers);
 
         console.log("Submit Data:", JSON.stringify(data)); 
         setExam(data)
-        navigation.navigate("DashboardContent",{exam :data});
+
+
+      
+          const questions = JSON.stringify(
+            data.questions.map(question => ({
+              question_id: question.question_id,
+              status: question.status,
+              question_time: question.question_time,
+              attempt_answer: question.attempt_answer,
+              reason_for_wrong: question.reason_for_wrong,
+              comments: question.comments,
+              slno: question.slno,
+              subject_id: question.subject_id,
+              review: question.review,
+              is_disabled: question.is_disabled
+            }))
+          );
+      data.questions=questions;
+
+        
+     
+          console.log("Submit Exam Data:", data)
+           try {
+            setIsLoading(true)
+                const response = await getSubmitExamResults(data);
+                console.log("Submit Response:", response);
+                const sampleObj = {
+                 
+                    exam_session_id:response?.data?.exam_session_id ?response.data.exam_session_id : session_id?session_id:0,
+                     isTimeUp: false,
+                     studentExamUID: studentExamId,
+                     exam_paper_id: parseInt(obj.exam_paper_id),
+                     type: examtype, 
+                     exam_name: obj?.exam_name,
+                }
+                setData(sampleObj)
+                // setPreExamResults(null);
+                // Alert.alert("Exam submitted Succesfully !")
+                // navigation.navigate("DashboardContent",{exam :data});
+                setFinishTest(true)
+                setIsLoading(false)
+              } catch (error) {
+                setIsLoading(false)
+                console.error("Error submitting results:", error);
+                // ... handle error
+              }
+        // 
 
     };
 
@@ -930,7 +1008,7 @@ setAllNum(allNumbers);
             start={{ x: 0, y: 1 }}
             end={{ x: 1, y: 1 }}
         >
-
+<SubmitTestModal studentExamId={studentExamId} data={data} examType={examtype} setFinishTest={setFinishTest} finishTest={finishTest} isTimeUp={false} />
 {questionsLoading && (
                 <View style={styles.loadingOverlay}>
                     <ActivityIndicator size="large" color={theme.textColor} />
@@ -938,7 +1016,7 @@ setAllNum(allNumbers);
             )}
             <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', marginTop: 10 }}>
-                    <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>EAMCET Mock Test</Text>
+                    <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>{obj.exam_name}</Text>
                     <Text style={[styles.mockSubtitle, { color: theme.textColor, marginLeft: 40 }]}>Remaining Time</Text>
                     <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>{formatTime(remainingTime)}</Text>
                 </View>

@@ -151,7 +151,7 @@ export default function MockTest({ navigation, route }) {
     const [isFirstLoad, setIsFirstLoad] = useState(true);
     const timerInterval = useRef(null);
     const obj = route?.params?.obj;
-    console.log("mocktest11", obj);
+    // console.log("mocktest11", obj);
     const [subjectName,setSubjectName] = useState([]);
     const [submitModalVisible, setSubmitModalVisible] = useState(false);
     const [textInputValues, setTextInputValues] = useState({});

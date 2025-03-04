@@ -24,7 +24,7 @@ export default function InstructionAuth({ navigation,route }) {
     const studentExamId = route?.params?.studentExamId;
     const examtype = route?.params?.examtype;
 
-    console.log("mocktest1", obj );
+    console.log("mocktest1", obj, route.params );
 
 
     return (

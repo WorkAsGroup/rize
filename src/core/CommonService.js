@@ -288,7 +288,7 @@ export const getYearsData = async (fields) => {
   };
   export const getDashboardExamResult = async (fields) => {
 	const API_URL = "https://mocktestapi.rizee.in/api/v1/reports/dashboard";
-	
+	console.log(API_URL, fields, "whatsHappening")
 	try {
 	  const response = await axios.post(API_URL, fields, {
 		headers: { "Content-Type": "application/json" },

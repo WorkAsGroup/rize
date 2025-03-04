@@ -15,7 +15,18 @@ import Svg, { Path } from "react-native-svg";
 import { darkTheme, lightTheme } from "../theme/theme";
 import { getSignUpDetails } from "../core/CommonService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Toast from 'react-native-toast-message'; // Import Toast
+import Toast from 'react-native-toast-message'; 
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+
+GoogleSignin.configure({
+	webClientId: "212625122753-o36nkar4vhepdof16e7ge3gmuaed2kio.apps.googleusercontent.com",
+});
+
+const GoogleLogin = async () => {
+	await GoogleSignin.hasPlayServices();
+	const userInfo = await GoogleSignin.signIn();
+	return userInfo;
+};
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
@@ -31,11 +42,33 @@ export default function Signup({ navigation }) {
     const [mobile, setMobile] = useState("");
     const [password, setPassword] = useState("");
     const [errors, setErrors] = useState({});
-    const [passwordVisible, setPasswordVisible] = useState(false); // New State
+    const [passwordVisible, setPasswordVisible] = useState(false); 
 
     const togglePasswordVisibility = () => {
         setPasswordVisible(!passwordVisible);
     };
+
+    const handleGoogleLogin = async () => {
+		setLoading(true);
+		try {
+			const response = await GoogleLogin();
+			const { idToken, user } = response;
+
+			if (idToken) {
+				const resp = await authAPI.validateToken({
+					token: idToken,
+					email: user.email,
+				});
+				await handlePostLoginData(resp.data);
+			}
+		} catch (apiError) {
+			setError(
+				apiError?.response?.data?.error?.message || 'Something went wrong'
+			);
+		} finally {
+			setLoading(false);
+		}
+	};
 
     const validate = () => {
         let valid = true;
@@ -268,6 +301,15 @@ export default function Signup({ navigation }) {
                                 Sign Up
                             </Text>
                         </TouchableOpacity>
+
+                        <View style={{justifyContent:'center',alignItems:'center'}}>
+                        <TouchableOpacity onPress={handleGoogleLogin}>
+                                <Image
+                        style={{ height:30,width:30 }}
+                        source={require("../images/google.png")}
+                    />
+                                </TouchableOpacity>
+                        </View>
 
                         {/* Footer Section */}
                         <View style={styles.footer}>

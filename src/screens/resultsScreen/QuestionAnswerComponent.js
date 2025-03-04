@@ -195,7 +195,7 @@ const QuestionAndAnswerComponent = ({ questionAndAnwerData }) => {
             const backgroundColor = isCorrect ? "#1ABE171A" : isAttempted ? "#E500041A" : "#fff";
     
             return (
-              <View key={i} style={[styles.optionContainer, { width:"48%" }]}>
+              <View key={i} style={[styles.optionContainer, { width:"100%" }]}>
                 <View style={[styles.paper, { borderColor, backgroundColor }]}>
                   <View style={styles.optionContent}>
                     <Text style={styles.optionText}>
@@ -234,7 +234,7 @@ const QuestionAndAnswerComponent = ({ questionAndAnwerData }) => {
                   <View
                   style={[
                     styles.statusContainer,
-                    { width: '48%', backgroundColor: '#1ABE171A', borderColor: '#1ABE1733' },
+                    { width: '100%', backgroundColor: '#1ABE171A', borderColor: '#1ABE1733' },
                   ]}
                 >
                   <Text style={styles.statusText}>{question?.attempt_answer}</Text>
@@ -247,7 +247,7 @@ const QuestionAndAnswerComponent = ({ questionAndAnwerData }) => {
           <View
             style={[
               styles.statusContainer,
-              { width: '48%', backgroundColor: '#E500041A', borderColor: '#E5000433' },
+              { width: '100%', backgroundColor: '#E500041A', borderColor: '#E5000433' },
             ]}
           >
             <Text style={styles.statusText}>{question?.attempt_answer}</Text>

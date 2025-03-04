@@ -3,9 +3,8 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, useColorSc
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 // import { LineChart } from 'react-native-svg-charts';
 import { useNavigation } from '@react-navigation/native';
-import pieChartIcon from "../images/pie-chart.png"
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { getAutoLogin, getYearsData, getMockExams, getAchievements, getLeaderBoards, getPreviousPapers, getCustomExams, getDashboardExamResult, getSubmitExamResults, getPreviousPapRes } from '../core/CommonService';
+import { getAutoLogin, getYearsData, getMockExams, getAchievements, getExamType, getLeaderBoards, getPreviousPapers, getCustomExams, getDashboardExamResult, getSubmitExamResults, getPreviousPapRes } from '../core/CommonService';
 import { darkTheme, lightTheme } from '../theme/theme';
 import LinearGradient from "react-native-linear-gradient";
 import RNPickerSelect from 'react-native-picker-select';
@@ -28,13 +27,17 @@ const DashboardContent = ({ route }) => {
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   const [examResults, setExamResults] = useState([]);
   const [name, setName] = useState("");
+  const [uid, setUid] = useState(route?.params?.exam?.uid ?? "");
   const [studentId, setStudentId] = useState("");
   const [studentExamId, setStudentExamId] = useState("");
   const [champ, setChamp] = useState([]);
   const [mocklist, setMocklist] = useState([]);
   const [pre, setPre] = useState([]);
   const [customExams, setCustomExams] = useState([]);
+   const [isOpen, setIsOpen] = useState(false);
+  const [selectedOption, setSelectedOption] = useState(items?.[0] || null);
   const [mock, setMock] = useState([]);
+  const [examsData, setExamsData] = useState([])
   const [loading, setLoading] = useState(true);
   const [ach, setAch] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -51,6 +54,7 @@ const DashboardContent = ({ route }) => {
     { data: [90, 50, 20, 50, 50], color: 'green', strokeWidth: 2 },
     { data: [10, 90, 20, 80, 50], color: 'red', strokeWidth: 2 },
   ];
+    const [items, setItems] = useState([]);
   const [selectedValue, setSelectedValue] = useState(1);
   console.log("99999999", preExamResults);
   const options = [
@@ -61,25 +65,50 @@ const DashboardContent = ({ route }) => {
     setSelectedType(type);
 
   };
+  const toggleDropdown = () => {
+    setIsOpen(true);
+  };
+  const handleOptionSelect = (option) => {
+    console.log(option, "options", option.exam_id)
+    setStudentExamId(option.student_user_exam_id)
+    setSelectedOption(option.exam_type);
+    setIsOpen(false);
+  };
+  const retrieveExam = async () => {
+    try {
+      const examData = await AsyncStorage.getItem('exam');
+      if (examData !== null) {
+        setPreExamResults(JSON.parse(examData));
+        console.error("999 AsyncStorage:", preExamResults);
+        // submitTestResult();
+      }
+
+    } catch (error) {
+      console.error("Error retrieving exam from AsyncStorage:", error);
+    }
+  };
 
   useEffect(() => {
-    const retrieveExam = async () => {
-      try {
-        const examData = await AsyncStorage.getItem('exam');
-        if (examData !== null) {
-          setPreExamResults(JSON.parse(examData));
-          console.error("999 AsyncStorage:", preExamResults);
-          submitTestResult();
-        }
+    if(!route?.params?.exam) {
+      retrieveExam();
+    }
 
-      } catch (error) {
-        console.error("Error retrieving exam from AsyncStorage:", error);
-      }
-    };
 
-    retrieveExam();
+   
   }, []);
 
+  // useEffect(() => {
+  //   console.log("response exams", items, examsData);
+  //   if(examsData.length>0&&items.length>0){
+  //     const filterData = items.filter((item) =>
+  //       examsData.some(exam => exam.exam_id === item.exam_id)
+  //   );
+  //   setStudentExamId(filterData[0].exam_id)
+  //   console.log(filterData, "heeeha");
+  //   setItems(filterData)
+  //   } 
+  // },[items, examsData])
+ 
 
   const submitTestResult = async () => {
     if (!preExamResults) {
@@ -111,10 +140,18 @@ const DashboardContent = ({ route }) => {
       student_user_exam_id: studentExamId,
       questions: questions,
     };
+    const prevData ={
+      exam_paper_id: preExamResults.exam_paper_id,
+      exam_session_id: 0,
+      student_user_exam_id: studentExamId,
+      questions: questions,
+      type: "previous_exam",
+      uid: uid ? uid: route?.params?.exam?.uid,
+    }
 
-    console.log("Submit Data:", JSON.stringify(data));
+    console.log("Submit Data:",route?.params?.exam,selectedType, JSON.stringify(selectedType==="previous" ? prevData:data));
     try {
-      const response = await getSubmitExamResults(data);
+      const response = await getSubmitExamResults(selectedType==="previous" ? prevData:data);
       console.log("Submit Response:", response);
       setPreExamResults(null);
     } catch (error) {
@@ -177,10 +214,34 @@ const DashboardContent = ({ route }) => {
       if (response.data) {
         const nm = response.data.name;
         const id = response.data.student_user_id;
+        setExamsData(response.data.examsData)
         const examId = response.data.examsData[0].student_user_exam_id;
+        const exams = await getExamType();
+       
+        if (response.data.examsData.length > 0 && exams.data.length > 0) {
+          // Create a Set of exam_ids present in response.data.examsData
+          const examsDataSet = new Set(response.data.examsData.map(exam => exam.exam_id));
+      
+          // Merge and filter exams where exam_id exists in both
+          const filteredMergedData = exams.data
+              .filter(item => examsDataSet.has(item.exam_id)) // Keep only matching exam_id
+              .map(item => ({
+                  ...item, // Retain properties from exams.data
+                  ...response.data.examsData.find(exam => exam.exam_id === item.exam_id) // Merge matching exam_id data
+              }));
+      
+          setItems(filteredMergedData);
+          setStudentExamId(filteredMergedData[0]?.student_user_exam_id); // Ensure safe access
+          console.log(filteredMergedData, "Filtered Merged Data", response.data.examsData, exams.data);
+      }
+      
+      else {
+        setStudentExamId(examId)
+      }
+ 
         setName(nm);
         setStudentId(id);
-        setStudentExamId(examId);
+      
       } else {
         console.warn("No user data received from API");
       }
@@ -354,7 +415,7 @@ const DashboardContent = ({ route }) => {
         obj: item,
         studentExamId: studentExamId,
         examtype: selectedType,
-        session_id: sessionId, // Use potentially updated sessionId
+        session_id: sessionId ? sessionId: item.custom_exam_id, // Use potentially updated sessionId
       });
     } catch (error) {
       console.error("Error in handleStartTest:", error);
@@ -393,7 +454,7 @@ const DashboardContent = ({ route }) => {
   };
 
   const renderItemMock = ({ item }) => {
-    console.log(item, "exam status")
+    // console.log(item, "exam status")
     return (
       <View style={[styles.itemContainer, { backgroundColor: theme.textColor1 }]} key={item?.exam_paper_id}>
         {/* Exam Details */}
@@ -435,7 +496,7 @@ const DashboardContent = ({ route }) => {
                   style={[styles.textExamBtn, styles.resultsButton]}
                 >
                   <Text style={styles.buttonText}>Results</Text>
-                  <Image source={pieChartIcon} style={styles.icon} />
+                  <Image source={require("../images/pie-chart.png")} style={styles.icon} />
                 </TouchableOpacity>
               </View>
             ) : item.exam_session_id !== 0 && item.auto_save_id !== 0 ? (
@@ -454,7 +515,7 @@ const DashboardContent = ({ route }) => {
                   style={[styles.textExamBtn, styles.resultsButton]}
                 >
                   <Text style={styles.buttonText}>Results</Text>
-                  <Image source={pieChartIcon} style={styles.icon} />
+                  <Image source={require("../images/pie-chart.png")} style={styles.icon} />
                 </TouchableOpacity>
               </View>
             ) : (
@@ -650,10 +711,10 @@ const DashboardContent = ({ route }) => {
 
 
     return (
-      <View style={[styles.performanceCard, { backgroundColor: theme.conbk, marginTop: 20, height: windowHeight * .4 }]}>
+      <View style={[styles.performanceCard, { backgroundColor: theme.conbk, marginTop: 20, height: windowHeight * .6 }]}>
+        
         <Text style={[styles.performanceTitle, { color: theme.textColor }]}>Mock Tests</Text>
         <Text style={styles.subText}>Select your preferred exam and start practicing</Text>
-
         <ScrollView
           horizontal={true}
           showsHorizontalScrollIndicator={false}
@@ -736,7 +797,7 @@ const DashboardContent = ({ route }) => {
           </LinearGradient>
         </TouchableOpacity>}
         <FlatList
-          data={mock}
+          data={selectedType==="mock" ? mocklist : selectedType==="previous" ? pre : customExams}
           renderItem={renderItemMock}
           keyExtractor={(item) => item.id ? item.id.toString() : Math.random().toString()}
           nestedScrollEnabled={true}
@@ -795,6 +856,46 @@ const DashboardContent = ({ route }) => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.textColor} />
         }
       >
+         <LinearGradient
+          colors={theme.mcb}
+          start={{ x: 0, y: 1 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.dropdownLinearGradient, { borderColor: theme.tx1, borderWidth: 1 }]}
+        >
+          <TouchableOpacity onPress={toggleDropdown} style={styles.dropdownButton}>
+            <Text style={[styles.dropdownButtonText, { color: theme.textColor }]}>
+              {selectedOption || "Select an option"}
+            </Text>
+            <Image
+              style={{
+                height: 20,
+                width: 20,
+                tintColor: theme.textColor,
+                resizeMode: "contain",
+              }}
+              source={require("../images/down.png")}
+            />
+          </TouchableOpacity>
+          {isOpen && (
+            <View
+              style={[
+                styles.dropdown,
+                { top: 50, backgroundColor: theme.background, borderColor: theme.brad },
+              ]}
+            >
+              {items&&items.map((option) => (
+                <TouchableOpacity
+                  key={option.exam_id}
+                  style={[styles.option, { backgroundColor: theme.textColor1 }]}
+                  onPress={() => handleOptionSelect(option)}
+                  defaultOption={items[0]}
+                >
+                  <Text style={{ color: theme.textColor }}>{option.exam_type}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </LinearGradient>
         <Text style={[styles.welcome, { color: theme.textColor }]}>Good morning 🔥</Text>
         <Text style={[styles.username, { color: theme.textColor }]}>Welcome {name},</Text>
 
@@ -1114,56 +1215,84 @@ const styles = StyleSheet.create({
     height: 17,
     marginLeft: 5,
   },
-});
-const pickerSelectStyles = {
-  inputIOS: {
-    fontSize: 16,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderColor: 'gray',
-    borderRadius: 5,
-    color: 'black',
-    width: 150, // Ensure width remains consistent
+  dropdownLinearGradient: {
+    borderRadius: 15,
   },
-  inputAndroid: {
-    fontSize: 16,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderColor: 'gray',
+  dropdownButton: {
+    padding: 10,
+    borderColor: "#ccc",
     borderRadius: 5,
-    color: 'black',
-    width: 150,
-  },
-  chartContainer: {
+    width: "100%",
     flexDirection: "row",
-    alignItems: "center",
-    marginTop: 20,
+    justifyContent: "space-between",
   },
-  title: {
-    fontSize: 18,
-    fontWeight: "bold",
+  dropdownButtonText: {
+    fontSize: 16,
   },
-  subText: {
-    fontSize: 14,
-    color: "gray",
+  dropdown: {
+    position: "absolute",
+    left: 20,
+    right: 20,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    zIndex: 2,
   },
-  bigText: {
-    fontSize: 24,
-    fontWeight: "bold",
+  option: {
+    padding: 10,
+    width: "100%",
   },
-  performanceCard: { backgroundColor: "#fff", padding: 15, borderRadius: 10, margin: 10 },
-  containertext: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  textContainer: {},
-  performanceTitle: { fontSize: 16, fontWeight: "bold" },
-  subText: { fontSize: 14, color: "#888" },
-  bigText: { fontSize: 22, fontWeight: "bold", marginTop: 5 },
-  dropdownContainer: { borderWidth: 1, borderColor: "#ccc", borderRadius: 5, padding: 5 },
-  toggleContainer: { flexDirection: "row", marginTop: 10 },
-  toggleButton: { flex: 1, padding: 10, alignItems: "center", borderRadius: 5, borderWidth: 1, borderColor: "#ddd" },
-  selectedToggle: { backgroundColor: "#ddd" },
+});
+// const pickerSelectStyles = {
+//   inputIOS: {
+//     fontSize: 16,
+//     paddingVertical: 8,
+//     paddingHorizontal: 10,
+//     borderWidth: 1,
+//     borderColor: 'gray',
+//     borderRadius: 5,
+//     color: 'black',
+//     width: 150, // Ensure width remains consistent
+//   },
+//   inputAndroid: {
+//     fontSize: 16,
+//     paddingVertical: 8,
+//     paddingHorizontal: 10,
+//     borderWidth: 1,
+//     borderColor: 'gray',
+//     borderRadius: 5,
+//     color: 'black',
+//     width: 150,
+//   },
+//   chartContainer: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     marginTop: 20,
+//   },
+//   title: {
+//     fontSize: 18,
+//     fontWeight: "bold",
+//   },
+//   subText: {
+//     fontSize: 14,
+//     color: "gray",
+//   },
+//   bigText: {
+//     fontSize: 24,
+//     fontWeight: "bold",
+//   },
+//   performanceCard: { backgroundColor: "#fff", padding: 15, borderRadius: 10, margin: 10 },
+//   containertext: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+//   textContainer: {},
+//   performanceTitle: { fontSize: 16, fontWeight: "bold" },
+//   subText: { fontSize: 14, color: "#888" },
+//   bigText: { fontSize: 22, fontWeight: "bold", marginTop: 5 },
+//   dropdownContainer: { borderWidth: 1, borderColor: "#ccc", borderRadius: 5, padding: 5 },
+//   toggleContainer: { flexDirection: "row", marginTop: 10 },
+//   toggleButton: { flex: 1, padding: 10, alignItems: "center", borderRadius: 5, borderWidth: 1, borderColor: "#ddd" },
+//   selectedToggle: { backgroundColor: "#ddd" },
 
-};
+// };
 
 export default DashboardContent;
