@@ -218,7 +218,7 @@ const DashboardContent = ({ route }) => {
         const examId = response.data.examsData[0].student_user_exam_id;
         const exams = await getExamType();
        
-        if (response.data.examsData.length > 0 && exams.data.length > 0) {
+        if (response.data.examsData?.length > 0 && exams.data?.length > 0) {
           // Create a Set of exam_ids present in response.data.examsData
           const examsDataSet = new Set(response.data.examsData.map(exam => exam.exam_id));
       

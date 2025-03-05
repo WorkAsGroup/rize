@@ -9,10 +9,11 @@ import {
     Dimensions,
     Image,
 } from "react-native";
+import RenderHtml from 'react-native-render-html';
 import LinearGradient from "react-native-linear-gradient";
 import { darkTheme, lightTheme } from "../theme/theme";
 import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Text as SvgText } from "react-native-svg";
-
+var striptags = require('striptags');
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
@@ -24,9 +25,22 @@ export default function InstructionAuth({ navigation,route }) {
     const studentExamId = route?.params?.studentExamId;
     const examtype = route?.params?.examtype;
 
-    console.log("mocktest1", obj, route.params );
+    console.log("mocktest1", obj, route.params.exam_instructions );
+const sanitizeHtml = (text) =>{
+  if (text.length > 0) {
+      text = text.replace("&nbsp;", " ");
+      text = striptags(text, '<p><img>');
+  }
+  
+  return { html: text };
+}
 
-
+const renderersProps = {    
+    img: {
+      initialDimensions :{width: 20, height: 20 },
+      enableExperimentalPercentWidth : true
+    }
+  };
     return (
         <LinearGradient
             colors={theme.bmc}
@@ -83,8 +97,14 @@ export default function InstructionAuth({ navigation,route }) {
 
 
                                 </View>
-
-                                <Svg height="40" width={windowWidth * 0.9}>
+ <RenderHtml
+            source={sanitizeHtml(obj.exam_instructions || "<p>No instructions provided.</p>",)}
+            renderersProps={renderersProps}
+            // baseFontStyle={baseFontStyle}
+            // {...DEFAULT_PROPS}
+            contentWidth={windowWidth}
+            />
+                                {/* <Svg height="40" width={windowWidth * 0.9}>
                                     <Defs>
                                         <SvgLinearGradient id="grad" x1="0" y1="1" x2="1" y2="1">
                                             <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
@@ -205,11 +225,11 @@ export default function InstructionAuth({ navigation,route }) {
                                             Make sure you save at least 20-30 mins in the end to revisit your answers in an online test, you can change your answer at any time.                                       </Text>
                                     </View>
 
-                                </View>
+                                </View> */}
 
                             </View>
-
-                            <Svg height="50" width={windowWidth * 0.9}>
+                              
+                            {/* <Svg height="50" width={windowWidth * 0.9}>
                                 <Defs>
                                     <SvgLinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
                                         <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
@@ -227,8 +247,8 @@ export default function InstructionAuth({ navigation,route }) {
                                 >
                                     Don'ts while taking the test
                                 </SvgText>
-                            </Svg>
-                            <View style={{ marginTop: -20 }}>
+                            </Svg> */}
+                            {/* <View style={{ marginTop: -20 }}>
                                 <View style={{ flexDirection: 'row', padding: 10 }}>
                                     <Text
                                         style={{ height: 10, width: 10, backgroundColor: theme.textColor, borderRadius: 10, borderWidth: 1, marginRight: 5, marginTop: 3 }}
@@ -254,9 +274,9 @@ export default function InstructionAuth({ navigation,route }) {
                                 </View>
 
 
-                            </View>
+                            </View> */}
 
-                            <Svg height="50" width={windowWidth * 0.9}>
+                            {/* <Svg height="50" width={windowWidth * 0.9}>
                                 <Defs>
                                     <SvgLinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
                                         <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
@@ -274,7 +294,7 @@ export default function InstructionAuth({ navigation,route }) {
                                 >
                                     Actions you can take during exam
                                 </SvgText>
-                            </Svg>
+                            </Svg> */}
 
                             <View style={{ marginTop: -20 }}>
                                 <View style={{ flexDirection: 'row', padding: 10 }}>

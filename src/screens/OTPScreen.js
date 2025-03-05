@@ -12,7 +12,7 @@ import {
 import LinearGradient from "react-native-linear-gradient";
 import Svg, { Path } from "react-native-svg";
 import { darkTheme, lightTheme } from "../theme/theme";
-import { getLoginDetails, getOTPSubmittedDetails } from "../core/CommonService";
+import { getLoginDetails,reSendOTP,  getOTPSubmittedDetails } from "../core/CommonService";
 import Toast from 'react-native-toast-message';
 import OTPTextInput from './OTPTextInput'; // Import OTPTextInput
 
@@ -22,11 +22,13 @@ const windowHeight = Dimensions.get("window").height;
 
 export default function OTPScreen({ navigation, route }) {
     const colorScheme = useColorScheme();
+    const[errorMsg, setErrorMsg] = useState("")
     const theme = colorScheme === "dark" ? darkTheme : lightTheme;
     const mobile = route?.params?.mobile;
-    const studentId = route?.params?.studentId;
+    const [reSend, setReSend] = useState(false)
+    const [studentId, setStudentId ]= useState(route?.params?.studentId);
     const [otp, setOtp] = useState('');
-    const [timeRemaining, setTimeRemaining] = useState(1 * 30);
+    const [timeRemaining, setTimeRemaining] = useState(1 * 120);
     const [isTimerActive, setIsTimerActive] = useState(true);
     const [loading, setLoading] = useState(false);
     const OTP_LENGTH = 6;
@@ -40,13 +42,18 @@ export default function OTPScreen({ navigation, route }) {
             }, 1000);
         } else if (timeRemaining === 0) {
             setIsTimerActive(false);
-            showToast("OTP Expired. Please request a new OTP.", "error");
+            setReSend(true)
+            // showToast("OTP Expired. Please request a new OTP.", "error");
         }
 
         return () => clearTimeout(timerId);
     }, [timeRemaining, isTimerActive]);
 
-
+useEffect(() => {
+if(route?.params?.exist===true){
+    handleResendOTP();
+}
+},[route?.params?.exist])
     const handleSubmitOTP = async () => {
         if (!otp || otp.length !== OTP_LENGTH) {
             showToast(`Please enter a ${OTP_LENGTH}-digit OTP.`, "error");
@@ -67,13 +74,13 @@ export default function OTPScreen({ navigation, route }) {
 
             if (response.statusCode === 200) {
                 showToast("OTP verified successfully!", "success");
-                navigation.navigate("AccountCreated",{"mobile":mobile,"studentId":studentId})
+                navigation.navigate("AccountCreated",{"mobile":mobile,"studentId":studentId, data:response?.data})
             } else {
                 let errorMessage = "OTP verification failed. Please try again.";
                 if (response.data && response.data.message) {
                     errorMessage = response.data.message;
                 }
-                showToast(errorMessage, "error");
+                setErrorMsg(errorMessage);
             }
         } catch (error) {
             console.error("Error verifying OTP:", error);
@@ -105,6 +112,24 @@ export default function OTPScreen({ navigation, route }) {
             bottomOffset: 40,
         });
     };
+
+    const resend =async() => {
+        const fields = {
+            "mobile":route?.params?.mobile,
+            "email":""
+        }
+        const res = await reSendOTP(fields)
+        if(res) {
+            setStudentId(res.data.student_user_id)
+        }
+    }
+    const handleResendOTP = () => {
+        setErrorMsg("")
+        setReSend(false);
+        setTimeRemaining(1*120);
+        setIsTimerActive(true);
+        resend();
+    }
 
     return (
         <LinearGradient
@@ -157,9 +182,26 @@ export default function OTPScreen({ navigation, route }) {
                             onOTPEntered={(otpValue) => setOtp(otpValue)}
                             theme={theme}
                         />
-                        <Text style={[styles.timerText, { color: theme.wb, paddingTop: 20, marginBottom: 10 }]}>
+                       {errorMsg!==""&&<Text style={{color: "red"}}>{errorMsg}*</Text>}
+                        {reSend===true ? 
+                        <TouchableOpacity 
+                        style={[
+                            styles.resendButton,
+                            { backgroundColor: theme.buttonBackground },{width: 120}, {padding: 5}
+                        ]}
+                        onPress={handleResendOTP}>
+                             <Text
+                                style={[
+                                    styles.submitButtonText,
+                                    { color: theme.textColor1 },
+                                ]}
+                            >
+                                Resend OTP
+                            </Text>
+                        </TouchableOpacity>: <Text style={[styles.timerText, { color: theme.wb, paddingTop: 20, marginBottom: 10 }]}>
                             Time Remaining: {formatTime(timeRemaining)}
                         </Text>
+                    }
 
                         {/* Submit Button */}
                         <TouchableOpacity
@@ -239,6 +281,14 @@ const styles = StyleSheet.create({
         marginBottom: 15,
         marginHorizontal: 10,
         height: 40,
+    },
+    resendButton: {
+        borderRadius: 30,
+        paddingVertical: 4,
+        alignItems: "center",
+        marginBottom: 15,
+        marginHorizontal: 10,
+        height: 30,
     },
     submitButtonText: {
         fontSize: 14,

@@ -13,8 +13,10 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import HTML from "react-native-render-html";
+import RenderHtml from 'react-native-render-html';
 import { Picker } from "@react-native-picker/picker";
 import { useWindowDimensions } from "react-native";
+var striptags = require('striptags');
 
 const QuestionAndAnswerComponent = ({ questionAndAnwerData }) => {
   const [state, setState] = useState({
@@ -142,7 +144,22 @@ const QuestionAndAnswerComponent = ({ questionAndAnwerData }) => {
   };
 
   const renderQuestionItem = ({ item, index }) => {
-// console.log(item?.question, "searchomgforooption")
+// console.log(item, "searchomgforooption")
+const sanitizeHtml = (text) =>{
+  if (text.length > 0) {
+      text = text.replace("&nbsp;", " ");
+      text = striptags(text, '<p><img>');
+  }
+  
+  return { html: text };
+}
+const renderersProps = {
+  img: {
+    initialDimensions :{width: 20, height: 20 },
+    enableExperimentalPercentWidth : true
+  }
+};
+
     return(
     <View key={item.slno} style={styles.accordion}>
       <TouchableOpacity onPress={() => handleChange(index)}>
@@ -181,8 +198,14 @@ const QuestionAndAnswerComponent = ({ questionAndAnwerData }) => {
       </TouchableOpacity>
       {state.isAccordianExpand === index && (
         <View style={styles.accordionContent}>
-          <HTML source={{ html: item?.question }} contentWidth={width} />
-         
+          {/* <HTML source={{ html: item?.question }} contentWidth={width} /> */}
+          <RenderHtml
+            source={sanitizeHtml(item?.question || "<p>No question provided.</p>",)}
+            renderersProps={renderersProps}
+            // baseFontStyle={baseFontStyle}
+            // {...DEFAULT_PROPS}
+            contentWidth={width}
+            />
           {/* Add more content rendering here */}
           {/* <Text>{item.question}</Text> */}
           {item?.question?.qtype !== 8 ? (
@@ -203,8 +226,14 @@ const QuestionAndAnswerComponent = ({ questionAndAnwerData }) => {
                       <Text style={styles.optionSpacer}> </Text>
                       {item?.question && (
                        
-                       <HTML source={item?.question?.[`option${i + 1}`] ?? ""} contentWidth={width} />
-
+                      //  <HTML  contentWidth={width} />
+                       <RenderHtml
+                       source={sanitizeHtml(item?.[`option${i + 1}`] || "<p>No  option provided.</p>",)}
+                       renderersProps={renderersProps}
+                       // baseFontStyle={baseFontStyle}
+                       // {...DEFAULT_PROPS}
+                       contentWidth={width}
+                       />
                       )}
                     </Text>
                     {isCorrect ? (
@@ -292,12 +321,19 @@ const QuestionAndAnswerComponent = ({ questionAndAnwerData }) => {
             <Text style={{ fontWeight: "600", fontSize: 16, marginBottom: 5 }}>
               Explanation:
             </Text>
-            <HTML
+            <RenderHtml
+            source={sanitizeHtml(item?.explanation || "<p>No explanation provided.</p>",)}
+            renderersProps={renderersProps}
+            // baseFontStyle={baseFontStyle}
+            // {...DEFAULT_PROPS}
+            contentWidth={width}
+            />
+            {/* <HTML
               contentWidth={width}
               source={{
                 html: item?.explanation || "<p>No explanation provided.</p>",
               }}
-            />
+            /> */}
           </View>
         </View>
       )}
@@ -477,11 +513,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    alignContent: "center",
     width: '100%',
   },
   optionText: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: "wrap",
   },
   optionLabel: {
     fontSize: 16,

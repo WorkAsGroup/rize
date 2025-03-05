@@ -24,12 +24,13 @@ export default function AccountCreated({ navigation, route }) {
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   const mobile = route?.params?.mobile;
   const studentId = route?.params?.studentId;
+  const data= route?.params?.data
   const scrollRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [email, setEmail] = useState(""); // State for email input
   const [loading, setLoading] = useState(false); // State for loading indicator
     const [errors, setErrors] = useState({});
-
+console.log(route?.params, "oioi")
   const accessOptions = [
     "Personalized dashboard",
     "Track your progress",
@@ -83,8 +84,9 @@ export default function AccountCreated({ navigation, route }) {
               setLoading(false);
 
               if (response.statusCode === 200) {
+                route.params.onChangeAuth(data.token);
                   showToast("Email updated successfully!", "success");
-                  navigation.navigate("Dashboard"); 
+                  navigation.navigate("DashboardContent"); 
               } else {
                   let errorMessage = "Failed to update email. Please try again.";
                   if (response.data && response.data.message) {
@@ -102,7 +104,8 @@ export default function AccountCreated({ navigation, route }) {
 
   const skipEmail = () => {
     // Navigate to dashboard
-    navigation.navigate("Dashboard"); 
+    route.params.onChangeAuth(data.token);
+    navigation.navigate("DashboardContent"); 
   };
 
     const showToast = (message, type = "default") => {
@@ -202,13 +205,18 @@ export default function AccountCreated({ navigation, route }) {
 
             {/* Footer Section */}
             <View style={styles.footer}>
-              <TouchableOpacity onPress={skipEmail}>
-                <Text
-                  style={[styles.newHereText, { color: theme.textColor, fontWeight: 'bold' }]}
-                >
-                  Skip and proceed to dashboard
-                </Text>
-              </TouchableOpacity>
+            
+                     <View style={{justifyContent:'center',alignItems:'center',marginBottom:120,marginTop:30}}>
+                     <TouchableOpacity style={{flexDirection:'row'}} onPress={skipEmail}>
+                     <Text style={[styles.skipText, { color: theme.white,textDecorationLine: "underline",fontSize:18,top:-3,left:-3 }]}>
+                            Skip
+                        </Text>
+                     <Text style={[styles.skipText, { color: theme.white }]}>
+                        and proceed to dashboard
+                        </Text>
+                     </TouchableOpacity>
+                  
+                     </View>
               <Text
                 style={[
                   styles.accessText,
@@ -289,6 +297,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     marginBottom: 20,
+    textAlign: "center",
+  },
+  skipText: {
+    fontSize: 15,
+    fontWeight: "300",
     textAlign: "center",
   },
   input: {

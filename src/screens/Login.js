@@ -1,6 +1,6 @@
 //src/screens/Login.js
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
     View,
     Text,
@@ -11,14 +11,16 @@ import {
     useColorScheme,
     Dimensions,
     Image,
-    Alert
+    Alert,
+    BackHandler
 } from "react-native";
+import Toast from 'react-native-toast-message'; 
 import LinearGradient from "react-native-linear-gradient";
 import Svg, { Path } from "react-native-svg";
 import { darkTheme, lightTheme } from "../theme/theme";
 import { getLoginDetails } from "../core/CommonService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
@@ -44,8 +46,45 @@ export default function Login({ route }) {
 
     const scrollRef = useRef(null);
     const [currentIndex, setCurrentIndex] = useState(0);
-    const navigation = useNavigation()
+    const navigation = useNavigation();
+   
+    useFocusEffect(
+        useCallback(() => {
+            const onBackPress = () => {
+                BackHandler.exitApp();
+                return true;
+            };
 
+            BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+            return () =>
+                BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+        }, [])
+    );
+ 
+    const showToastError = (message) => {
+        Toast.show({
+          type: 'error',
+          text1: message,
+          position: 'top',
+          visibilityTime: 4000,
+          autoHide: true,
+          topOffset: 30,
+          bottomOffset: 40,
+        });
+      };
+
+      const showToast = (message) => {
+        Toast.show({
+          type: 'info',
+          text1: message,
+          position: 'top',
+          visibilityTime: 4000,
+          autoHide: true,
+          topOffset: 30,
+          bottomOffset: 40,
+        });
+      };
     const accessOptions = [
         "Personalized dashboard",
         "Track your progress",
@@ -66,29 +105,28 @@ export default function Login({ route }) {
 
     const validateFields = () => {
         let valid = true;
-        let newErrors = { email: "", password: "" };
 
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const phoneRegex = /^[0-9]{10}$/;
-        if (!emailRegex.test(email) && !phoneRegex.test(email)) {
-            newErrors.email = "Enter a valid email or phone number";
+        if (!email) { 
+            showToastError("Enter your email or phone number");
+            valid = false;
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !/^[0-9]{10}$/.test(email)) {
+            showToastError("Enter a valid email or phone number");
             valid = false;
         }
 
-        if (password.length < 6) {
-            newErrors.password = "Password must be at least 6 characters";
+        if (!password) { 
+            showToastError("Enter your password");
+            valid = false;
+        } else if (password.length < 6) {
+            showToastError("Password must be at least 6 characters");
             valid = false;
         }
 
-        setErrors(newErrors);
         return valid;
     };
 
     const handleLogin = async () => {
-        if (!check) {
-            Alert.alert("Please agree to the privacy policy and terms of service.");
-            return;
-        }
+        
 
         const data = {
             [validateEmailOrPhone(email) ? "email" : "mobile"]: email,
@@ -101,6 +139,11 @@ export default function Login({ route }) {
         }
 
         if (validateFields()) {
+
+            if (!check) {
+                showToast("Please agree to the privacy policy and terms of service.")
+                return;
+            }
             const response = await getLoginDetails(data);
             console.log("Response", response);
 
@@ -111,9 +154,14 @@ export default function Login({ route }) {
                     onChangeAuth: route.params.onChangeAuth,
                     exam: route.params.exam
                 });
+            } else if(response.statusCode == 404){
+                showToastError("User not found.");
             } else {
-                 Alert.alert("Login failed. Please check your credentials.");
-            }
+                // showToast("Uh Oh! No account found with the email / phone number.")
+                showToastError("Uh Oh! No account found.")
+
+                // showToastError("Login failed. Please check your credentials.");
+                        }
 
         }
     };
@@ -370,6 +418,8 @@ export default function Login({ route }) {
                     </View>
                 </View>
                 </View>
+                <Toast ref={(ref) => Toast.setRef(ref)} />
+
         </LinearGradient>
     );
 }

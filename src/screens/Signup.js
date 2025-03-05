@@ -71,69 +71,78 @@ export default function Signup({ navigation }) {
 	};
 
     const validate = () => {
-        let valid = true;
+        let isValid = true;
         let errors = {};
-
+    
         if (!name.trim()) {
             errors.name = "Name is required";
-            valid = false;
-        } else if (!/^[a-zA-Z ]+$/.test(name)) {
-            errors.name = "Name must contain only letters";
-            valid = false;
+            isValid = false;
         }
-
+    
         if (!mobile.trim()) {
             errors.mobile = "Mobile number is required";
-            valid = false;
-        } else if (!/^\d{10}$/.test(mobile)) {
-            errors.mobile = "Mobile number must be 10 digits";
-            valid = false;
+            isValid = false;
+        } else if (!/^[6-9]{1}[0-9]{9}$/.test(mobile)) { 
+            errors.mobile = "Invalid mobile number";
+            isValid = false;
         }
-
+    
+    
         if (!password.trim()) {
             errors.password = "Password is required";
-        } else if (password.length < 6) {
-            errors.password = "Password must be at least 6 characters";
-            valid = false;
+            isValid = false;
+        } else if (password.length < 8) {
+            errors.password = "Password must be at least 8 characters";
+            isValid = false;
         }
-
-        setErrors(errors);
-        return valid;
+    
+        return { isValid, errors }; 
     };
 
     const handleSignup = async () => {
-      const data = {
-          "name": name,
-          "mobile": mobile,
-          "email": "",
-          "password": password
-      }
-      if (validate()) {
-          const response = await getSignUpDetails(data);
-          console.log("Signup API Response:", response); 
+        const { isValid, errors } = validate();
 
-          if (response.statusCode === 201) {
-              navigation.navigate("OTPScreen",{"mobile":mobile,"studentId":response?.data?.student_user_id});
-              showToast("OTP Sent Successfully")
-          } else if (response.statusCode === 409) {
-             showToast("User already exists.");
-          } else {
-              let errorMessage = "Signup failed. Please try again.";
-              if (response.data && response.data.message) {
-                  errorMessage = response.data.message; 
-              } else if (typeof response.data === 'string') {
-                  errorMessage = response.data; 
-              }
-              showToast(errorMessage);
-          }
-      }
-  };
+        if (!isValid) {
+            for (const errorKey in errors) {
+                showToastError(errors[errorKey]);
+            }
+            return; 
+        }
+        const data = {
+            name: name,
+            mobile: mobile,
+            email: "",
+            password: password,
+        };
+    
+    
+        if (isValid) {
+            const response = await getSignUpDetails(data);
+            console.log("Signup API Response:", response.statusCode);
+    
+            if (response.statusCode === 201) {
+                navigation.navigate("OTPScreen", { mobile: mobile, studentId: response?.data?.student_user_id });
+                showToast("OTP Sent Successfully");
+            } else if (response.statusCode === 409) {
+                showToast("User already exists.");
+            } else {
+                let errorMessage = "Signup failed. Please try again.";
+                if (response.data && response.data.message) {
+                    errorMessage = response.data.message;
+                } else if (typeof response.data === 'string') {
+                    errorMessage = response.data;
+                }
+                showToast(errorMessage);
+            }
+        } else {
+            setErrors(errors);
+        }
+    };
 
     const showToast = (message) => {
       Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: message,
+        type: 'info',
+        text1: message,
         position: 'top',
         visibilityTime: 4000,
         autoHide: true,
@@ -141,6 +150,18 @@ export default function Signup({ navigation }) {
         bottomOffset: 40,
       });
     };
+
+    const showToastError = (message) => {
+        Toast.show({
+          type: 'error',
+          text1: message,
+          position: 'top',
+          visibilityTime: 4000,
+          autoHide: true,
+          topOffset: 30,
+          bottomOffset: 40,
+        });
+      };
 
     const accessOptions = [
         "Personalized dashboard",
@@ -210,8 +231,8 @@ export default function Signup({ navigation }) {
                             placeholderTextColor={theme.gray}
                             value={name}
                             onChangeText={(text) => {
-                                const filteredText = text.replace(/[^A-Za-z\s]/g, "");
-                                setName(filteredText);
+                                // const filteredText = text.replace(/[^A-Za-z\s]/g, "");
+                                setName(text);
                                 if (errors.name) {
                                     setErrors((prevErrors) => ({ ...prevErrors, name: null }));
                                 }
@@ -256,7 +277,7 @@ export default function Signup({ navigation }) {
                                 ]}
                                 placeholder="New Password"
                                 placeholderTextColor={theme.gray}
-                                secureTextEntry={!passwordVisible} // Toggle secureTextEntry
+                                secureTextEntry={!passwordVisible} 
                                 value={password}
                                 onChangeText={(text) => {
                                     setPassword(text);
@@ -269,7 +290,7 @@ export default function Signup({ navigation }) {
                                 <Image
                                     source={passwordVisible ? require('../images/eye_open.png') : require('../images/eye_close.png')}
                                     style={styles.eyeIcon}
-                                    tintColor={theme.gray}  // Option if you want to tint the image
+                                    tintColor={theme.gray} 
                                 />
                             </TouchableOpacity>
                         </View>
@@ -356,7 +377,7 @@ export default function Signup({ navigation }) {
                     </View>
                 </View>
             </View>
-            <Toast ref={(ref) => Toast.setRef(ref)} /> {/* Toast Component */}
+            <Toast ref={(ref) => Toast.setRef(ref)} />
         </LinearGradient>
     );
 }

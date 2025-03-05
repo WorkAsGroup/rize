@@ -7,6 +7,7 @@ export const endPoint = {
 	preExam: "/api/v1/mocktests/guest",
 	exmQuestions: "/api/v1/exams/questions",
 	startExam: "/api/v1/exams/startExam",
+	resendOtp: "/api/v1/auth/otp-generation",
 	signup: "/api/v1/auth/register",
 	login: "/api/v1/auth/login",
 	verifyOtp: "/api/v1/auth/verify-otp",
@@ -435,6 +436,24 @@ export const getSignUpDetails = async (fields) => {
 	
 	return await axios
 	  .post(apiurl + endPoint.signup, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in sign up det:", error.response?.data || error.message);
+		return error.response?.data;
+	  }); 
+  };
+
+  export const reSendOTP = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.resendOtp, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.resendOtp, fields, { headers: headers })
 	  .then((res) => res.data)
 	  .catch((error) => {
 		console.error("Error in sign up det:", error.response?.data || error.message);
