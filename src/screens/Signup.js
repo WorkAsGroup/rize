@@ -73,6 +73,12 @@ export default function Signup({ navigation }) {
     const validate = () => {
         let isValid = true;
         let errors = {};
+
+        if (!name.trim() && !mobile.trim() && !password.trim()) { 
+            showToastError("Please enter your signup details.");
+            isValid = false;
+            return { isValid, errors };
+        }
     
         if (!name.trim()) {
             errors.name = "Name is required";
@@ -117,6 +123,11 @@ export default function Signup({ navigation }) {
     
     
         if (isValid) {
+            if (!check) {
+                showToast("Please agree to the privacy policy and terms of service.")
+                return;
+            }
+            
             const response = await getSignUpDetails(data);
             console.log("Signup API Response:", response.statusCode);
     

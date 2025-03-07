@@ -21,6 +21,8 @@ import { darkTheme, lightTheme } from "../theme/theme";
 import { getLoginDetails } from "../core/CommonService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import Modal from 'react-native-modal';
+
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
@@ -47,7 +49,12 @@ export default function Login({ route }) {
     const scrollRef = useRef(null);
     const [currentIndex, setCurrentIndex] = useState(0);
     const navigation = useNavigation();
-   
+    const [isModalVisible, setModalVisible] = useState(false);
+
+    const toggleModal = () => {
+        setModalVisible(!isModalVisible);
+
+    };
     useFocusEffect(
         useCallback(() => {
             const onBackPress = () => {
@@ -106,7 +113,14 @@ export default function Login({ route }) {
     const validateFields = () => {
         let valid = true;
 
-        if (!email) { 
+        if (!email && !password) { 
+            showToastError("Please enter your login details.");
+            valid = false;
+            return valid;
+        }
+
+       
+        if (!email) {
             showToastError("Enter your email or phone number");
             valid = false;
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !/^[0-9]{10}$/.test(email)) {
@@ -114,7 +128,7 @@ export default function Login({ route }) {
             valid = false;
         }
 
-        if (!password) { 
+        if (!password) {
             showToastError("Enter your password");
             valid = false;
         } else if (password.length < 6) {
@@ -127,6 +141,7 @@ export default function Login({ route }) {
 
     const handleLogin = async () => {
         
+
 
         const data = {
             [validateEmailOrPhone(email) ? "email" : "mobile"]: email,
@@ -158,8 +173,8 @@ export default function Login({ route }) {
                 showToastError("User not found.");
             } else {
                 // showToast("Uh Oh! No account found with the email / phone number.")
-                showToastError("Uh Oh! No account found.")
-
+                showToastError("Uh Oh! No account found.");
+                toggleModal();
                 // showToastError("Login failed. Please check your credentials.");
                         }
 
@@ -214,6 +229,27 @@ export default function Login({ route }) {
             end={{ x: 1, y: 1 }}
         >
             <View contentContainerStyle={styles.scrollContainer}>
+            <Modal isVisible={isModalVisible}
+                   onBackdropPress={toggleModal} 
+                   onSwipeComplete={toggleModal}
+                   swipeDirection={['up', 'down']}
+                   style={styles.modal}>
+                <View style={[styles.modalContent,{backgroundColor:theme.textColor1}]}>
+                    <Text style={[styles.modalTitle,{color:theme.textColor}]}>Account Not Found</Text>
+                    <Text style={[styles.modalMessage,{color:theme.textColor}]}>No account found with this email / phone number</Text>
+                    <View style={styles.modalButtons}>
+                        <TouchableOpacity style={[styles.modalButton,{backgroundColor:theme.buttonBackground,marginLeft:10}]} onPress={toggleModal}>
+                            <Text style={[styles.modalButtonText,{color:theme.textColor1}]}>Try Again</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={[styles.modalButton,{backgroundColor:theme.buttonBackground,marginLeft:10}]} onPress={() => {
+                            toggleModal();
+                            navigation.navigate("Signup");
+                        }}>
+                            <Text style={[styles.modalButtonText,{color:theme.textColor1}]}>Create Account</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
                 <View style={styles.header}>
                     <Image
                         style={[styles.logo, { tintColor: theme.textColor1 }]}
@@ -557,5 +593,44 @@ const styles = StyleSheet.create({
         height: 20,
         marginTop:4,
         resizeMode: 'contain',
+    },
+    modal: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        margin: 20,
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        padding: 22,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 20,
+        borderColor: 'rgba(0, 0, 0, 0.1)',
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 12,
+    },
+    modalMessage: {
+        fontSize: 16,
+        marginBottom: 20,
+        textAlign: 'center',
+        paddingHorizontal:20,
+    },
+    modalButtons: {
+      flexDirection: 'row',
+      justifyContent: 'space-around', 
+    },
+    modalButton: {
+        backgroundColor: '#2196F3', 
+        paddingHorizontal: 15,
+        paddingVertical: 8,
+        borderRadius: 15,
+    },
+    modalButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight:"500"
     },
 });
