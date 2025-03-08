@@ -14,7 +14,7 @@ import Svg, { Path } from "react-native-svg";
 import { darkTheme, lightTheme } from "../theme/theme";
 import { getLoginDetails,reSendOTP,  getOTPSubmittedDetails } from "../core/CommonService";
 import Toast from 'react-native-toast-message';
-import OTPTextInput from './OTPTextInput'; // Import OTPTextInput
+import OTPTextInput from './OTPTextInput'; 
 
 
 const windowWidth = Dimensions.get("window").width;
@@ -32,7 +32,7 @@ export default function OTPScreen({ navigation, route }) {
     const [isTimerActive, setIsTimerActive] = useState(true);
     const [loading, setLoading] = useState(false);
     const OTP_LENGTH = 6;
-
+    const otpInputRef = useRef(null); 
 
     useEffect(() => {
         let timerId;
@@ -54,41 +54,59 @@ if(route?.params?.exist===true){
     handleResendOTP();
 }
 },[route?.params?.exist])
-    const handleSubmitOTP = async () => {
-        if (!otp || otp.length !== OTP_LENGTH) {
-            showToast(`Please enter a ${OTP_LENGTH}-digit OTP.`, "error");
-            return;
-        }
 
-        setLoading(true);
-        try {
-            const data = {
-                "student_user_id": studentId,
-                "otp": otp
-            };
 
-            const response = await getOTPSubmittedDetails(data);
-            console.log("OTP Verification API Response:", response);
+const handleSubmitOTP = async () => {
+    if (!otp || otp.length !== OTP_LENGTH) {
+        showToast(`Please enter a ${OTP_LENGTH}-digit OTP !!`, "error");
+        return;
+    }
 
-            setLoading(false);
+    setLoading(true);
+    setErrorMsg("");
 
-            if (response.statusCode === 200) {
-                showToast("OTP verified successfully!", "success");
-                navigation.navigate("AccountCreated",{"mobile":mobile,"studentId":studentId, data:response?.data})
-            } else {
-                let errorMessage = "OTP verification failed. Please try again.";
-                if (response.data && response.data.message) {
-                    errorMessage = response.data.message;
+    try {
+        const data = {
+            student_user_id: studentId,
+            otp: otp,
+        };
+
+        const response = await getOTPSubmittedDetails(data);
+        console.log("OTP Verification API Response:", response);
+
+        if (response.statusCode === 200) {
+            showToast("OTP verified successfully!", "success");
+
+            if (response.data && response.data.email_verified === 1) {
+                if (route.params?.onChangeAuth) { 
+                    route.params.onChangeAuth(response.data.token); 
                 }
-                setErrorMsg(errorMessage);
-            }
-        } catch (error) {
-            console.error("Error verifying OTP:", error);
-            setLoading(false);
-            showToast("An error occurred while verifying OTP. Please check your internet connection and try again.", "error");
-        }
-    };
 
+                 navigation.navigate("DashboardContent");
+            } else {
+                navigation.navigate("AccountCreated", { 
+                    mobile: mobile,
+                    studentId: response.data?.student_user_id || studentId,
+                    data: response.data,
+                });
+            }
+        } else {
+            let errorMessage = "OTP verification failed. Please try again.";
+            if (response.data && response.data.message) {
+                errorMessage = response.data.message;
+            } else if (typeof response.data === 'string') {
+                errorMessage = response.data;
+            }
+            // setErrorMsg(errorMessage);
+            showToast(errorMessage, "error");
+        }
+    } catch (error) {
+        console.error("Error verifying OTP:", error);
+        showToast("An error occurred while verifying OTP. Please check your internet connection and try again.", "error");
+    } finally {
+        setLoading(false);
+    }
+};
 
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
@@ -103,8 +121,7 @@ if(route?.params?.exist===true){
     const showToast = (message, type = "default") => {
         Toast.show({
             type: type,
-            text1: type === "success" ? "Success" : "Error",
-            text2: message,
+            text1: message,
             position: 'top',
             visibilityTime: 4000,
             autoHide: true,
@@ -114,13 +131,32 @@ if(route?.params?.exist===true){
     };
 
     const resend =async() => {
-        const fields = {
-            "mobile":route?.params?.mobile,
-            "email":""
+
+        let fields = {};
+        if (/^[6-9]{1}[0-9]{9}$/.test(mobile)) { 
+            fields = {
+                "mobile": mobile,
+                "email": "",
+            };
+        } else {
+            fields = {
+                "mobile": "", 
+                "email": mobile, 
+            };
         }
-        const res = await reSendOTP(fields)
-        if(res) {
-            setStudentId(res.data.student_user_id)
+
+        try {
+            const res = await reSendOTP(fields);
+            if (res && res.data && res.data.student_user_id) {
+                setStudentId(res.data.student_user_id);
+                showToast("OTP resent successfully!", "success"); 
+            } else {
+                showToast("Failed to resend OTP. Please try again.", "error");
+            }
+
+        } catch (error) { 
+            console.error("Error resending OTP:", error);
+            showToast("An error occurred while resending OTP. Please check your internet connection.", "error");
         }
     }
     const handleResendOTP = () => {
@@ -129,6 +165,10 @@ if(route?.params?.exist===true){
         setTimeRemaining(1*120);
         setIsTimerActive(true);
         resend();
+        if (otpInputRef.current) {
+            otpInputRef.current.clear();
+        }
+        setOtp("");
     }
 
     return (
@@ -181,6 +221,7 @@ if(route?.params?.exist===true){
                             length={OTP_LENGTH}
                             onOTPEntered={(otpValue) => setOtp(otpValue)}
                             theme={theme}
+                            ref={otpInputRef}
                         />
                        {errorMsg!==""&&<Text style={{color: "red"}}>{errorMsg}*</Text>}
                         {reSend===true ? 

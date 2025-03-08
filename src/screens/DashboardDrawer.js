@@ -111,7 +111,7 @@ const DashboardDrawer = ({ route }) => {
         {(props) => (
           <DashboardContent
             {...props}
-            route={{ params: { onChangeAuth: onChangeAuth } }}
+            onChangeAuth={route.params.onChangeAuth }
           />
         )}
       </Drawer.Screen>

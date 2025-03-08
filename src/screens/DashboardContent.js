@@ -14,17 +14,23 @@ import { LineChart } from "react-native-chart-kit";
 import { Defs, LinearGradient as SvgLinearGradient, Stop } from "react-native-svg";
 import CustomExamCreation from './CustomExamCreation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import DropDownPicker from 'react-native-dropdown-picker';
+
+import ExamModalComponent from './ExamModalComponent';
 
 const Tab = createBottomTabNavigator();
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
-const DashboardContent = ({ route }) => {
-  const navigation = useNavigation();
-  const { onChangeAuth } = route.params;
+const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
+  // const navigation = useNavigation();
+  const [open, setOpen] = useState(false);
+  const [studentUserId, setStudentUserId] = useState(null)
+  // const { onChangeAuth } = route.params;
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
+  const [addExam, setAddExam] = useState(false)
   const [examResults, setExamResults] = useState([]);
   const [name, setName] = useState("");
   const [uid, setUid] = useState(route?.params?.exam?.uid ?? "");
@@ -194,7 +200,18 @@ const DashboardContent = ({ route }) => {
 
 
   const handleLogout = async () => {
-    onChangeAuth(null);
+    if(onChangeAuth) { 
+        try {
+           await AsyncStorage.removeItem('authToken'); 
+           onChangeAuth(null); 
+           navigation.navigate("Login")
+        } catch (error) {
+            console.error("Logout error:", error);
+            Alert.alert("Error", "An error occurred during logout."); 
+        }
+    } else {
+        console.warn("onChangeAuth function not provided!  Cannot logout.");
+    }
   };
 
   const getCustomeExam = async () => {
@@ -214,6 +231,7 @@ const DashboardContent = ({ route }) => {
       if (response.data) {
         const nm = response.data.name;
         const id = response.data.student_user_id;
+        setStudentUserId(id)
         setExamsData(response.data.examsData)
         const examId = response.data.examsData[0].student_user_exam_id;
         const exams = await getExamType();
@@ -837,6 +855,22 @@ const DashboardContent = ({ route }) => {
     );
   }
 
+  const dropdownItems = [
+    { label: "➕ Add", value: "add" , custom: true,},
+    ...items.map((option) => ({
+      label: option.exam_type, 
+      value: option.exam_id,
+    })),
+  ];
+
+  const handleSelect = (value) => {
+    if (value === "add") {
+      setAddExam(true);
+      // Alert.alert("Add Button Clicked!"); // Test function
+    } else {
+      setSelectedOption(value);
+    }
+  };
   return (
     <View style={[styles.container, { backgroundColor: theme.textbgcolor }]}>
       {/* Header */}
@@ -856,46 +890,56 @@ const DashboardContent = ({ route }) => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.textColor} />
         }
       >
-         <LinearGradient
-          colors={theme.mcb}
-          start={{ x: 0, y: 1 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.dropdownLinearGradient, { borderColor: theme.tx1, borderWidth: 1 }]}
-        >
-          <TouchableOpacity onPress={toggleDropdown} style={styles.dropdownButton}>
-            <Text style={[styles.dropdownButtonText, { color: theme.textColor }]}>
-              {selectedOption || "Select an option"}
-            </Text>
-            <Image
-              style={{
-                height: 20,
-                width: 20,
-                tintColor: theme.textColor,
-                resizeMode: "contain",
-              }}
-              source={require("../images/down.png")}
-            />
-          </TouchableOpacity>
-          {isOpen && (
-            <View
-              style={[
-                styles.dropdown,
-                { top: 50, backgroundColor: theme.background, borderColor: theme.brad },
-              ]}
+     
+        <ExamModalComponent show={addExam} setShow={setAddExam} studentUserId={studentUserId} />
+  <View style={{ zIndex: open ? 1000 : 1 }}> {/* Fix dropdown overlap */}
+      <DropDownPicker
+        open={open}
+        setOpen={setOpen}
+        value={selectedOption}
+        setValue={setSelectedOption}
+        onChangeValue={handleSelect}
+        items={dropdownItems}
+        placeholder="Select an option"
+        containerStyle={{ height: 50 }}
+        style={{
+          backgroundColor: theme.background,
+          borderColor: theme.tx1,
+          borderWidth: 1,
+        }}
+        dropDownContainerStyle={{
+          backgroundColor: theme.textColor1,
+          borderColor: theme.brad,
+          maxHeight: 200,
+        }}
+        textStyle={{ color: theme.textColor }}
+        flatListProps={{
+          nestedScrollEnabled: true, // Enable scrolling
+        }}
+        renderListItem={({ item, onPress }) => {
+          if (item.custom) {
+            return (
+              <TouchableOpacity
+                style={[styles.addButton, { backgroundColor: theme.tx1 }]} // Custom styling
+                onPress={() => handleSelect(item.value)}
+              >
+                <Text style={[styles.addButtonText, { color: theme.background }]}>
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          }
+          return (
+            <TouchableOpacity
+              style={styles.option1}
+              onPress={() => handleSelect(item.value)}
             >
-              {items&&items.map((option) => (
-                <TouchableOpacity
-                  key={option.exam_id}
-                  style={[styles.option, { backgroundColor: theme.textColor1 }]}
-                  onPress={() => handleOptionSelect(option)}
-                  defaultOption={items[0]}
-                >
-                  <Text style={{ color: theme.textColor }}>{option.exam_type}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </LinearGradient>
+              <Text style={{ color: theme.textColor }}>{item.label}</Text>
+            </TouchableOpacity>
+          );
+        }}
+      />
+    </View>
         <Text style={[styles.welcome, { color: theme.textColor }]}>Good morning 🔥</Text>
         <Text style={[styles.username, { color: theme.textColor }]}>Welcome {name},</Text>
 
@@ -1242,6 +1286,21 @@ const styles = StyleSheet.create({
   option: {
     padding: 10,
     width: "100%",
+  },
+  addButton: {
+    padding: 12,
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderColor: "#ccc",
+  },
+  addButtonText: {
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  option1: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderColor: "#ddd",
   },
 });
 // const pickerSelectStyles = {

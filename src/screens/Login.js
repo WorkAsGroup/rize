@@ -141,8 +141,6 @@ export default function Login({ route }) {
 
     const handleLogin = async () => {
         
-
-
         const data = {
             [validateEmailOrPhone(email) ? "email" : "mobile"]: email,
             password: password
@@ -163,12 +161,18 @@ export default function Login({ route }) {
             console.log("Response", response);
 
             if(response.statusCode == 200){
+                if(response.data.email_verified == 1){
+                    const tkn = response.data.token;
+                    route.params.onChangeAuth(tkn);
+                    navigation.navigate("DashboardContent"); 
+                } else {
 
-                navigation.navigate("EmailVerification", {
+                navigation.navigate("AccountCreated", {
                     token: response.data.token,
                     onChangeAuth: route.params.onChangeAuth,
                     exam: route.params.exam
                 });
+            }
             } else if(response.statusCode == 404){
                 showToastError("User not found.");
             } else {

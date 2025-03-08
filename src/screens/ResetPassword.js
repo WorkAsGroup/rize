@@ -66,7 +66,7 @@ export default function ResetPassword({ navigation }) {
         }
 
         const data = {
-            mobile: isMobile ? inputText : null, // conditionally setting "mobile" and "email" value
+            mobile: isMobile ? inputText : null, 
             email: !isMobile ? inputText : null,
         };
 
@@ -149,10 +149,10 @@ export default function ResetPassword({ navigation }) {
                         <TextInput
                             style={[
                                 styles.input,
-                                { backgroundColor: "#fff", color: theme.textColor1 },
+                                { backgroundColor: "#fff", color: theme.black },
                             ]}
                             placeholder="Email / Phone Number"
-                            placeholderTextColor={theme.textColor1}
+                            placeholderTextColor={theme.black}
                             value={inputText}
                             onChangeText={text => setInputText(text)}
                             keyboardType="email-address" // Suggest keyboard

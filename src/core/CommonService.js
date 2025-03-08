@@ -4,6 +4,7 @@ let apiurl = "https://mocktestapi.rizee.in"
 
 export const endPoint = {
 	examtype: "/api/v1/general/exams",
+	addExams:"/api/v1/general/addExams",
 	preExam: "/api/v1/mocktests/guest",
 	exmQuestions: "/api/v1/exams/questions",
 	startExam: "/api/v1/exams/startExam",
@@ -375,6 +376,23 @@ export const getPreExamdata = async (fields) => {
 
 	return await axios
 		.post(apiurl +  endPoint.startExam, fields, { headers: headers })
+		.then((res) => {
+			return res.data;
+		})
+		.catch((error) => {
+			return error;
+		});
+};
+export const addExam = async (fields) => {
+	const headers = {
+		"content-type": "application/json",
+		"X-Content-Type-Options": "nosniff",
+		"X-Frame-Options": "SAMEORIGIN",
+	};
+	console.log("Making request to pre exam:", apiurl + endPoint.addExams, "with data:", fields);
+
+	return await axios
+		.post(apiurl +  endPoint.addExams, fields, { headers: headers })
 		.then((res) => {
 			return res.data;
 		})

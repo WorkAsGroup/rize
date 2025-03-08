@@ -51,21 +51,42 @@ const AuthNavigator = ({ onChangeAuth }) => {
       <Stack.Screen name="EmailVerification" component={EmailVerification} />
 
 
-    </Stack.Navigator>
+    </Stack.Navigator> 
   );
 };
 
 const AppNavigator = ({ onChangeAuth }) => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
-    <Stack.Screen name="DashboardContent">
-      {(props) => <DashboardDrawer {...props} route={{ params: { onChangeAuth: onChangeAuth } }} />}
-    </Stack.Screen>
-    <Stack.Screen name="resultsPage">
-      {(props) => <ResultMainComponent {...props} route={{ params: { onChangeAuth: onChangeAuth } }} />}
-    </Stack.Screen>
-    <Stack.Screen name="PerformanceAnalasys" component={PerformanceAnalasys} />
-    <Stack.Screen name="InstructionAuth" component={InstructionAuth} />
-    <Stack.Screen name="StartExam" component={StartExam} />
+     <Stack.Screen name="Intro" component={Intro} />
+            <Stack.Screen
+                name="Login"
+                component={Login}
+                initialParams={{ onChangeAuth: onChangeAuth }}
+                options={{ gestureEnabled: false }}
+            />
+            <Stack.Screen name="Signup" component={Signup} />
+            <Stack.Screen name="AccountCreated" component={AccountCreated} />
+            <Stack.Screen name="ResetPassword" component={ResetPassword} />
+            <Stack.Screen name="ResetLink" component={ResetLink} />
+            <Stack.Screen name="Form" component={Form} />
+            <Stack.Screen name="OTPScreen" component={OTPScreen} />
+            <Stack.Screen name="Instruction" component={Instruction} />
+            <Stack.Screen name="Instruct" component={Instruct} />
+            <Stack.Screen name="MockTest" component={MockTest} />
+            <Stack.Screen name="EmailVerification" component={EmailVerification} />
+
+
+            {/* App Screens (Previously in AppNavigator) */}
+            <Stack.Screen name="DashboardContent">
+  {(props) => <DashboardDrawer {...props} onChangeAuth={handleAuthChange} />} 
+</Stack.Screen>
+
+            <Stack.Screen name="resultsPage">
+                {(props) => <ResultMainComponent {...props} route={{ params: { onChangeAuth: onChangeAuth } }} />}
+            </Stack.Screen>
+            <Stack.Screen name="PerformanceAnalasys" component={PerformanceAnalasys} />
+            <Stack.Screen name="InstructionAuth" component={InstructionAuth} />
+            <Stack.Screen name="StartExam" component={StartExam} />
   </Stack.Navigator>
 );
 
@@ -121,14 +142,14 @@ export default function App() {
     try {
       if (token) {
         await AsyncStorage.setItem('authToken', token);
+        setAuthToken(token);
       } else {
         await AsyncStorage.removeItem('authToken');
+        setAuthToken(null);
       }
-      setAuthToken(token);
     } catch (e) {
       console.log("Error during auth change:", e);
-    } finally {
-    }
+    } 
   }, []);
 
   useEffect(() => {
@@ -150,26 +171,7 @@ export default function App() {
     checkToken(); 
   }, []);
 
-  const NavigationContent = () => { 
-    const currentRouteName = useNavigationState(state => state?.routes[state.index]?.name);
-
-    useEffect(() => {
-        routeNameRef.current = currentRouteName; 
-    }, [currentRouteName]);
-
-
-    return (
-       isAppReady ? (
-        authToken ? (
-          <AppNavigator onChangeAuth={handleAuthChange} initialRouteName={"DashboardContent"}/>
-        ) : (
-          <AuthNavigator onChangeAuth={handleAuthChange} />
-        )
-      ) : (
-        <SplashScreen />
-      )
-    );
-  };
+ 
 
 
   return (
@@ -179,15 +181,11 @@ export default function App() {
         setIsAppReady(true); 
       }}
     >
-      {isAppReady ? ( 
-        authToken ? (
-          <AppNavigator onChangeAuth={handleAuthChange} initialRouteName={"DashboardContent"} />
+     {isAppReady ? (
+            <AppNavigator onChangeAuth={handleAuthChange} />
         ) : (
-          <AuthNavigator onChangeAuth={handleAuthChange} />
-        )
-      ) : (
-        <SplashScreen />
-      )}
+            <SplashScreen />
+        )}
     </NavigationContainer>
   );
 }

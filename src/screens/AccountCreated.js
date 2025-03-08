@@ -14,7 +14,7 @@ import LinearGradient from "react-native-linear-gradient";
 import Svg, { Path } from "react-native-svg";
 import { darkTheme, lightTheme } from "../theme/theme";
 import { getUpdatedEmail } from "../core/CommonService";
-import Toast from 'react-native-toast-message'; // Import Toast
+import Toast from 'react-native-toast-message'; 
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
@@ -27,10 +27,9 @@ export default function AccountCreated({ navigation, route }) {
   const data= route?.params?.data
   const scrollRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [email, setEmail] = useState(""); // State for email input
-  const [loading, setLoading] = useState(false); // State for loading indicator
+  const [email, setEmail] = useState(""); 
+  const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
-console.log(route?.params, "oioi")
   const accessOptions = [
     "Personalized dashboard",
     "Track your progress",
@@ -84,7 +83,8 @@ console.log(route?.params, "oioi")
               setLoading(false);
 
               if (response.statusCode === 200) {
-                route.params.onChangeAuth(data.token);
+                const tkn = data?.token;
+                route.params.onChangeAuth(tkn);
                   showToast("Email updated successfully!", "success");
                   navigation.navigate("DashboardContent"); 
               } else {
@@ -103,8 +103,8 @@ console.log(route?.params, "oioi")
   };
 
   const skipEmail = () => {
-    // Navigate to dashboard
-    route.params.onChangeAuth(data.token);
+    const tkn = data?.token;
+    route.params.onChangeAuth(tkn);
     navigation.navigate("DashboardContent"); 
   };
 
@@ -150,7 +150,7 @@ console.log(route?.params, "oioi")
           ]}
         >
           <View style={{ top: -180, padding: 20 }}>
-            <Text style={[styles.welcomeText, { color: theme.textColor }]}>
+            <Text style={[styles.welcomeText, { color: theme.black }]}>
               Account created!
             </Text>
             <View style={{ justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
@@ -167,7 +167,7 @@ console.log(route?.params, "oioi")
                 {
                   borderColor: errors.email ? theme.red : theme.inputBorder,
                   backgroundColor: "#fff",
-                  color:theme.textColor
+                  color:theme.black
                 },
               ]}
               placeholder="Email ID"

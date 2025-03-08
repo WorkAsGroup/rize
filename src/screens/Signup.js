@@ -43,10 +43,21 @@ export default function Signup({ navigation }) {
     const [password, setPassword] = useState("");
     const [errors, setErrors] = useState({});
     const [passwordVisible, setPasswordVisible] = useState(false); 
-
+    const [mobileOrEmail,setMobileOrEmail] = useState("mobile");
     const togglePasswordVisibility = () => {
         setPasswordVisible(!passwordVisible);
     };
+    const [email, setEmail] = useState("");
+
+    const handleMobileEmailToggle = () => {
+        setMobileOrEmail(mobileOrEmail === "mobile" ? "email" : "mobile");
+        if (mobileOrEmail === "mobile") {
+            setMobile("");
+        } else {
+            setEmail("");
+        }
+    };
+
 
     const handleGoogleLogin = async () => {
 		setLoading(true);
@@ -73,25 +84,30 @@ export default function Signup({ navigation }) {
     const validate = () => {
         let isValid = true;
         let errors = {};
-
-        if (!name.trim() && !mobile.trim() && !password.trim()) { 
-            showToastError("Please enter your signup details.");
-            isValid = false;
-            return { isValid, errors };
-        }
     
         if (!name.trim()) {
             errors.name = "Name is required";
             isValid = false;
         }
     
-        if (!mobile.trim()) {
-            errors.mobile = "Mobile number is required";
-            isValid = false;
-        } else if (!/^[6-9]{1}[0-9]{9}$/.test(mobile)) { 
-            errors.mobile = "Invalid mobile number";
-            isValid = false;
+        if (mobileOrEmail === "mobile") {
+            if (!mobile.trim()) {
+                errors.mobile = "Mobile number is required";
+                isValid = false;
+            } else if (!/^[6-9]{1}[0-9]{9}$/.test(mobile)) {
+                errors.mobile = "Invalid mobile number";
+                isValid = false;
+            }
+        } else { 
+            if (!email.trim()) {
+                errors.email = "Email is required";
+                isValid = false;
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { // Basic email validation
+                errors.email = "Invalid email address";
+                isValid = false;
+            }
         }
+    
     
     
         if (!password.trim()) {
@@ -101,41 +117,64 @@ export default function Signup({ navigation }) {
             errors.password = "Password must be at least 8 characters";
             isValid = false;
         }
+
+        if (Object.keys(errors).length === 0 && !name.trim() && !mobile.trim() && !email.trim() && !password.trim()) {
+            showToastError("Please enter your signup details.");
+            isValid = false;
+        }
     
         return { isValid, errors }; 
     };
 
     const handleSignup = async () => {
+        let mobileValue = mobile;
+        let emailValue = email;
+
+        if (mobileOrEmail === "email") {
+            mobileValue = "";
+        } else {
+            emailValue = "";
+        }
         const { isValid, errors } = validate();
 
         if (!isValid) {
-            for (const errorKey in errors) {
-                showToastError(errors[errorKey]);
-            }
+            showToastError(Object.values(errors).join('\n'));
             return; 
         }
+        if (!check) {
+            showToast("Please agree to the privacy policy and terms of service.")
+            return;
+        }
+
         const data = {
             name: name,
-            mobile: mobile,
-            email: "",
+            mobile: mobileValue,
+            email: emailValue,
             password: password,
         };
     
     
-        if (isValid) {
-            if (!check) {
-                showToast("Please agree to the privacy policy and terms of service.")
-                return;
-            }
-            
+        try {
+           
+
             const response = await getSignUpDetails(data);
             console.log("Signup API Response:", response.statusCode);
     
             if (response.statusCode === 201) {
-                navigation.navigate("OTPScreen", { mobile: mobile, studentId: response?.data?.student_user_id });
+                navigation.navigate("OTPScreen", { 
+                    mobile: mobileValue || emailValue, 
+                    studentId: response?.data?.student_user_id 
+                });
                 showToast("OTP Sent Successfully");
             } else if (response.statusCode === 409) {
+                const existingUserIdentifier = mobileValue ? mobileValue: emailValue;
+    
+                navigation.navigate("OTPScreen", { 
+                    mobile: existingUserIdentifier, 
+                    studentId: response?.data?.student_user_id 
+                });
                 showToast("User already exists.");
+    
             } else {
                 let errorMessage = "Signup failed. Please try again.";
                 if (response.data && response.data.message) {
@@ -143,11 +182,13 @@ export default function Signup({ navigation }) {
                 } else if (typeof response.data === 'string') {
                     errorMessage = response.data;
                 }
-                showToast(errorMessage);
+                showToastError(errorMessage);
             }
-        } else {
-            setErrors(errors);
+        } catch (error) {
+            console.error("Signup API Error:", error); 
+            showToastError("Something went wrong. Please try again later."); 
         }
+    
     };
 
     const showToast = (message) => {
@@ -251,32 +292,69 @@ export default function Signup({ navigation }) {
                         />
                         {errors.name && <Text style={[styles.errorText, { color: theme.red }]}>{errors.name}</Text>}
 
-                        <TextInput
-                            style={[
-                                styles.input,
-                                {
-                                    borderColor: errors.mobile ? theme.red : theme.inputBorder,
-                                    backgroundColor: "#fff",
-                                    borderWidth: errors.password ? 1 : 0,
-                                    color: "#000"
+                        <View style={{ flexDirection: "row", alignItems: "center" }}>
+                            {mobileOrEmail === "mobile" ? (
+                                <TextInput
+                                    style={[
+                                        styles.input,
+                                        {
+                                            borderColor: errors.mobile ? theme.red : theme.inputBorder,
+                                            backgroundColor: "#fff",
+                                            borderWidth: errors.mobile ? 1 : 0,
+                                            color: "#000",
+                                            flex: 1, // Take up remaining space
+                                        },
+                                    ]}
+                                    placeholder="Mobile"
+                                    placeholderTextColor={theme.gray}
+                                    keyboardType="number-pad"
+                                    maxLength={10}
+                                    value={mobile}
+                                    onChangeText={(text) => {
+                                        const filteredText = text.replace(/[^0-9]/g, "");
+                                        setMobile(filteredText);
+                                        if (errors.mobile) {
+                                            setErrors((prevErrors) => ({ ...prevErrors, mobile: null }));
+                                        }
+                                    }}
+                                />
 
-                                },
-                            ]}
-                            placeholder="Mobile"
-                            placeholderTextColor={theme.gray}
-                            keyboardType="number-pad"
-                            maxLength={10}
-                            value={mobile}
-                            onChangeText={(text) => {
-                                const filteredText = text.replace(/[^0-9]/g, "");
-                                setMobile(filteredText);
-                                if (errors.mobile) {
-                                    setErrors((prevErrors) => ({ ...prevErrors, mobile: null }));
-                                }
+                            ) : (
+                                <TextInput
+                                    style={[
+                                        styles.input,
+                                        {
+                                            borderColor: errors.email ? theme.red : theme.inputBorder,
+                                            backgroundColor: "#fff",
+                                            borderWidth: errors.email ? 1 : 0,
+                                            color: "#000",
+                                            flex: 1,
+                                        },
+                                    ]}
+                                    placeholder="Email"
+                                    placeholderTextColor={theme.gray}
+                                    keyboardType="email-address"
+                                    value={email}
+                                    onChangeText={(text) => {
+                                        setEmail(text);
+                                        if (errors.email) {
+                                            setErrors((prevErrors) => ({ ...prevErrors, email: null }));
+                                        }
+                                    }}
+                                />
+                            )}
 
-                            }}
-                        />
+                             <TouchableOpacity 
+                                onPress={handleMobileEmailToggle} 
+                                style={{top:-6,marginLeft:20,left:-20}}
+                                >
+                                    <Image
+                                     style={[styles.logo1, { tintColor: "#fff" }]}
+                                     source={mobileOrEmail === "mobile" ? require("../images/email.png") : require("../images/phone.png")}/>
+                            </TouchableOpacity>
+                        </View>
                         {errors.mobile && <Text style={[styles.errorText, { color: theme.red }]}>{errors.mobile}</Text>}
+                        {errors.email && <Text style={[styles.errorText, { color: theme.red }]}>{errors.email}</Text>}
 
                         <View style={[styles.passwordContainer, { borderColor: errors.password ? theme.red : theme.inputBorder }]}>
                             <TextInput
@@ -311,7 +389,7 @@ export default function Signup({ navigation }) {
                             <TouchableOpacity onPress={() => setCheck(!check)}>
                                 <Image
                                     style={{
-                                        tintColor: check ? "#fff" : theme.textColor1,
+                                        tintColor: check ? "#fff" : "#000",
                                         marginRight: 5,
                                         height:25,
                                         width:25,
@@ -408,6 +486,11 @@ const styles = StyleSheet.create({
     logo: {
         width: 250,
         height: 50,
+        resizeMode: "contain",
+    },
+    logo1: {
+        width: 30,
+        height: 30,
         resizeMode: "contain",
     },
     tagline: {
@@ -521,5 +604,10 @@ const styles = StyleSheet.create({
         marginTop:4,
         resizeMode: 'contain',
         tintColor:'#8e8e8e'
+    },
+ 
+    toggleButtonText: {
+        fontSize: 12,
+        color: "#000"
     },
 });
