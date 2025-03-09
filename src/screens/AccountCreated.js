@@ -20,11 +20,12 @@ const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
 export default function AccountCreated({ navigation, route }) {
+  console.log(route?.params?.token, "route")
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   const mobile = route?.params?.mobile;
   const studentId = route?.params?.studentId;
-  const data= route?.params?.data
+  const data= route?.params
   const scrollRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [email, setEmail] = useState(""); 
@@ -104,8 +105,12 @@ export default function AccountCreated({ navigation, route }) {
 
   const skipEmail = () => {
     const tkn = data?.token;
-    route.params.onChangeAuth(tkn);
-    navigation.navigate("DashboardContent"); 
+    if(tkn){
+      route.params.onChangeAuth(tkn);
+      console.log(tkn, "eerigneroin")
+      navigation.navigate("DashboardContent");
+    }
+     
   };
 
     const showToast = (message, type = "default") => {

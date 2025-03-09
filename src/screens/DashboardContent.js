@@ -212,6 +212,8 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
     } else {
         console.warn("onChangeAuth function not provided!  Cannot logout.");
     }
+    navigation.navigate("Login")
+
   };
 
   const getCustomeExam = async () => {

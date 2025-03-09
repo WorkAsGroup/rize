@@ -166,12 +166,14 @@ export default function Login({ route }) {
                     route.params.onChangeAuth(tkn);
                     navigation.navigate("DashboardContent"); 
                 } else {
-
+                   if(response?.data?.token) {
+                    
                 navigation.navigate("AccountCreated", {
                     token: response.data.token,
                     onChangeAuth: route.params.onChangeAuth,
                     exam: route.params.exam
                 });
+                   }
             }
             } else if(response.statusCode == 404){
                 showToastError("User not found.");

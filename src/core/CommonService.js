@@ -32,7 +32,8 @@ export const endPoint = {
 	chapters: "/api/v1/general/chapters",
 	createCustomExam: "/api/v1/customExam/createExam",
 	submitExam:"/api/v1/exams/finishExam",
-	prevpap:"/api/v1/exams/start-previouspaper-session"
+	prevpap:"/api/v1/exams/start-previouspaper-session",
+	updatepassword:"/api/v1/auth/update-password"
 	
   };
 
@@ -49,6 +50,24 @@ export const getSubmitExamResults = async (fields) => {
 	
 	return await axios
 	  .post(apiurl + endPoint.submitExam, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in submit exam:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
+
+  export const getResetPasswordConfirmation = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.updatepassword, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.updatepassword, fields, { headers: headers })
 	  .then((res) => res.data)
 	  .catch((error) => {
 		console.error("Error in submit exam:", error.response?.data || error.message);
@@ -480,22 +499,23 @@ export const getSignUpDetails = async (fields) => {
   };
 
   export const getResetDetails = async (fields) => {
-	const headers = {
-	  "content-type": "application/json",
-	  "X-Content-Type-Options": "nosniff",
-	  "X-Frame-Options": "SAMEORIGIN",
-	};
-  
-	console.log("Making request to:", apiurl + endPoint.resetPass, "with data:", fields);
-	
-	return await axios
-	  .post(apiurl + endPoint.resetPass, fields, { headers: headers })
-	  .then((res) => res.data)
-	  .catch((error) => {
-		console.error("Error in reset det:", error.response?.data || error.message);
-		return error;
-	  }); 
-  };
+    const headers = {
+        "content-type": "application/json",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "SAMEORIGIN",
+    };
+
+    console.log("Making request to:", apiurl + endPoint.resetPass, "with data:", fields);
+
+    try {
+        const res = await axios.post(apiurl + endPoint.resetPass, fields, { headers: headers });
+        return res.data; 
+    } catch (error) {
+        console.error("Error in reset det:", error.response?.data || error.message);
+        throw error.response; 
+    }
+};
+
   export const getLoginDetails = async (fields) => {
 	const headers = {
 	  "content-type": "application/json",

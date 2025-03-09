@@ -420,7 +420,9 @@ export default function StartExam({ navigation, route }) {
 
     useEffect(() => {
         if (exams.length > 0) {
-            const initialTime = exams.length * 120;
+            const initialTime = parseInt(route.params.obj.exam_duration) * 60;
+            console.log(initialTime, route.params.obj.exam_duration
+                , "inital")
             setRemainingTime(initialTime);
 
             timerInterval.current = setInterval(() => {
@@ -778,49 +780,14 @@ setAllNum(allNumbers);
     const images1 = extractImages(questionHtml1);
 
     const QuestionTimer = () => {
-        const [timeElapsed, setTimeElapsed] = useState(120);
+        const [timeElapsed, setTimeElapsed] = useState(0);
         const [startTime, setStartTime] = useState(null);
         const questionId = selectedNumber
         const colorScheme = useColorScheme();
         const theme = colorScheme === "dark" ? darkTheme : lightTheme;
 
-        useEffect(() => {
-            const loadTimer = async () => {
-                try {
-                    const savedStartTime = await AsyncStorage.getItem(`questionStartTime_${questionId}`);
-                    if (savedStartTime) {
-                        setStartTime(savedStartTime);
-                        const elapsedTime = Math.floor((Date.now() - parseInt(savedStartTime, 10)) / 1000);
-                        setTimeElapsed(Math.max(60 - elapsedTime, 0));
-                    } else {
-                        const newStartTime = Date.now().toString();
-                        await AsyncStorage.setItem(`questionStartTime_${questionId}`, newStartTime);
-                        setStartTime(newStartTime);
-                        setTimeElapsed(60);
-                    }
-                } catch (error) {
-                    console.error('Error loading question timer:', error);
-                }
-            };
-
-            loadTimer();
-        }, [selectedNumber]);
-
-        useEffect(() => {
-            if (startTime) {
-                const timer = setInterval(() => {
-                    setTimeElapsed(prevTime => {
-                        if (prevTime <= 0) {
-                            clearInterval(timer);
-                            return 0;
-                        }
-                        return prevTime - 1;
-                    });
-                }, 1000);
-
-                return () => clearInterval(timer);
-            }
-        }, [startTime]);
+      
+    
 
         const formatTime = (seconds) => {
             const mins = Math.floor(seconds / 60);
@@ -837,7 +804,7 @@ setAllNum(allNumbers);
 
         return (
             <View style={{ flexDirection: 'row' }}>
-                <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>Question Timer:</Text>
+                <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>Time spent:</Text>
                 <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>{formatTime(timeElapsed)}</Text>
             </View>
         );

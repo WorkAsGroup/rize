@@ -218,44 +218,47 @@ const renderersProps = {
             const backgroundColor = isCorrect ? "#1ABE171A" : isAttempted ? "#E500041A" : "#fff";
     
             return (
-              <View key={i} style={[styles.optionContainer, { width:"100%" }]}>
+              <View key={i} style={[styles.optionContainer, { width: "100%" }]}>
                 <View style={[styles.paper, { borderColor, backgroundColor }]}>
                   <View style={styles.optionContent}>
-                    <Text style={styles.optionText}>
-                      <Text style={styles.optionLabel}>{option}</Text>
-                      <Text style={styles.optionSpacer}> </Text>
-                      {item?.question && (
-                       
-                      //  <HTML  contentWidth={width} />
-                       <RenderHtml
-                       source={sanitizeHtml(item?.[`option${i + 1}`] || "<p>No  option provided.</p>",)}
-                       renderersProps={renderersProps}
-                       // baseFontStyle={baseFontStyle}
-                       // {...DEFAULT_PROPS}
-                       contentWidth={width}
-                       />
-                      )}
-                    </Text>
-                    {isCorrect ? (
-                             
-                         
-                            <Image
-                              source={require("../../images/check.png")}
-                              style={{ height: 19, width: 19 }}
-                            />
-                    
-                    ) : isAttempted ? (
+                    {/* Aligning Text and Image/Icon in a row */}
+                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                      
+                      {/* Option Text */}
+                      <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
+                        <Text style={styles.optionText}>
+                          <Text style={styles.optionLabel}>{option}</Text>
+                          <Text style={styles.optionSpacer}> . </Text>
+                        </Text>
+                        {item?.question && (
+                          <RenderHtml
+                            source={sanitizeHtml(item?.[`option${i + 1}`] || "<p>No option provided.</p>")}
+                            renderersProps={renderersProps}
+                            contentWidth={width}
+                          />
+                        )}
+                      </View>
+            
+                      {/* Correct/Wrong Icon or Radio Button */}
+                      {isCorrect ? (
                         <Image
-                        source={require("../../images/delete2.png")}
-                        style={{ height: 19, width: 19 }}
-                      />
-                    ) : (
-                      <View style={styles.radioRounded} />
-                    )}
+                          source={require("../../images/check.png")}
+                          style={{ height: 19, width: 19 }}
+                        />
+                      ) : isAttempted ? (
+                        <Image
+                          source={require("../../images/delete2.png")}
+                          style={{ height: 19, width: 19 }}
+                        />
+                      ) : (
+                        <View style={styles.radioRounded} />
+                      )}
+                    </View>
                   </View>
                 </View>
               </View>
             );
+            
           })}
         </View>
           ):<View>

@@ -24,6 +24,8 @@ import ResultMainComponent from './src/screens/ResultsMainConponent';
 import InstructionAuth from './src/screens/InstructionAuth';
 import StartExam from './src/screens/StartExam';
 import PerformanceAnalasys from './src/screens/PerformanceAnalasys';
+import DashboardContent from './src/screens/DashboardContent';
+import ResetPasswordOTP from './src/screens/ResetPasswordOTP';
 
 const Stack = createStackNavigator();
 
@@ -49,6 +51,7 @@ const AuthNavigator = ({ onChangeAuth }) => {
       <Stack.Screen name="Instruct" component={Instruct} />
       <Stack.Screen name="MockTest" component={MockTest} />
       <Stack.Screen name="EmailVerification" component={EmailVerification} />
+      <Stack.Screen name="ResetPasswordOTP" component={ResetPasswordOTP} />
 
 
     </Stack.Navigator> 
@@ -73,13 +76,14 @@ const AppNavigator = ({ onChangeAuth }) => (
             <Stack.Screen name="Instruction" component={Instruction} />
             <Stack.Screen name="Instruct" component={Instruct} />
             <Stack.Screen name="MockTest" component={MockTest} />
-            <Stack.Screen name="EmailVerification" component={EmailVerification} />
+            <Stack.Screen name="ResetPasswordOTP" component={ResetPasswordOTP} />
+            <Stack.Screen name="EmailVerification" component={EmailVerification} /> 
 
 
             {/* App Screens (Previously in AppNavigator) */}
-            <Stack.Screen name="DashboardContent">
-  {(props) => <DashboardDrawer {...props} onChangeAuth={handleAuthChange} />} 
-</Stack.Screen>
+            <Stack.Screen name="DashboardContent" component={DashboardContent}/>
+  {/* {(props) => <DashboardDrawer {...props} onChangeAuth={onChangeAuth} />}  */}
+{/* </Stack.Screen> */}
 
             <Stack.Screen name="resultsPage">
                 {(props) => <ResultMainComponent {...props} route={{ params: { onChangeAuth: onChangeAuth } }} />}
@@ -175,17 +179,20 @@ export default function App() {
 
 
   return (
-    <NavigationContainer 
-      ref={navigationRef} 
-      onReady={() => {
-        setIsAppReady(true); 
-      }}
+   <NavigationContainer
+      ref={navigationRef}
+      onReady={() => setIsAppReady(true)} 
     >
-     {isAppReady ? (
-            <AppNavigator onChangeAuth={handleAuthChange} />
+      {isAppReady ? (
+        authToken ? (
+          <AppNavigator onChangeAuth={handleAuthChange} />
         ) : (
-            <SplashScreen />
-        )}
+          <AuthNavigator onChangeAuth={handleAuthChange} />
+        )
+      ) : (
+        <SplashScreen />
+      )}
     </NavigationContainer>
+
   );
 }
