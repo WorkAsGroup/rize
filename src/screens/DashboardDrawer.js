@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, useColorScheme, Alert } from 'react-native';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import DashboardContent from './DashboardContent';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { darkTheme, lightTheme } from '../theme/theme';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Intro from './Intro';
 import PerformanceAnalasys from './PerformanceAnalasys';
 
@@ -15,22 +16,21 @@ const Settings = () => (
   </View>
 );
 
-// Custom Drawer Content without Icons
 const CustomDrawerContent = (props) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   const navigation = useNavigation();
   const route = useRoute();
   const currentRouteName = route.name;
-
+  
   const getIconSource = (routeName) => {
     switch (routeName) {
       case 'Dashboard':
         return require('../images/dashboard.png');
       case 'MockTests':
         return require('../images/test.png');
-        case 'Performance':
-          return require('../images/performance.png');
+      case 'Performance':
+        return require('../images/performance.png');
       case 'Settings':
         return require('../images/settings.png');
       default:
@@ -45,48 +45,25 @@ const CustomDrawerContent = (props) => {
 
   return (
     <DrawerContentScrollView {...props} style={{ backgroundColor: theme.textbgcolor }}>
-      {/* App Title */}
       <View style={[styles.drawerHeader]}>
-      <Image source={require("../images/title.png")} style={{width:160,tintColor:theme.textColor,resizeMode:'contain',marginLeft:10}} />
+        <Image source={require("../images/title.png")} style={{ height: 100, width: 160, tintColor: theme.textColor, resizeMode: 'contain', marginLeft: 10 }} />
       </View>
 
-      {/* Drawer Items */}
       <TouchableOpacity style={[styles.drawerItem, currentRouteName === 'Dashboard' && styles.selectedDrawerItem]} onPress={() => handleNavigation('Dashboard')}>
-        <Image
-          source={getIconSource('Dashboard')}
-          style={[styles.drawerIcon, { tintColor: theme.textColor }]}
-        />
+        <Image source={getIconSource('Dashboard')} style={[styles.drawerIcon, { tintColor: theme.textColor }]} />
         <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Dashboard</Text>
       </TouchableOpacity>
+
       <TouchableOpacity style={[styles.drawerItem, currentRouteName === 'PerformanceAnalasys' && styles.selectedDrawerItem]} onPress={() => handleNavigation('PerformanceAnalasys')}>
-        <Image
-          source={getIconSource('Performance')}
-          style={[styles.drawerIcon, { tintColor: theme.textColor }]}
-        />
+        <Image source={getIconSource('Performance')} style={[styles.drawerIcon, { tintColor: theme.textColor }]} />
         <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Performance Analysys</Text>
       </TouchableOpacity>
-      {/* <TouchableOpacity style={[styles.drawerItem, currentRouteName === 'Settings' && styles.selectedDrawerItem]} onPress={() => handleNavigation('Settings')}>
-        <Image
-          source={getIconSource('Settings')}
-          style={[styles.drawerIcon, { tintColor: theme.textColor }]}
-        />
-        <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Settings</Text>
-      </TouchableOpacity> */}
-      {/* <TouchableOpacity style={[styles.drawerItem, currentRouteName === 'MockTests' && styles.selectedDrawerItem]} onPress={() => handleNavigation('MockTests')}>
-        <Image
-          source={getIconSource('MockTests')}
-          style={[styles.drawerIcon, { tintColor: theme.textColor }]}
-        />
-        <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Mock Tests</Text>
-      </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.drawerItem, currentRouteName === 'Settings' && styles.selectedDrawerItem]} onPress={() => handleNavigation('Settings')}>
-        <Image
-          source={getIconSource('Settings')}
-          style={[styles.drawerIcon, { tintColor: theme.textColor }]}
-        />
-        <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Settings</Text>
-      </TouchableOpacity> */}
+      {/* ✅ LOGOUT BUTTON */}
+      <TouchableOpacity onPress={props.onLogout} style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 20, marginTop: 20 }}>
+        <Image source={require("../images/logout.png")} style={[styles.icon, { tintColor: theme.textColor, width: 22, height: 22 }]} />
+        <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Logout</Text>
+      </TouchableOpacity>
     </DrawerContentScrollView>
   );
 };
@@ -94,35 +71,41 @@ const CustomDrawerContent = (props) => {
 const DashboardDrawer = ({ route }) => {
   const { onChangeAuth } = route.params;
   const colorScheme = useColorScheme();
+  const navigation = useNavigation();
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
+
+  // ✅ FIXED LOGOUT FUNCTION
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('authToken');
+      onChangeAuth(null);
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+      Alert.alert("Error", "An error occurred during logout.");
+    }
+  };
 
   return (
     <Drawer.Navigator
       initialRouteName="Dashboard"
-      drawerContent={(props) => <CustomDrawerContent {...props} />}
+      drawerContent={(props) => <CustomDrawerContent {...props} onLogout={handleLogout} />}
       screenOptions={{
         headerShown: false,
         drawerStyle: {
           backgroundColor: theme.background,
         },
-      }} 
+      }}
     >
-      <Drawer.Screen name="Dashboard" >
-        {(props) => (
-          <DashboardContent
-            {...props}
-            onChangeAuth={route.params.onChangeAuth }
-          />
-        )}
+      <Drawer.Screen name="Dashboard">
+        {(props) => <DashboardContent {...props} onChangeAuth={route.params.onChangeAuth} />}
       </Drawer.Screen>
-      {/* <Drawer.Screen name="Introv2" component={Intro} /> */}
-      <Drawer.Screen name="PerformanceAnalasys"> 
-      {(props) => (
-          <PerformanceAnalasys
-            {...props}
-            route={{ params: { onChangeAuth: onChangeAuth } }}
-          />
-        )}
+
+      <Drawer.Screen name="PerformanceAnalasys">
+        {(props) => <PerformanceAnalasys {...props} onChangeAuth={route.params.onChangeAuth} />}
       </Drawer.Screen>
     </Drawer.Navigator>
   );
@@ -140,11 +123,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
   },
-  
-  drawerTitle: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    //color: '#6A5ACD',
+  drawerHeader: {
+    paddingVertical: 20,
   },
   drawerItem: {
     paddingVertical: 15,
@@ -164,15 +144,14 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     marginLeft: 8,
   },
-  drawerItemTextInactive: {
-    fontSize: 18,
-    fontFamily: 'CustomFont',
-    top: 5,
-    marginLeft: 8
-  },
   drawerIcon: {
     width: 24,
     height: 24,
+    resizeMode: 'contain',
+  },
+  icon: {
+    width: 20,
+    height: 20,
     resizeMode: 'contain',
   },
 });

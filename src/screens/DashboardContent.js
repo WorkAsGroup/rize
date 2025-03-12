@@ -15,7 +15,7 @@ import { Defs, LinearGradient as SvgLinearGradient, Stop } from "react-native-sv
 import CustomExamCreation from './CustomExamCreation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DropDownPicker from 'react-native-dropdown-picker';
-
+import { Dropdown } from 'react-native-element-dropdown';
 import ExamModalComponent from './ExamModalComponent';
 
 const Tab = createBottomTabNavigator();
@@ -28,6 +28,8 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
   const [open, setOpen] = useState(false);
   const [studentUserId, setStudentUserId] = useState(null)
   // const { onChangeAuth } = route.params;
+
+
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   const [addExam, setAddExam] = useState(false)
@@ -41,7 +43,7 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
   const [pre, setPre] = useState([]);
   const [customExams, setCustomExams] = useState([]);
    const [isOpen, setIsOpen] = useState(false);
-  const [selectedOption, setSelectedOption] = useState(items?.[0] || null);
+  const [selectedOption, setSelectedOption] = useState(null);
   const [mock, setMock] = useState([]);
   const [examsData, setExamsData] = useState([])
   const [loading, setLoading] = useState(true);
@@ -170,7 +172,7 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      await getUser();
+ 
       await getYears();
       await getMock();
 
@@ -188,9 +190,11 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
       setLoading(false);
     }
   }, [studentExamId]);
+  
 
   useEffect(() => {
     fetchData();
+    
   }, [fetchData]);
 
   useEffect(() => {
@@ -198,23 +202,9 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
     setMock(mocklist);
   }, [mocklist, pre]);
 
-
-  const handleLogout = async () => {
-    if(onChangeAuth) { 
-        try {
-           await AsyncStorage.removeItem('authToken'); 
-           onChangeAuth(null); 
-           navigation.navigate("Login")
-        } catch (error) {
-            console.error("Logout error:", error);
-            Alert.alert("Error", "An error occurred during logout."); 
-        }
-    } else {
-        console.warn("onChangeAuth function not provided!  Cannot logout.");
-    }
-    navigation.navigate("Login")
-
-  };
+useEffect(() => {
+  getUser();
+},[])
 
   const getCustomeExam = async () => {
     const data = {
@@ -237,8 +227,8 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
         setExamsData(response.data.examsData)
         const examId = response.data.examsData[0].student_user_exam_id;
         const exams = await getExamType();
-       
-        if (response.data.examsData?.length > 0 && exams.data?.length > 0) {
+       console.log(response?.data?.examsData, "e[okpqeof")
+        if (response?.data?.examsData&&response.data.examsData?.length > 0 && exams.data?.length > 0) {
           // Create a Set of exam_ids present in response.data.examsData
           const examsDataSet = new Set(response.data.examsData.map(exam => exam.exam_id));
       
@@ -249,9 +239,29 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
                   ...item, // Retain properties from exams.data
                   ...response.data.examsData.find(exam => exam.exam_id === item.exam_id) // Merge matching exam_id data
               }));
-      
-          setItems(filteredMergedData);
-          setStudentExamId(filteredMergedData[0]?.student_user_exam_id); // Ensure safe access
+         
+  const dropdownItems = [
+   
+    ...filteredMergedData.map((option) => ({
+      label: option.exam_type,
+      value: option.exam_id,
+      isDefault: option.is_default,
+      stUserExamId:  option.student_user_exam_id
+    })),
+    { label: "➕ Add", value: "add", custom: true },
+  ];
+  setItems(dropdownItems);
+  const defaultItem = dropdownItems.find((item) => item.is_default === 1);
+if(defaultItem) {
+  console.log(defaultItem,dropdownItems,examsDataSet, "defaultItem")
+  setSelectedOption(defaultItem);
+
+  setStudentExamId(defaultItem.stUserExamId);
+} else {
+  setSelectedOption(dropdownItems[0]);
+  setStudentExamId(dropdownItems[0].stUserExamId);
+}
+// Ensure safe access
           console.log(filteredMergedData, "Filtered Merged Data", response.data.examsData, exams.data);
       }
       
@@ -388,16 +398,22 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: 200, left: -55 }}>
           <Text style={{ color: "#000", color: theme.textColor }}>{item.name}</Text>
 
-          {item.is_increase && (<View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
-            <Image source={require("../images/up_arrow.png")} style={{ height: 30, width: 15, tintColor: "green", resizeMode: 'contain', marginRight: 5 }} />
-            <Text style={{ color: "#000", justifyContent: 'flex-end', color: "green" }}>{item.count}</Text>
-          </View>
-          )}
-          {!item.is_increase && (<View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
-            <Image source={require("../images/down_arrow.png")} style={{ height: 30, width: 15, tintColor: "red", resizeMode: 'contain', marginRight: 5 }} />
-            <Text style={{ color: "#000", justifyContent: 'flex-end', color: "red" }}>{item.count}</Text>
-          </View>
-          )}
+          <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+  {item.count === 0 ? (
+    <Text style={{fontSize: 21, color: "#2575FC", marginRight: 5 }} >=</Text>
+  ) : item.is_increase ? (
+    <>
+      <Image source={require("../images/up_arrow.png")} style={{ height: 30, width: 15, tintColor: "green", resizeMode: 'contain', marginRight: 5 }} />
+      <Text style={{ color: "green" }}>{item.count}</Text>
+    </>
+  ) : (
+    <>
+      <Image source={require("../images/down_arrow.png")} style={{ height: 30, width: 15, tintColor: "red", resizeMode: 'contain', marginRight: 5 }} />
+      <Text style={{ color: "red" }}>{item.count}</Text>
+    </>
+  )}
+</View>
+
         </View>
 
       </View>
@@ -431,15 +447,14 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
         sessionId = response.data.exam_session_id;
       }
 
-      navigation.navigate("InstructionAuth", { // Navigation after async operation
+      navigation.navigate("InstructionAuth", {
         obj: item,
         studentExamId: studentExamId,
         examtype: selectedType,
-        session_id: sessionId ? sessionId: item.custom_exam_id, // Use potentially updated sessionId
+        session_id: sessionId ? sessionId: item.custom_exam_id, 
       });
     } catch (error) {
       console.error("Error in handleStartTest:", error);
-      // Handle the error appropriately, e.g., display an error message to the user.
     }
   };
 
@@ -568,12 +583,14 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
   };
 
   const renderItems = ({ item }) => {
+    console.log(item, "badgeItem")
     return (
-      <View style={{ width: "98%", margin: 5, flexDirection: 'row', padding: 5, backgroundColor: theme.textColor1, borderRadius: 15, justifyContent: 'space-evenly' }}>
-
-        <Text style={{ color: theme.white }}>
-          {item.name}
+      <View style={{ width: "98%", margin: 5, flexDirection: 'column', padding: 5, backgroundColor: theme.textColor1, borderRadius: 15, justifyContent: 'center' , alignItems: 'center' }}>
+        <Image source={{ uri: item.badge_logo }} style={{ height: 50, width: 50, resizeMode: 'contain' }} />
+        <Text style={{ color: "#000" }}>
+          {item.badge_name}
         </Text>
+        
       </View>
     )
   };
@@ -620,10 +637,13 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
 
     return (
       <View style={{ backgroundColor: theme.conbk, padding: 10, borderRadius: 10 }}>
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-          <View>
+       
+          {chartData?.length > 0 ? (
+          <React.Fragment>
+             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <View>
             <Text style={{ fontSize: 18, fontWeight: "bold", color: theme.textColor }}>Weekly Performance</Text>
-            <Text style={{ fontSize: 14, color: theme.textColor }}>Total tests this week</Text>
+            <Text style={{ fontSize: 14, color: theme.textColor }}>Total tests taken current week</Text>
             <Text style={{ fontSize: 24, fontWeight: "bold", color: theme.textColor }}>
               {totalExamCount ? totalExamCount : 0}
             </Text>
@@ -641,88 +661,93 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
               }}
             />
           </View>
-        </View>
+          </View>
 
-        <View style={{ flexDirection: "row", marginTop: 10 }}>
-          <TouchableOpacity
-            style={{
-              padding: 8,
-              borderBottomWidth: selectedPerformanceType === "score" ? 2 : 0,
-              borderBottomColor: selectedPerformanceType === "score" ? theme.tx1 : "transparent",
-            }}
-            onPress={() => setSelectedPerformanceType("score")}
-          >
-            <Text style={{ color: selectedPerformanceType === "score" ? theme.tx1 : theme.textColor }}>Scoring</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={{
-              padding: 8,
-              marginLeft: 10,
-              borderBottomWidth: selectedPerformanceType === "avgtime" ? 2 : 0,
-              borderBottomColor: selectedPerformanceType === "avgtime" ? theme.tx1 : "transparent",
-            }}
-            onPress={() => setSelectedPerformanceType("avgtime")}
-          >
-            <Text style={{ color: selectedPerformanceType === "avgtime" ? theme.tx1 : theme.textColor }}>
-              Avg Time Spent
-            </Text>
-          </TouchableOpacity>
-        </View>
+<View style={{ flexDirection: "row", marginTop: 10 }}>
+  <TouchableOpacity
+    style={{
+      padding: 8,
+      borderBottomWidth: selectedPerformanceType === "score" ? 2 : 0,
+      borderBottomColor: selectedPerformanceType === "score" ? theme.tx1 : "transparent",
+    }}
+    onPress={() => setSelectedPerformanceType("score")}
+  >
+    <Text style={{ color: selectedPerformanceType === "score" ? theme.tx1 : theme.textColor }}>Scoring</Text>
+  </TouchableOpacity>
+  <TouchableOpacity
+    style={{
+      padding: 8,
+      marginLeft: 10,
+      borderBottomWidth: selectedPerformanceType === "avgtime" ? 2 : 0,
+      borderBottomColor: selectedPerformanceType === "avgtime" ? theme.tx1 : "transparent",
+    }}
+    onPress={() => setSelectedPerformanceType("avgtime")}
+  >
+    <Text style={{ color: selectedPerformanceType === "avgtime" ? theme.tx1 : theme.textColor }}>
+      Avg Time Spent
+    </Text>
+  </TouchableOpacity>
+</View>
 
-        {/* Line Chart */}
-        {chartData && chartData.length > 0 && xLabels && xLabels.length > 0 ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <LineChart
-              data={{
-                labels: xLabels,
-                datasets: chartData.map((subject, index) => ({
-                  data: subject.data || [],
-                  color: () => subjectColors[index % subjectColors.length],
-                  strokeWidth: 2,
-                })),
-              }}
-              width={Dimensions.get("window").width * 0.85}
-              height={250}
-              yAxisLabel=""
-              chartConfig={{
-                backgroundColor: theme.conbk,
-                backgroundGradientFrom: theme.white,
-                backgroundGradientTo: theme.white,
-                decimalPlaces: 0,
-                color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                propsForDots: {
-                  r: "4",
-                  strokeWidth: "2",
-                  stroke: "#ffa726",
-                },
-              }}
-              bezier
-              style={{
-                marginVertical: 8,
-                borderRadius: 10,
-              }}
-            />
-          </ScrollView>
-        ) : (
-          <Text style={{ color: theme.textColor }}>No data available</Text>
-        )}
-        {/* Subject Legends */}
-        <View style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 10 }}>
-          {chartData.map((subject, index) => (
-            <View key={index} style={{ flexDirection: "row", alignItems: "center", marginRight: 10 }}>
-              <View
-                style={{
-                  width: 10,
-                  height: 10,
-                  backgroundColor: subjectColors[index % subjectColors.length],
-                  marginRight: 5,
-                }}
-              />
-              <Text style={{ color: theme.textColor }}>{subject.name}</Text>
-            </View>
-          ))}
-        </View>
+{/* Line Chart */}
+{chartData && chartData.length > 0 && xLabels && xLabels.length > 0 ? (
+  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+    <LineChart
+      data={{
+        labels: xLabels,
+        datasets: chartData.map((subject, index) => ({
+          data: subject.data || [],
+          color: () => subjectColors[index % subjectColors.length],
+          strokeWidth: 2,
+        })),
+      }}
+      width={chartData.length >5 ? chartData.length* 0.8 : windowWidth*0.85}
+      height={250}
+      yAxisLabel=""
+      chartConfig={{
+        backgroundColor: theme.conbk,
+        backgroundGradientFrom: theme.white,
+        backgroundGradientTo: theme.white,
+        decimalPlaces: 0,
+        color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+        labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+        propsForDots: {
+          r: "4",
+          strokeWidth: "2",
+          stroke: "#ffa726",
+        },
+      }}
+      bezier
+      style={{
+        marginVertical: 8,
+        borderRadius: 10,
+      }}
+    />
+  </ScrollView>
+) : (
+  <Text style={{ color: theme.textColor }}>No data available</Text>
+)}
+{/* Subject Legends */}
+<View style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 10 }}>
+  {chartData.map((subject, index) => (
+    <View key={index} style={{ flexDirection: "row", alignItems: "center", marginRight: 10 }}>
+      <View
+        style={{
+          width: 10,
+          height: 10,
+          backgroundColor: subjectColors[index % subjectColors.length],
+          marginRight: 5,
+        }}
+      />
+      <Text style={{ color: theme.textColor }}>{subject.name}</Text>
+    </View>
+  ))}
+</View>
+          </React.Fragment>
+          ) : (
+            <Image source={{ uri: "https://mocktest.rizee.in/static/media/take-the-test1.e09ad0cac0e111c3b6d7.png" }} style={{ width: windowWidth, height: windowWidth*0.75, resizeMode: "cover" }} />
+          )}
+       
       </View>
     );
   };
@@ -759,7 +784,7 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
                 handleSetMockType('mock');
               }}
             >
-              <Text style={{ color: selectedType === 'mock' ? theme.tx1 : theme.textColor, fontSize: 13 }}>Mock Tests</Text>
+              <Text style={{ color: selectedType === 'mock' ? theme.tx1 : theme.textColor, fontSize: 13 }}>Curated Tests</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -775,7 +800,7 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
                 setMock(pre);
               }}
             >
-              <Text style={{ color: selectedType === 'previous' ? theme.tx1 : theme.textColor, fontSize: 13 }}>Previous years exam</Text>
+              <Text style={{ color: selectedType === 'previous' ? theme.tx1 : theme.textColor, fontSize: 13 }}>Previous Year Tests</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -796,7 +821,7 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
           </View>
         </ScrollView>
         {selectedType === "custom" && <TouchableOpacity
-          style={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-end", width: "100%" }}
+          style={{ display: "flex", justifyContent: `${customExams.legth> 0 ? "flex-end":"center"}`, alignItems:  `${customExams.legth> 0 ? "flex-end":"center"}`, width: "100%" }}
           activeOpacity={0.8}
           onPress={() => setShowCustom(true)}
         >
@@ -826,22 +851,100 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
       </View>
     );
   };
-
+  
   const Leaderboard = () => {
+    const [leaderBoardValue, setLeaderBoardValue] = useState(1);
+    const [leadData, setLeadData] = useState([]);
+  
+  
+    const options = [
+      { value: 1, label: "Weekly" },
+      { value: 0, label: "Daily" }
+    ];
+  
+    // ✅ Handle Dropdown Change
+    const handleChangeFormat = (item) => {
+      setLeaderBoardValue(item.value);
+    };
+  
+    // ✅ Filter Data Based On Dropdown Selection
+    useEffect(() => {
+       if(champ) {
+        const filteredData = champ.filter((item) => item.report_level === leaderBoardValue);
+        setLeadData(filteredData);
+       }
+    }, [leaderBoardValue]);
+  
+ 
+  
     return (
-      <View style={[styles.performanceCard, { backgroundColor: theme.conbk, marginTop: 20, height: windowHeight * .4 }]}>
-        <Text style={[styles.performanceTitle, { color: theme.textColor }]}>LeaderBoard</Text>
-        <Text style={[styles.subText, { marginBottom: 10 }]}>Checkout your leader board score</Text>
+      <View  style={[
+        styles.performanceCard,
+        {
+          backgroundColor: theme.conbk,
+          marginTop: 20,
+          height: windowHeight * 0.5,
+          marginBottom: 10,
+        },
+      ]}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View>
+            <Text style={[styles.performanceTitle, { color: theme.textColor }]}>LeaderBoard</Text>
+            <Text style={[styles.subText, { marginBottom: 10 }]}>Checkout your leaderboard score</Text>
+          </View>
+          <View style={{ zIndex: 1000 }}>
+            <Dropdown
+              style={{
+                backgroundColor: theme.background,
+                borderColor: theme.tx1,
+                borderWidth: 1,
+                minHeight: 35,
+                width: 100,
+                paddingHorizontal: 10,
+                borderRadius: 10,
+              }}
+              containerStyle={{
+                backgroundColor: theme.textColor1,
+                borderColor: theme.brad,
+                maxHeight: 150,
+              }}
+              placeholderStyle={{
+                color: theme.textColor,
+                fontSize: 12,
+              }}
+              selectedTextStyle={{
+                color: theme.textColor,
+                fontSize: 12,
+              }}
+              itemTextStyle={{
+                fontSize: 11,
+                color: theme.textColor,
+              }}
+              data={options}
+              labelField="label"
+              valueField="value"
+              value={leaderBoardValue}
+              onChange={(item) => handleChangeFormat(item)}
+              placeholder="Select"
+            />
+          </View>
+        </View>
+  
         <FlatList
-          data={champ}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id ? item.id.toString() : Math.random().toString()}
-          ListEmptyComponent={<Text style={{ color: theme.textColor, textAlign: 'center' }}>No leaderboard data available.</Text>}
-        />
+      data={leadData}
+      renderItem={renderItem}
+      keyExtractor={(item) => item.value}
+      contentContainerStyle={{ flexGrow: 1 }}
+      style={{ flex: 1 }} // ✅ Allows FlatList to take up available space
+      ListEmptyComponent={
+        <Text style={{ color: theme.textColor, textAlign: 'center' }}>
+          No leaderboard data available.
+        </Text>
+      }
+    />
       </View>
     );
-  }
-
+  };
   const Achievements = () => {
     return (
       <View style={[styles.performanceCard, { backgroundColor: theme.conbk, marginTop: 20 }]}>
@@ -857,34 +960,76 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
     );
   }
 
-  const dropdownItems = [
-    { label: "➕ Add", value: "add" , custom: true,},
-    ...items.map((option) => ({
-      label: option.exam_type, 
-      value: option.exam_id,
-    })),
-  ];
 
-  const handleSelect = (value) => {
-    if (value === "add") {
+console.log(items, "itemsvaluses")
+  const handleSelect = (item) => {
+    if (item.value === "add") {
       setAddExam(true);
-      // Alert.alert("Add Button Clicked!"); // Test function
     } else {
-      setSelectedOption(value);
+    
+      setSelectedOption(item);
+      setStudentExamId(item.stUserExamId);
     }
   };
+
+  console.log(addExam, "modalstatus")
   return (
     <View style={[styles.container, { backgroundColor: theme.textbgcolor }]}>
       {/* Header */}
-      <View style={[styles.header, { alignItems: "center" }]}>
-        <TouchableOpacity onPress={() => navigation.openDrawer()}>
-          <Image source={{ uri: 'https://cdn-icons-png.flaticon.com/512/1828/1828859.png' }} style={[styles.icon, { tintColor: theme.textColor }]} />
-        </TouchableOpacity>
-        <Image source={require("../images/title.png")} style={{ height: 60, width: 160, tintColor: theme.textColor, resizeMode: 'contain', marginLeft: 10 }} />
-        <TouchableOpacity onPress={handleLogout} style={{ marginLeft: 'auto' }}>
-          <Image source={require("../images/logout.png")} style={[styles.icon, { tintColor: theme.textColor }]} />
-        </TouchableOpacity>
-      </View>
+      <View style={styles.header}>
+      {/* Hamburger Menu */}
+      <TouchableOpacity onPress={() => navigation.openDrawer()}>
+        <Image
+          source={{ uri: 'https://cdn-icons-png.flaticon.com/512/1828/1828859.png' }}
+          style={[styles.icon, { tintColor: theme.textColor }]}
+        />
+      </TouchableOpacity>
+
+      {/* App Logo */}
+      <Image
+        source={require("../images/title.png")}
+        style={[styles.logo, { tintColor: theme.textColor }]}
+      />
+
+      {/* Compact Dropdown */}
+      <View style={{ zIndex: 1000 }}>
+      <Dropdown
+  style={{
+    backgroundColor: theme.background,
+    borderColor: theme.tx1,
+    borderWidth: 1,
+    minHeight: 35,
+    width: 120,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+  }}
+  containerStyle={{
+    backgroundColor: theme.textColor1,
+    borderColor: theme.brad,
+    maxHeight: 150,
+  }}
+  placeholderStyle={{
+    color: theme.textColor,
+    fontSize: 12, // Smaller font size for placeholder
+  }}
+  selectedTextStyle={{
+    color: theme.textColor,
+    fontSize: 12, // Smaller font size for selected value
+  }}
+  itemTextStyle={{
+    fontSize: 11, // ✅ Decreased font size for dropdown items
+    color: theme.textColor,
+  }}
+  data={items}
+  labelField="label"
+  valueField="value"
+  value={selectedOption}
+  onChange={(item) => handleSelect(item)}
+  placeholder="Select"
+/>
+
+    </View>
+    </View>
 
       {/* Welcome Message */}
       <ScrollView
@@ -894,56 +1039,9 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
       >
      
         <ExamModalComponent show={addExam} setShow={setAddExam} studentUserId={studentUserId} />
-  <View style={{ zIndex: open ? 1000 : 1 }}> {/* Fix dropdown overlap */}
-      <DropDownPicker
-        open={open}
-        setOpen={setOpen}
-        value={selectedOption}
-        setValue={setSelectedOption}
-        onChangeValue={handleSelect}
-        items={dropdownItems}
-        placeholder="Select an option"
-        containerStyle={{ height: 50 }}
-        style={{
-          backgroundColor: theme.background,
-          borderColor: theme.tx1,
-          borderWidth: 1,
-        }}
-        dropDownContainerStyle={{
-          backgroundColor: theme.textColor1,
-          borderColor: theme.brad,
-          maxHeight: 200,
-        }}
-        textStyle={{ color: theme.textColor }}
-        flatListProps={{
-          nestedScrollEnabled: true, // Enable scrolling
-        }}
-        renderListItem={({ item, onPress }) => {
-          if (item.custom) {
-            return (
-              <TouchableOpacity
-                style={[styles.addButton, { backgroundColor: theme.tx1 }]} // Custom styling
-                onPress={() => handleSelect(item.value)}
-              >
-                <Text style={[styles.addButtonText, { color: theme.background }]}>
-                  {item.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          }
-          return (
-            <TouchableOpacity
-              style={styles.option1}
-              onPress={() => handleSelect(item.value)}
-            >
-              <Text style={{ color: theme.textColor }}>{item.label}</Text>
-            </TouchableOpacity>
-          );
-        }}
-      />
-    </View>
-        <Text style={[styles.welcome, { color: theme.textColor }]}>Good morning 🔥</Text>
-        <Text style={[styles.username, { color: theme.textColor }]}>Welcome {name},</Text>
+
+        {/* <Text style={[styles.welcome, { color: theme.textColor }]}>Good morning 🔥</Text>
+        <Text style={[styles.username, { color: theme.textColor }]}>Welcome {name},</Text> */}
 
 
         <SafeAreaView style={styles.centeredView}>
@@ -1136,10 +1234,20 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
-    // alignItems: "center",
-    // paddingHorizontal: 20,
-    paddingBottom: 10,
+    padding: 10,
+    backgroundColor: "transparent",
+  },
+  icon: {
+    width: 24,
+    height: 24,
+    resizeMode: "contain",
+  },
+  logo: {
+    height: 50,
+    width: 150,
+    resizeMode: "contain",
   },
   headerText: {
     fontSize: 20,

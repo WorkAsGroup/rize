@@ -104,7 +104,7 @@ console.log(examsData, "errfir")
               />
               {state.yearIdError && <Text style={styles.errorText}>{state.yearIdError}</Text>}
               <Text style={styles.label}>Exam</Text>
-              <DropDownPicker
+             {examsData&&<DropDownPicker
                 open={openExam}
                 setOpen={setOpenExam}
                 value={selectedExam}
@@ -117,7 +117,7 @@ console.log(examsData, "errfir")
                 containerStyle={{ marginBottom: 10 }}
                 style={styles.dropdown}
                 dropDownContainerStyle={styles.dropdownContainer}
-              />
+              />} 
               {state.examIdError && <Text style={styles.errorText}>{state.examIdError}</Text>}
               <Button
                 mode="contained"

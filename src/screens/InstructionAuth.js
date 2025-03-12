@@ -83,7 +83,7 @@ padding:10px auto;
                     fill="url(#grad)"
                     fontSize="24"
                     fontWeight="bold"
-                    x="60"
+                    x="80"
                     y="20"
                     textAnchor="middle"
                     alignmentBaseline="middle"
@@ -120,7 +120,7 @@ padding:10px auto;
                       for the "{obj.exam_name}"
                     </Text>
                   </View>
-                  <Text>
+                  <Text style={{color: theme.textColor}}>
                     Read all the instructions carefully before start an exam.
                   </Text>
                   <View>
@@ -198,6 +198,7 @@ padding:10px auto;
                   source={sanitizeHtml(
                     obj.exam_instructions || "<p>No instructions provided.</p>"
                   )}
+                  
                   renderersProps={renderersProps}
                   // baseFontStyle={baseFontStyle}
                   // {...DEFAULT_PROPS}
@@ -394,7 +395,7 @@ padding:10px auto;
                                 </SvgText>
                             </Svg> */}
 
-              <Text>👍 Good luck for your exam</Text>
+              <Text style={{color: theme.textColor}}>👍 Good luck for your exam</Text>
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => {

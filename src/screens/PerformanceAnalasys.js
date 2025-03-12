@@ -16,6 +16,7 @@ import PerformanceStatusGraph from "./PerformanceAvgTimeGraph";
 import { useNavigation } from "@react-navigation/native";
 
 const PerformanceAnalasys = ({ route }) => {
+  console.log(route.params)
   const navigation = useNavigation();
   const [selectedSubject, setSelectedSubject] = useState(1);
   const [selectedValue, setSelectedValue] = useState(1);

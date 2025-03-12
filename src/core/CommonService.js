@@ -33,7 +33,7 @@ export const endPoint = {
 	createCustomExam: "/api/v1/customExam/createExam",
 	submitExam:"/api/v1/exams/finishExam",
 	prevpap:"/api/v1/exams/start-previouspaper-session",
-	updatepassword:"/api/v1/auth/update-password"
+	updatepassword:"/api/v1/auth/update-password",
 	
   };
 

@@ -31,22 +31,23 @@ const QuestionAndAnswerComponent = ({ questionAndAnwerData }) => {
     isAllSelect: true,
     isLoading: false,
   });
-  console.log(questionAndAnwerData, "received");
-  const examSubjects = questionAndAnwerData
-    ? questionAndAnwerData[0]?.examSubjects
+  const [filteredAnswers, setFilteredAnswers] = useState(questionAndAnwerData);
+  console.log(filteredAnswers, "received");
+  const examSubjects = filteredAnswers
+    ? filteredAnswers[0]?.examSubjects
     : [];
-  const difficultyLevels = questionAndAnwerData
-    ? questionAndAnwerData[0]?.difficulty
+  const difficultyLevels = filteredAnswers
+    ? filteredAnswers[0]?.difficulty
     : [];
-  const questionsAndAnswers = questionAndAnwerData
-    ? questionAndAnwerData[0]?.questions
+  const questionsAndAnswers = filteredAnswers
+    ? filteredAnswers[0]?.questions
     : [];
 
   const [loading, setLoading] = useState(false);
   const { width } = useWindowDimensions();
 
   useEffect(() => {
-    if (questionAndAnwerData && questionAndAnwerData.length > 0) {
+    if (filteredAnswers && filteredAnswers.length > 0) {
       setState((prev) => ({
         ...prev,
         totalQuestions: questionsAndAnswers.length,
@@ -62,7 +63,7 @@ const QuestionAndAnswerComponent = ({ questionAndAnwerData }) => {
         selectedDifficulty: difficultyLevels,
       }));
     }
-  }, [questionAndAnwerData]);
+  }, [filteredAnswers]);
 
   useEffect(() => {
     if (
@@ -343,9 +344,30 @@ const renderersProps = {
     </View>
   )};
 
+  const handleAnswers = (type) => () => {
+
+    let updatedResult = [];
+  
+    if (type === "correct") {
+      updatedResult = questionAndAnwerData[0]?.questions?.filter((item) => item.status === 2);
+    } else if (type === "incorrect") {
+      updatedResult = questionAndAnwerData[0]?.questions?.filter((item) => item.status === 1);
+    } else if (type === "skipped") {
+      updatedResult = questionAndAnwerData[0]?.questions?.filter((item) => item.status === 0);
+    } else {
+      updatedResult = questionAndAnwerData[0]?.questions || [];
+    }
+  
+    setState((prev) => ({
+      ...prev,
+      filteredQuestions: updatedResult,
+    }));
+  };
+  
+
   return (
     <ScrollView style={styles.container}>
-      {questionAndAnwerData && questionAndAnwerData.length > 0 ? (
+      {filteredAnswers && filteredAnswers.length > 0 ? (
         <>
           <View style={styles.filterContainer}>
             <Picker
@@ -392,28 +414,28 @@ const renderersProps = {
               Analysis breakdown of answers
             </Text>
             <View style={styles.analysisRow}>
-              <View style={styles.analysisItem}>
+            <TouchableOpacity onPress={handleAnswers("total")} style={styles.analysisItem}>
                 <Text style={styles.analysisValue}>{state.totalQuestions}</Text>
                 <Text style={styles.analysisLabel}>Total Questions</Text>
-              </View>
-              <View style={styles.analysisItem}>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleAnswers("correct")} style={styles.analysisItem}>
                 <Text style={[styles.analysisValue, { color: "#28A745" }]}>
                   {state.correctAnswers}
                 </Text>
                 <Text style={styles.analysisLabel}>Correct answers</Text>
-              </View>
-              <View style={styles.analysisItem}>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleAnswers("incorrect")} style={styles.analysisItem}>
                 <Text style={[styles.analysisValue, { color: "#E50004" }]}>
                   {state.inCorrectAnswers}
                 </Text>
                 <Text style={styles.analysisLabel}>Incorrect answers</Text>
-              </View>
-              <View style={styles.analysisItem}>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleAnswers("skipped")} style={styles.analysisItem}>
                 <Text style={[styles.analysisValue, { color: "#FFC107" }]}>
                   {state.skipped}
                 </Text>
                 <Text style={styles.analysisLabel}>Skipped</Text>
-              </View>
+              </TouchableOpacity>
             </View>
           </View>
           <FlatList

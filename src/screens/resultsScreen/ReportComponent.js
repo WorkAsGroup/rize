@@ -46,8 +46,8 @@ console.log(reportData, "as;foiefowief")
                         </View>
                         <View style={[styles.statsRow, {marginTop: 10}]}>
                             {/* <View style={styles.statBox}><Text style={styles.statValue}></Text><Text style={styles.statLabel}></Text></View> */}
-                            <View style={styles.statBox}><Text style={styles.statValue}>{reportDetails.averageTimePerQuestion}s</Text><Text style={styles.statLabel}>Avg time per question{" "}</Text></View>
-                            <View style={styles.statBox}><Text style={styles.statValue}>{`${Math.floor(reportDetails.subjectWiseOverAllTime / 60)}:${reportDetails.subjectWiseOverAllTime % 60}`}s</Text><Text style={styles.statLabel}>Avg time per subject{" "}</Text></View>
+                            <View style={styles.statBox}><Text style={styles.statValue}>{reportDetails.averageTimePerQuestion}{" "}Sec</Text><Text style={styles.statLabel}>Avg time per question{" "}</Text></View>
+                            <View style={styles.statBox}><Text style={styles.statValue}>{`${Math.floor(reportDetails.subjectWiseOverAllTime / 60)}:${reportDetails.subjectWiseOverAllTime % 60}`}{" "}Sec</Text><Text style={styles.statLabel}>Avg time per subject{" "}</Text></View>
 
                         </View>
                     </View>
