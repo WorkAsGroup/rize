@@ -12,7 +12,8 @@ import {
     Dimensions,
     Image,
     Alert,
-    BackHandler
+    BackHandler,
+    ActivityIndicator
 } from "react-native";
 import Toast from 'react-native-toast-message'; 
 import LinearGradient from "react-native-linear-gradient";
@@ -31,6 +32,7 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 GoogleSignin.configure({
 	webClientId: "212625122753-o36nkar4vhepdof16e7ge3gmuaed2kio.apps.googleusercontent.com",
+    offlineAccess: true,
 });
 
 const GoogleLogin = async () => {
@@ -187,27 +189,65 @@ export default function Login({ route }) {
         }
     };
 
-    const handleGoogleLogin = async () => {
-		setLoading(true);
-		try {
-			const response = await GoogleLogin();
-			const { idToken, user } = response;
+    async function validateGoogleToken(token) {
+        try {
+            const ticket = await client.verifyIdToken({
+                idToken: token,
+                audience: CLIENT_ID, 
+            });
+    
+            const payload = ticket.getPayload();
+            console.log("Google Payload:", payload); 
+    
+            if (!payload || !payload.email) {
+                throw new Error('Invalid Google payload');
+            }
+    
+    
+            const userToken = generateUserToken(payload.email);
+    
+            console.log("Generated User Token:", userToken); 
+    
+    
+            return { success: true, data: {token: userToken, email: payload.email } };
+        } catch (error) {
+            console.error('Error validating Google ID token:', error);
+            return { success: false, error: error.message };
+        }
+    }
 
-			if (idToken) {
-				const resp = await authAPI.validateToken({
-					token: idToken,
-					email: user.email,
-				});
-				await handlePostLoginData(resp.data);
-			}
-		} catch (apiError) {
-			setError(
-				apiError?.response?.data?.error?.message || 'Something went wrong'
-			);
-		} finally {
-			setLoading(false);
-		}
-	};
+    const handleGoogleLogin = async () => {
+        setLoading(true);
+        try {
+            await GoogleSignin.hasPlayServices();
+            const userInfo = await GoogleSignin.signIn();
+            console.log("Google User Info:", userInfo); 
+
+            if(userInfo.user.idToken){
+
+                const response = await validateGoogleToken(userInfo.user.idToken); 
+                console.log("response form backend",response);
+                if(response.success){
+                    route.params.onChangeAuth(response.data.token);
+                    navigation.navigate("DashboardContent"); 
+                }
+
+            }
+
+        } catch (error) {
+            if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+                console.log("User cancelled the login flow.");
+            } else if (error.code === statusCodes.IN_PROGRESS) {
+                console.log("Operation (e.g., sign in) is in progress already.");
+            } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+                console.log("Play services not available or outdated.");
+            } else {
+                console.error("Google Sign-In Error:", error);
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const validateEmailOrPhone = (input) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -387,12 +427,16 @@ export default function Login({ route }) {
                             </Text>
                         </TouchableOpacity>
                         <View style={{justifyContent:'center',alignItems:'center'}}>
-                        <TouchableOpacity onPress={handleGoogleLogin}>
-                                <Image
-                        style={{ height:30,width:30 }}
-                        source={require("../images/google.png")}
-                    />
-                                </TouchableOpacity>
+                        <TouchableOpacity onPress={handleGoogleLogin} disabled={loading}>
+                                {loading ? (
+                                    <ActivityIndicator size="small" color={theme.textColor1} /> 
+                                ) : (
+                                    <Image
+                                        style={{ height: 30, width: 30 }}
+                                        source={require("../images/google.png")}
+                                    />
+                                )}
+                            </TouchableOpacity>
                         </View>
 
                       

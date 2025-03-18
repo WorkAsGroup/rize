@@ -15,9 +15,8 @@ import {
   BackHandler,
   FlatList,
 } from "react-native";
-
 import RenderHTML, { StaticRenderer } from "react-native-render-html";
-// import SubmitTestModal from "./resultsScreen/SubmitTestModal";
+import SubmitTestModal from "./resultsScreen/SubmitTestModal";
 import LinearGradient from "react-native-linear-gradient";
 import { darkTheme, lightTheme } from "../theme/theme";
 import Svg, {
@@ -33,10 +32,10 @@ import {
   getPreviousPapRes,
   getSubmitExamResults,
 } from "../core/CommonService";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 var striptags = require("striptags");
 
+const TEST_INTERRUPTED_KEY = "testInterrupted";
 const windowWidth = Dimensions.get("window").width;
 
 const ANSWERED_QUESTIONS_KEY = "answeredQuestions";
@@ -44,6 +43,8 @@ const SKIPPED_QUESTIONS_KEY = "skippedQuestions";
 const TAGGED_QUESTIONS_KEY = "taggedQuestions";
 const REVIEWED_QUESTIONS_KEY = "reviewedQuestions";
 const REMAINING_TIME_KEY = "remainingTime";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+const COMPLETED_EXAMS_KEY = "completedExams"; 
 
 const removeHtmlTags = (html) => {
     if (!html) return "";
@@ -136,6 +137,7 @@ const sanitizeHtml = (text) => {
   };
   
 const MockTest = ({ navigation, route }) => {
+  // console.log(route, "wrihfwoiehoi")
     const colorScheme = useColorScheme();
     const [data, setData] = useState([]);
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
@@ -179,7 +181,7 @@ const MockTest = ({ navigation, route }) => {
   const [exam, setExam] = useState([]);
   const numberCircleRefs = useRef({});
   const [questionsLoading, setQuestionsLoading] = useState(true);
-
+  const [completedExams, setCompletedExams] = useState([]);
   const previousTimeRef = useRef(timeElapsed);
   const timerRef = useRef(null);
   const [startTime, setStartTime] = useState(null);
@@ -187,20 +189,75 @@ const MockTest = ({ navigation, route }) => {
 
   const [questionStartTime, setQuestionStartTime] = useState(null);
   const [timeElapsed, setTimeElapsed] = useState(0);
+  const [isFirstRender, setIsFirstRender] = useState(true); 
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
+  const [wasTestInterrupted, setWasTestInterrupted] = useState(false);
 // console.log(obj, "objobjobj")
 
   useEffect(() => {
    getExam();
    getExamPattern()
-   if (obj) {
-    // ifgetPrevExam (examtype === "previous") {
-    getPrevExam();
-    // } else {
-    //     getExam();
-    // }
-  }
+
   },[]);
+
+  useEffect(() => {
+    const loadCompletedExams = async () => {
+        try {
+            const completedExamsString = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
+            if (completedExamsString) {
+                setCompletedExams(JSON.parse(completedExamsString));
+            }
+        } catch (error) {
+            console.error("Error loading completed exams:", error);
+        }
+    };
+
+    loadCompletedExams();
+}, []);
+
+
   
+  const loadInitialData = useCallback(async () => {
+    setQuestionsLoading(true);
+    setIsLoading(true);
+    try {
+      if (wasTestInterrupted) {
+        await resetQuestionTimers();
+        await clearStoredAnswers();
+        await AsyncStorage.removeItem(TEST_INTERRUPTED_KEY);
+        setWasTestInterrupted(false); // Reset the flag
+      }
+
+      await getExam();
+      await getExamPattern();
+
+      if (pattern.data && pattern.data.length > 0) {
+        setSelectedSubjectId(pattern.data[0].id);
+        setSelectedSubject(pattern.data[0]);
+        setSelectedNumber(pattern.data[0].starting_no);
+        setInitialDataLoaded(true);
+      }
+    } catch (error) {
+      console.error("Error loading data:", error);
+    } finally {
+      setQuestionsLoading(false);
+      setIsLoading(false);
+    }
+  }, [wasTestInterrupted]);
+
+  const resetQuestionTimers = async () => {
+    try {
+        if (exams?.length > 0) {
+          for (let i = 1; i <= exams.length; i++) {
+            await AsyncStorage.setItem(`timeElapsed_${i}`, "0");
+          }
+        }
+      } catch (error) {
+        console.error("Error resetting question timers:", error);
+      }
+    };
+
+
   const getItemLayout = useCallback(
     (data, index) => ({
       length: ITEM_WIDTH,
@@ -211,14 +268,27 @@ const MockTest = ({ navigation, route }) => {
   );
 
   useEffect(() => {
+    const checkInterruption = async () => {
+      const wasInterrupted = await AsyncStorage.getItem(TEST_INTERRUPTED_KEY);
+      if (wasInterrupted === "true") {
+        setWasTestInterrupted(true); // Update state to trigger data reloading
+      } else {
+        loadInitialData(); // Load immediately if not interrupted
+      }
+    };
+
+    checkInterruption();
+  }, [loadInitialData]);
+
+  useEffect(() => {
     const loadRemainingTime = async () => {
       try {
-        const savedTime = await AsyncStorage.getItem(REMAINING_TIME_KEY);
-        const timeToSet = obj.exam_duration; // This is in minutes
-        console.log(timeToSet, obj.exam_duration, "savedTime");
+        const timeToSet = route?.params?.obj?.duration; // This is in minutes (as a string)
   
         if (timeToSet) {
-          setRemainingTime(parseInt(timeToSet, 10) * 60); // Convert to seconds
+          const totalSeconds = parseInt(timeToSet, 10) * 60; // Convert minutes to seconds
+          // console.log(timeToSet, totalSeconds*60, "")
+          setRemainingTime(totalSeconds*60); // Store in state
         }
       } catch (error) {
         console.error("Error loading remaining time:", error);
@@ -226,14 +296,15 @@ const MockTest = ({ navigation, route }) => {
     };
   
     loadRemainingTime();
-  }, []);
+  }, [route?.params?.obj?.duration]); // Add dependency to re-run when route params change
   
   useEffect(() => {
-    if (remainingTime > 0) {
+    if (remainingTime > 0 && !timerRef.current) {
       timerRef.current = setInterval(() => {
         setRemainingTime((prevTime) => {
           if (prevTime <= 1) {
             clearInterval(timerRef.current);
+            timerRef.current = null;
             return 0; // Stop at 0
           }
           return prevTime - 1;
@@ -241,10 +312,17 @@ const MockTest = ({ navigation, route }) => {
       }, 1000);
     }
   
-    return () => clearInterval(timerRef.current); // Cleanup interval
-  }, [remainingTime]);
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [remainingTime]); // Ensures the timer runs only when needed
+  
   
   const formatTime = (seconds) => {
+    // console.log(seconds, "sec")
     const hours = Math.floor(seconds / 3600);
     const remainingMins = Math.floor((seconds % 3600) / 60);
     const remainingSecs = seconds % 60;
@@ -312,11 +390,14 @@ useEffect(() => {
         setReviewedQuestions(reviewed ? JSON.parse(reviewed) : {});
         setTaggedQuestions(tagged ? JSON.parse(tagged) : {});
         const savedTime = await AsyncStorage.getItem(REMAINING_TIME_KEY);
-        const timeToSet =  obj.exam_duration; 
-        console.log(timeToSet, obj.exam_duration, "savedTime");
+  
         
-        if (savedTime) {
-            setRemainingTime(parseInt(savedTime, 10));
+        const timeToSet = route?.params?.obj?.duration; // This is in minutes (as a string)
+  
+        if (timeToSet) {
+          const totalSeconds = parseInt(timeToSet, 10) * 60; // Convert minutes to seconds
+          // console.log(timeToSet, totalSeconds*60, "")
+          setRemainingTime(totalSeconds*60); // Store in state
         }
       } catch (error) {
         console.error("Error loading stored data:", error);
@@ -330,6 +411,38 @@ useEffect(() => {
     setTextInputAnswer(text);
   };
  
+  
+    useFocusEffect(
+    useCallback(() => {
+      return () => {
+        AsyncStorage.setItem(TEST_INTERRUPTED_KEY, "true");
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+        setTimeElapsed(0);
+      };
+    }, []) 
+  );
+  
+  const clearStoredAnswers = async () => { 
+    try {
+      await AsyncStorage.removeItem(ANSWERED_QUESTIONS_KEY);
+      await AsyncStorage.removeItem(SKIPPED_QUESTIONS_KEY);
+      await AsyncStorage.removeItem(REVIEWED_QUESTIONS_KEY);
+      await AsyncStorage.removeItem(TAGGED_QUESTIONS_KEY);
+      await AsyncStorage.removeItem(REMAINING_TIME_KEY);
+  
+      for (let i = 1; i <= exams.length; i++) {
+        await AsyncStorage.removeItem(`questionStartTime_${i}`);
+      }
+    } catch (error) {
+      console.error("Error clearing stored answers:", error);
+    }
+  };
+  
+
+
   const scrollToQuestion = useCallback((questionNumber) => {
     if (!flatListRef.current) {
       console.warn("scrollToQuestion: FlatList ref not ready");
@@ -407,88 +520,6 @@ useEffect(() => {
       }
     };
   }, [handleBackPress, isFirstLoad]);
-  const getPrevExam = async () => {
-    console.log("objobjobj", obj);
-    setQuestionsLoading(true);
-
-    const datas = {
-      exam_paper_id: parseInt(obj.exam_paper_id),
-      exam_session_id: session_id ? session_id : 0,
-      type:
-        examtype === "previous"
-          ? "previous_exam"
-          : examtype === "mock"
-          ? "schedule_exam"
-          : "custom_exam",
-    };
-    console.log(obj, "hoisefoue");
-    const startPrevSession = {
-      previous_exam_paper_id: obj.previous_paper_id,
-      student_user_exam_id: studentExamId,
-    };
-    const startSession = {
-      exam_paper_id: parseInt(obj.exam_paper_id),
-      student_user_exam_id: studentExamId,
-    };
-
-    try {
-      console.log(examtype, "weoihewouh");
-      var sessionStart = "";
-      if (examtype === "previous") {
-        sessionStart = await getPreviousPapRes(
-          examtype === "previous" ? startPrevSession : startSession
-        );
-        console.log(sessionStart, "weoihfiweufhweiu");
-        setSessionid(sessionStart?.data?.exam_session_id);
-      }
-      const startExm = {
-        student_user_exam_id: studentExamId,
-        exam_paper_id: parseInt(obj.exam_paper_id),
-        exam_session_id: sessionStart?.data?.exam_session_id
-          ? sessionStart?.data?.exam_session_id
-          : session_id
-          ? session_id
-          : 0,
-      };
-
-      const startExamResponse = await getPreExamdata(startExm);
-      setUid(startExamResponse?.data?.uid);
-      console.log(
-        startExamResponse?.data?.uid,
-        startExm,
-        "wrfhwiufwe",
-        startExamResponse
-      );
-      if (startExamResponse) {
-        const examsResponse = await getPreExam(datas);
-        setExams(examsResponse.data);
-
-        const subjectCounts = {};
-
-        examsResponse?.data.forEach((exam) => {
-          const subjectValue =
-            exam.subject !== undefined ? exam.subject : "Unknown Subject";
-
-          subjectCounts[subjectValue] = (subjectCounts[subjectValue] || 0) + 1;
-        });
-
-        for (const subjectValue in subjectCounts) {
-          if (subjectCounts.hasOwnProperty(subjectValue)) {
-            console.log(
-              `Subject Value: ${subjectValue}, Object Count: ${subjectCounts[subjectValue]}`
-            );
-          }
-        }
-
-        console.log("Subject Counts:", subjectCounts);
-        console.log("Exams Response:", examsResponse);
-      }
-    } catch (error) {
-      console.error("Error fetching exams:", error);
-    } finally {
-      setQuestionsLoading(false);
-    }
-  };
   const getExamPattern = async () => {
     setIsLoading(true);
     const data = {
@@ -516,131 +547,53 @@ useEffect(() => {
     }
   };
 
-  useEffect(() => {
-    const loadRemainingTime = async () => {
-        try {
-            const savedTime = await AsyncStorage.getItem(REMAINING_TIME_KEY);
-            if (savedTime) {
-                setRemainingTime(parseInt(savedTime, 10));
-            }
-        } catch (error) {
-            console.error("Error loading remaining time:", error);
-        }
-    };
-
-    loadRemainingTime();
-}, []);
-
-useEffect(() => {
-    const saveRemainingTime = async () => {
-        try {
-            await AsyncStorage.setItem(REMAINING_TIME_KEY, remainingTime.toString());
-        } catch (error) {
-            console.error("Error saving remaining time:", error);
-        }
-    };
-
-    saveRemainingTime();
-}, [remainingTime]);
-
-useEffect(() => {
-    if (exams.length > 0) {
-        const initialTime = exams.length * 120;
-        setRemainingTime(initialTime);
-
-        timerInterval.current = setInterval(() => {
-            setRemainingTime((prevTime) => {
-                if (prevTime <= 0) {
-                    clearInterval(timerInterval.current);
-                    return 0;
-                }
-                return prevTime - 1;
-            });
-        }, 1000);
-
-        return () => {
-            clearInterval(timerInterval.current);
-        };
-    }
-}, [exams]);
-
-useEffect(() => {
-    const loadStoredData = async () => {
-        try {
-            const answered = await AsyncStorage.getItem(ANSWERED_QUESTIONS_KEY);
-            const skipped = await AsyncStorage.getItem(SKIPPED_QUESTIONS_KEY);
-            const reviewed = await AsyncStorage.getItem(REVIEWED_QUESTIONS_KEY);
-            const tagged = await AsyncStorage.getItem(TAGGED_QUESTIONS_KEY);
-
-            setAnsweredQuestions(answered ? JSON.parse(answered) : {});
-            setSkippedQuestions(skipped ? JSON.parse(skipped) : {});
-            setReviewedQuestions(reviewed ? JSON.parse(reviewed) : {});
-            setTaggedQuestions(tagged ? JSON.parse(tagged) : {});
-        } catch (error) {
-            console.error('Error loading stored data:', error);
-        }
-    };
-
-    loadStoredData();
-    getExamPattern();
-
-    if (obj) {
-        getExam();
-    }
-}, []);
 
   const loadQuestionElapsedTime = async () => {
     try {
-      if (!selectedNumber || exams.length === 0) return;
-
+      if (!selectedNumber) return;
+  
+      // Stop any existing timer
       if (questionTimerRef.current) {
         clearInterval(questionTimerRef.current);
       }
-
-      setTimeElapsed(0);  
-
+  
+      // Load previously saved elapsed time
+      const savedTime = await AsyncStorage.getItem(`timeElapsed_${selectedNumber}`);
+      const initialTime = savedTime ? parseInt(savedTime, 10) : 0;
+      setTimeElapsed(initialTime);
+  
+      // Start a new timer
       questionTimerRef.current = setInterval(() => {
-        setTimeElapsed((prevTime) => prevTime + 1);
+        setTimeElapsed(prevTime => prevTime + 1);
       }, 1000);
     } catch (error) {
       console.error("Error loading elapsed time:", error);
     }
   };
-
-  useEffect(() => {
-
   
+  useEffect(() => {
     loadQuestionElapsedTime();
   
     return () => {
-      if (selectedNumber) {
-        // ✅ Save elapsed time for previous question before unmount
-        AsyncStorage.setItem(`timeElapsed_${selectedNumber}`, timeElapsed.toString());
-      }
-  
       if (questionTimerRef.current) {
         clearInterval(questionTimerRef.current);
       }
     };
-  }, []);  
+  }, [selectedNumber]);
+  
   useEffect(() => {
-
+    if (selectedNumber) {
+      AsyncStorage.setItem(`timeElapsed_${selectedNumber}`, timeElapsed.toString());
+    }
+  }, [timeElapsed, selectedNumber]);
   
-    loadQuestionElapsedTime();
-  
+  useEffect(() => {
     return () => {
-      if (selectedNumber) {
-        // ✅ Save elapsed time for previous question before unmount
-        AsyncStorage.setItem(`timeElapsed_${selectedNumber}`, timeElapsed.toString());
-      }
-  
       if (questionTimerRef.current) {
         clearInterval(questionTimerRef.current);
       }
     };
-  }, [selectedNumber]);  
-
- 
+  }, []);
   
 
   const getExam = async () => {
@@ -697,6 +650,8 @@ useEffect(() => {
     //       .toString()
     //       .padStart(2, "0")}`;
     //   };
+
+
   const ClearResponseData = async () => {
     try {
       if (selectedNumber) {
@@ -912,6 +867,7 @@ useEffect(() => {
   };
 
   const submitTestResult = async () => {
+    console.log("------------",obj)
     const data = {
         "exam_paper_id": obj.exam_paper_id,
         "exam_session_id": 0,
@@ -963,9 +919,31 @@ useEffect(() => {
 
     console.log("Submit Data:", JSON.stringify(data)); 
     setExam(data)
-    navigation.navigate("Login",{exam :data});
 
+    const completedExamsString = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
+        let completedExams = completedExamsString ? JSON.parse(completedExamsString) : [];
+        completedExams.push(obj.exam_paper_id); 
+        await AsyncStorage.setItem(COMPLETED_EXAMS_KEY, JSON.stringify(completedExams));
+
+
+    navigation.navigate("Login",{exam :data});
+    setRemainingTime(0); 
+    setTimeElapsed(0);   
+    if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+    }
+
+    try {
+      for (let i = 1; i <= exams.length; i++) {
+        await AsyncStorage.removeItem(`timeElapsed_${i}`);
+      }
+    } catch (error) {
+      console.error("Error clearing timeElapsed data:", error);
+    }
 };
+
+
   
 
   if (isLoading) {
@@ -980,7 +958,7 @@ useEffect(() => {
       </View>
     );
   }
-console.log(remainingTime, "remainingTime")
+// console.log(remainingTime, "remainingTime")
 
 
 const handleReviewTag = async (questionId) => {
@@ -1040,28 +1018,28 @@ const handleTagQuestion = async () => {
       start={{ x: 0, y: 1 }}
       end={{ x: 1, y: 1 }}
     >
-      {/* <SubmitTestModal
+      <SubmitTestModal
         studentExamId={studentExamId}
         data={data}
         examType={examtype}
         setFinishTest={setFinishTest}
         finishTest={finishTest}
         isTimeUp={false}
-      /> */}
+      />
       {questionsLoading && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color={theme.textColor} />
         </View>
       )}
       <View style={{ flex: 1 }}>
-        <View style={{ flexDirection: "row", marginTop: 10,marginRight:20 }}>
+        <View style={{ flexDirection: "row", marginTop: 10 }}>
           <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>
-          Mock Test
+            {obj.examName}
           </Text>
           <Text
             style={[
               styles.mockSubtitle,
-              { color: theme.textColor, marginLeft: 70 },
+              { color: theme.textColor, marginLeft: 40 },
             ]}
           >
             Remaining Time
@@ -1783,62 +1761,70 @@ const handleTagQuestion = async () => {
 
       {/* Submit Test Modal */}
       <Modal
-                animationType="slide"
-                transparent={true}
-                visible={submitModalVisible}
-                onRequestClose={() => {
-                    setSubmitModalVisible(!submitModalVisible);
-                }}
-            >
-                <View style={styles.centeredView}>
-                    <TouchableOpacity>
+        animationType="slide"
+        transparent={true}
+        visible={submitModalVisible}
+        onRequestClose={() => {
+          setSubmitModalVisible(!submitModalVisible);
+        }}
+      >
+        <View style={styles.centeredView}>
+          {/* <TouchableOpacity>
                         <Image
                             style={{ tintColor: theme.textColor, marginRight: 10, height: 45, width: 45, left: 150, top: 40, position: 'absolute' }}
                             source={require("../images/delete.png")}
                         />
-                    </TouchableOpacity>
-                    <View style={[styles.modalView, { backgroundColor: theme.bmc1 }]}>
-                        <Text style={[styles.modalText, { color: theme.textColor }]}>
-                            In order to get the results, you need to either login or register.
-                        </Text>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-around', width: '100%' }}>
-                            <TouchableOpacity
-                                style={[styles.button, { backgroundColor: theme.background[0] }]}
-                                onPress={() => {
-                                    setSubmitModalVisible(false);
-                                    submitTestResult();
-                                    setIsFirstLoad(true);
-                                   
-                                }}
-                            >
-                                <Text style={[styles.textStyle, { color: theme.textColor1 }]}>Login</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.button, { backgroundColor: theme.background[1] }]}
-                                // onPress={() => {
-                                //     setSubmitModalVisible(false);
-                                //     navigation.navigate("Signup");
-                                // }}
-                                onPress={() => setSubmitModalVisible(false)}
-
-                            >
-                                <Text style={[styles.textStyle, { color: theme.textColor1 }]}>Cancel</Text>
-                            </TouchableOpacity>
-                        </View>
-                        {/* <TouchableOpacity
+                    </TouchableOpacity> */}
+          <View style={[styles.modalView, { backgroundColor: theme.bmc1 }]}>
+            <Text style={[styles.modalText, { color: theme.textColor }]}>
+              Do you want to submit the exam.
+            </Text>
+            <View style={{ flexDirection: "row", width: "100%" }}>
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  { backgroundColor: theme.background[0] },
+                ]}
+                onPress={() => {
+                  setSubmitModalVisible(false);
+                  submitTestResult();
+                  setIsFirstLoad(true);
+                }}
+              >
+                <Text style={[styles.textStyle, { color: theme.textColor1 }]}>
+                  Ok
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  { backgroundColor: theme.background[1] },
+                ]}
+                // onPress={() => {
+                //     setSubmitModalVisible(false);
+                //     navigation.navigate("Signup");
+                // }}
+                onPress={() => setSubmitModalVisible(false)}
+              >
+                <Text style={[styles.textStyle, { color: theme.textColor1 }]}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+            </View>
+            {/* <TouchableOpacity
                             style={[styles.button, { backgroundColor: theme.gray, marginTop: 10 }]}
                             onPress={() => setSubmitModalVisible(false)}
                         >
                             <Text style={[styles.textStyle, { color: '#FFF' }]}>Cancel</Text>
                         </TouchableOpacity> */}
-                    </View>
-                </View>
-            </Modal>
+          </View>
+        </View>
+      </Modal>
     </LinearGradient>
   );
 }
 
-export default MockTest;
+export default MockTest
 
 
 const styles = StyleSheet.create({

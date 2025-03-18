@@ -17,6 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { Dropdown } from 'react-native-element-dropdown';
 import ExamModalComponent from './ExamModalComponent';
+import AchivementsModel from './models/AchivementsModel';
 
 const Tab = createBottomTabNavigator();
 
@@ -56,6 +57,7 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
   const [selectedPerformanceType, setSelectedPerformanceType] = useState('score');
   const [showCustom, setShowCustom] = useState(false);
   const [preExamResults, setPreExamResults] = useState(null);
+  const [achivementShow, setAchivementShow] = useState(false);
   const [hasLoadedResults, setHasLoadedResults] = useState(false);
   const chartData = [
     { data: [50, 70, 60, 90, 80], color: '#6A5ACD', strokeWidth: 2 },
@@ -377,9 +379,26 @@ if(defaultItem) {
     }
   };
 
-  const renderItem = ({ item }) => {
+  const renderItem = ({ item, index  }) => {
     return (
-      <View style={{ width: "98%", margin: 5, flexDirection: 'row', padding: 5, backgroundColor: theme.textColor1, borderRadius: 15, left: -5 }}>
+      <LinearGradient
+      colors={index===0 ? [
+        'rgba(184, 203, 184, 0.1)',
+        'rgba(180, 101, 218, 0.1)',
+        'rgba(207, 108, 201, 0.1)',
+        'rgba(238, 96, 156, 0.1)',
+      ] : [theme.textColor1, theme.textColor1]} 
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={{
+        width: "98%",
+        margin: 5,
+        flexDirection: 'row',
+        padding: 5,
+        borderRadius: 15,
+        left: -5,
+      }}
+    >
         <LinearGradient
           colors={[theme.tx1, theme.tx2]}
           start={{ x: 0, y: 1 }}
@@ -416,7 +435,7 @@ if(defaultItem) {
 
         </View>
 
-      </View>
+      </LinearGradient>
     );
   };
 
@@ -745,7 +764,9 @@ if(defaultItem) {
 </View>
           </React.Fragment>
           ) : (
-            <Image source={{ uri: "https://mocktest.rizee.in/static/media/take-the-test1.e09ad0cac0e111c3b6d7.png" }} style={{ width: windowWidth, height: windowWidth*0.75, resizeMode: "cover" }} />
+           <View>
+             <Image source={{ uri: "https://mocktest.rizee.in/static/media/take-the-test1.e09ad0cac0e111c3b6d7.png" }} style={{ width: windowWidth*0.85, height: windowHeight*0.20, resizeMode: "contain" }} />
+           </View>
           )}
        
       </View>
@@ -878,16 +899,17 @@ if(defaultItem) {
  
   
     return (
-      <View  style={[
-        styles.performanceCard,
-        {
-          backgroundColor: theme.conbk,
-          marginTop: 20,
-          height: windowHeight * 0.5,
-          marginBottom: 10,
-        },
-      ]}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+      <View
+        style={[
+          styles.performanceCard,
+          {
+            backgroundColor: theme.conbk,
+            marginTop: 20,
+            flex: 1, // 🔹 Allow it to take available space
+          },
+        ]}
+      >
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
           <View>
             <Text style={[styles.performanceTitle, { color: theme.textColor }]}>LeaderBoard</Text>
             <Text style={[styles.subText, { marginBottom: 10 }]}>Checkout your leaderboard score</Text>
@@ -929,31 +951,39 @@ if(defaultItem) {
             />
           </View>
         </View>
-  
-        <FlatList
-      data={leadData}
-      renderItem={renderItem}
-      keyExtractor={(item) => item.value}
-      contentContainerStyle={{ flexGrow: 1 }}
-      style={{ flex: 1 }} // ✅ Allows FlatList to take up available space
-      ListEmptyComponent={
-        <Text style={{ color: theme.textColor, textAlign: 'center' }}>
-          No leaderboard data available.
-        </Text>
-      }
-    />
+    
+        {/* 🔹 Use ScrollView or Flex to ensure scrolling */}
+        <View style={{ flex: 1 }}>
+          <FlatList
+            data={leadData}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.value}
+            contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }} // 🔹 Added padding for spacing
+            style={{ flex: 1 }}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <Text style={{ color: theme.textColor, textAlign: "center" }}>
+                No leaderboard data available.
+              </Text>
+            }
+          />
+        </View>
       </View>
     );
+    
   };
   const Achievements = () => {
     return (
       <View style={[styles.performanceCard, { backgroundColor: theme.conbk, marginTop: 20 }]}>
+        <View style={{display: "flex", flexDirection: "row", alignItems: "center", gap: 5}}>
         <Text style={[styles.performanceTitle, { color: theme.textColor }]}>Achievements</Text>
+        <TouchableOpacity onPress={() =>setAchivementShow(true)}><Image source={require("../images/info.png")}  style={{height: 15, width: 15}}/></TouchableOpacity>
+        </View>
         <FlatList
           data={ach}
           renderItem={renderItems}
           keyExtractor={(item) => item.id ? item.id.toString() : Math.random().toString()}
-          ListEmptyComponent={<Text style={{ alignSelf: 'center', color: theme.textColor }}>No Data Found</Text>}
+          ListEmptyComponent={<Text style={{ alignSelf: 'center', color: theme.textColor, padding: 15 }}>📝 Take a Test to Earn a Badge 🏅</Text>}
         />
       </View>
 
@@ -1069,6 +1099,12 @@ console.log(items, "itemsvaluses")
 
             </View>
           </Modal>
+          {achivementShow && (
+  <AchivementsModel
+    visible={achivementShow}
+    onClose={() => setAchivementShow(false)} // ✅ Corrected this
+  />
+)}
         </SafeAreaView>
 
         <WeeklyPerformance />

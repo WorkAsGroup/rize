@@ -31,7 +31,7 @@ export default function InstructionAuth({ navigation, route }) {
   const studentExamId = route?.params?.studentExamId;
   const examtype = route?.params?.examtype;
 
-  console.log("mocktest1", obj, route.params.exam_instructions);
+  console.log("mocktest1", obj);
   const sanitizeHtml = (text) => {
     if (text.length > 0) {
       text = text.replace("&nbsp;", " ");
@@ -83,7 +83,7 @@ padding:10px auto;
                     fill="url(#grad)"
                     fontSize="24"
                     fontWeight="bold"
-                    x="80"
+                    x="60"
                     y="20"
                     textAnchor="middle"
                     alignmentBaseline="middle"
@@ -120,7 +120,7 @@ padding:10px auto;
                       for the "{obj.exam_name}"
                     </Text>
                   </View>
-                  <Text style={{color: theme.textColor}}>
+                  <Text>
                     Read all the instructions carefully before start an exam.
                   </Text>
                   <View>
@@ -150,7 +150,7 @@ padding:10px auto;
                               { fontWeight: "600", fontSize: 14 },
                             ]}
                           >
-                            {obj?.exam_marks}
+                            {obj?.no_of_ques}
                           </Text>
                           <Text style={[styles.frameDesc, { fontSize: 12 }]}>
                             Total questions
@@ -198,7 +198,6 @@ padding:10px auto;
                   source={sanitizeHtml(
                     obj.exam_instructions || "<p>No instructions provided.</p>"
                   )}
-                  
                   renderersProps={renderersProps}
                   // baseFontStyle={baseFontStyle}
                   // {...DEFAULT_PROPS}
@@ -395,7 +394,7 @@ padding:10px auto;
                                 </SvgText>
                             </Svg> */}
 
-              <Text style={{color: theme.textColor}}>👍 Good luck for your exam</Text>
+              <Text>👍 Good luck for your exam</Text>
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => {

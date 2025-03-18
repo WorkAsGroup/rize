@@ -21,6 +21,7 @@ export const endPoint = {
 	years: "/api/v1/general/years",
 	mocktest: "/api/v1/mocktests",
 	achievements:"/api/v1/general/achievements",
+	achivementBadges: "/api/v1/general/availableBadges",
 	leaderBoard:"/api/v1/general/leaderboards",
 	resultExamData: "/api/v1/exams/examResult",
 	attempts: "/api/v1/exams/attempts",
@@ -141,6 +142,23 @@ export const getAchievements = async (fields) => {
 	  .then((res) => res.data)
 	  .catch((error) => {
 		console.error("Error in achievements:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
+  export const getAchievementBadges = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.achivementBadges, "with data:", fields);
+	
+	return await axios
+	  .get(apiurl + endPoint.achivementBadges, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in achivementBadges:", error.response?.data || error.message);
 		return error;
 	  }); 
   };

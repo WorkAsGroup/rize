@@ -15,14 +15,19 @@ import {
 import LinearGradient from "react-native-linear-gradient";
 import { darkTheme, lightTheme } from "../theme/theme";
 import DropDownPicker from "react-native-dropdown-picker";
+import { Dropdown } from 'react-native-element-dropdown';
 import { getExamType, getPreExamOptions } from "../core/CommonService";
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
+const COMPLETED_EXAMS_KEY = "completedExams";
+
 export default function Intro({ navigation }) {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
+  const [completedExams, setCompletedExams] = useState([]);
   const [open, setOpen] = useState(false);
   const [examType, setExamType] = useState("NEET");
   const [items, setItems] = useState([
@@ -42,19 +47,36 @@ export default function Intro({ navigation }) {
   const [opt, setOpt] = useState([]);
   const [examId, setExamId] = useState(null);
   const [examOpt, setExamOpt] = useState([]);
-  const [mockTests, setMockTests] = useState([]); 
+  const [mockTests, setMockTests] = useState([]);
 
   useEffect(() => {
     const initialize = async () => {
-       await getExam(); 
+      await getExam();
     };
 
     initialize();
   }, []);
 
   useEffect(() => {
+    const loadCompletedExams = async () => {
+      try {
+        const completedExamsString = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
+        if (completedExamsString) {
+          setCompletedExams(JSON.parse(completedExamsString));
+        }
+      } catch (error) {
+        console.error("Error loading completed exams:", error);
+      }
+    };
+
+    loadCompletedExams(); // Load when component mounts
+  }, []);
+
+
+  console.log(options, "oreiu3rfiwu")
+  useEffect(() => {
     if (options.length > 0) {
-      setSelectedOption(options[0]); 
+      setSelectedOption(options[0]);
     }
   }, [options]);
 
@@ -75,7 +97,7 @@ export default function Intro({ navigation }) {
     if (examId) {
       getPreExam();
     } else {
-      setMockTests([]); 
+      setMockTests([]);
     }
   }, [examId]);
 
@@ -106,27 +128,30 @@ export default function Intro({ navigation }) {
   const getPreExam = async () => {
     try {
       const exams = await getPreExamOptions();
+      console.log(exams, 'inital exams')
       const filteredExams = exams.data.filter(
         (exam) => exam.exam_id === examId
       );
-  
+
       const mockData = filteredExams.map((exam, index) => {
-        const durationInMinutes = exam.exam_duration || 180; 
+        const durationInMinutes = exam.exam_duration || 180;
         const hours = Math.floor(durationInMinutes / 60);
         const minutes = durationInMinutes % 60;
         const formattedDuration = `${hours} hours ${minutes < 10 ? "0" : ""}${minutes} minutes`;
-  
+
         return {
           id: index,
           examName: exam.exam_name || "Mock Test",
           marks: exam.exam_marks || 720,
-          duration: formattedDuration ,
+          duration: formattedDuration,
           exam_id: exam.exam_id,
           exam_pattern_id: exam.exam_pattern_id,
-          exam_paper_id: exam.exam_paper_id
+          exam_paper_id: exam.exam_paper_id,
+          instructions: exam.exam_instructions,
+          no_of_ques: exam.no_of_ques
         };
       });
-  
+
       setMockTests(mockData);
       console.log("Mock Data:", mockData);
     } catch (error) {
@@ -138,86 +163,92 @@ export default function Intro({ navigation }) {
     navigation.navigate("Instruction", { obj: item });
   };
 
-  const renderMockTest = ({ item }) => (
-    <View
-      style={[styles.mockTestWrapper, { borderColor: theme.tx1, marginTop: 20 }]}
-    >
-      <View style={[styles.mockTestBorder, { borderColor: theme.brad }]} />
-      <LinearGradient
-        colors={theme.mcb}
-        start={{ x: 0, y: 1 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.mockTestContainer}
+  const renderMockTest = ({ item }) => {
+    const isExamCompleted = completedExams.includes(item.exam_paper_id);
+    return (
+      <View
+        style={[styles.mockTestWrapper, { borderColor: theme.tx1, marginTop: 20 }]}
       >
-        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-          <View style={{ flexDirection: "row" }}>
-            <Text style={[styles.sectionTitle, { color: theme.textColor,marginStart:7 }]}>
-              Exam Name:
-            </Text>
-            <Text style={[styles.tag, { color: theme.textColor }]}>
-              {item.examName}
-            </Text>
-          </View>
-
-          <View style={{ flexDirection: "row", marginEnd: 10 }}>
-            <Text style={[styles.sectionTitle, { color: theme.textColor }]}>
-              Marks:
-            </Text>
-            <Text style={[styles.tag, { color: theme.textColor }]}>
-              {item.marks}
-            </Text>
-          </View>
-        </View>
-        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-          <View style={{ flexDirection: "row" }}>
-            <Image
-              style={{
-                height: 20,
-                width: 20,
-                tintColor: theme.textColor,
-                resizeMode: "contain",
-                marginTop: 12,
-                marginLeft: 10,
-              }}
-              source={require("../images/clock.png")}
-            />
-            <Text style={[styles.sectionTitle, { color: theme.textColor }]}>
-              {item.duration}
-            </Text>
-          </View>
-        </View>
-        <TouchableOpacity
-          style={{ alignItems: "center" }}
-          activeOpacity={0.8}
-          onPress={() => {
-            handleStartTest(item);
-            console.log("item selected", item)
-          }}
+        <View style={[styles.mockTestBorder, { borderColor: theme.brad }]} />
+        <LinearGradient
+          colors={theme.mcb}
+          start={{ x: 0, y: 1 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.mockTestContainer}
         >
-          <LinearGradient
-            colors={[theme.tx1, theme.tx2]}
-            start={{ x: 0, y: 1 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.startButtonGradient}
+          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+            <View style={{ flexDirection: "row" }}>
+              <Text style={[styles.sectionTitle, { color: theme.textColor, marginStart: 7 }]}>
+                Exam Name:
+              </Text>
+              <Text style={[styles.tag, { color: theme.textColor }]}>
+                {item.examName}
+              </Text>
+            </View>
+
+            <View style={{ flexDirection: "row", marginEnd: 10 }}>
+              <Text style={[styles.sectionTitle, { color: theme.textColor }]}>
+                Marks:
+              </Text>
+              <Text style={[styles.tag, { color: theme.textColor }]}>
+                {item.marks}
+              </Text>
+            </View>
+          </View>
+          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+            <View style={{ flexDirection: "row" }}>
+              <Image
+                style={{
+                  height: 20,
+                  width: 20,
+                  tintColor: theme.textColor,
+                  resizeMode: "contain",
+                  marginTop: 12,
+                  marginLeft: 10,
+                }}
+                source={require("../images/clock.png")}
+              />
+              <Text style={[styles.sectionTitle, { color: theme.textColor }]}>
+                {item.duration}
+              </Text>
+            </View>
+          </View>
+          <TouchableOpacity
+            style={{ alignItems: "center" }}
+            activeOpacity={0.8}
+            onPress={() => {
+              if (isExamCompleted) {
+                navigation.navigate("Login");
+              } else {
+                handleStartTest(item);
+              }
+            }}
           >
-            <Text
-              style={[
-                styles.startButtonText,
-                { color: theme.textColor1, fontFamily: "CustomFont" },
-              ]}
+            <LinearGradient
+              colors={[theme.tx1, theme.tx2]}
+              start={{ x: 0, y: 1 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.startButtonGradient}
             >
-              Start Test
-            </Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </LinearGradient>
-    </View>
-  );
+              <Text
+                style={[
+                  styles.startButtonText,
+                  { color: theme.textColor1, fontFamily: "CustomFont" },
+                ]}
+              >
+                {isExamCompleted ? "View Results" : "Start Test"}
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </LinearGradient>
+      </View>
+    )
+  };
 
   const renderItem = useCallback(() => {
     return (
       <View style={styles.itemContainer}>
-        <View style={{ width: windowWidth / 1.2, marginTop: 20, marginBottom: 10 }}>
+        {/* <View style={{ width: windowWidth / 1.2, marginTop: 20, marginBottom: 10 }}>
           <Text style={[styles.feature, { color: theme.textColor }]}>
             Select Exam
           </Text>
@@ -261,8 +292,47 @@ export default function Intro({ navigation }) {
               ))}
             </View>
           )}
-        </LinearGradient>
+        </LinearGradient> */}
+        <View style={{ width: windowWidth / 1.2, marginTop: 20, marginLeft: "auto", }}>
+          <Text style={[styles.feature, { color: theme.textColor }]}>
+            Select Exam
+          </Text>
+          <Dropdown
+            style={{
+              backgroundColor: theme.background,
+              borderColor: theme.tx1,
+              borderWidth: 1,
+              minHeight: 40,
+              width: 220,
+              // paddingH2rizontal: 10,
+              borderRadius: 10,
+            }}
+            containerStyle={{
+              backgroundColor: theme.textColor1,
+              borderColor: theme.brad,
+              maxHeight: 150,
+            }}
+            // placeholderStyle={{
+            //   color: theme.textColor,
+            //   fontSize: 12, // Smaller font size for placeholder
+            // }}
+            selectedTextStyle={{
+              color: theme.textColor,
+              padding: 10, // Smaller font size for selected value
+            }}
+            itemTextStyle={{
+              // fontSize: 11, ✅ Decreased font size for dropdown items
+              color: theme.textColor,
+            }}
+            data={options.map((exam) => ({ label: exam, value: exam }))}
+            labelField="label"
+            valueField="value"
+            value={selectedOption}
+            onChange={(item) => handleOptionSelect(item.value)}
+            placeholder="Select"
+          />
 
+        </View>
         <View style={{ width: windowWidth / 1.2, marginTop: 20, marginBottom: 10 }}>
           <Text style={[styles.feature, { color: theme.textColor, alignSelf: "center", fontSize: 18 }]}>
             Mock Test
@@ -270,7 +340,7 @@ export default function Intro({ navigation }) {
         </View>
 
         <FlatList
-          data={mockTests} 
+          data={mockTests}
           renderItem={renderMockTest}
           keyExtractor={(item) => item.id.toString()}
         />

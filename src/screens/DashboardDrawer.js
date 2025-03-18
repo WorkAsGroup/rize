@@ -69,6 +69,7 @@ const CustomDrawerContent = (props) => {
 };
 
 const DashboardDrawer = ({ route }) => {
+  console.log(route, "route")
   const { onChangeAuth } = route.params;
   const colorScheme = useColorScheme();
   const navigation = useNavigation();
@@ -104,9 +105,12 @@ const DashboardDrawer = ({ route }) => {
         {(props) => <DashboardContent {...props} onChangeAuth={route.params.onChangeAuth} />}
       </Drawer.Screen>
 
-      <Drawer.Screen name="PerformanceAnalasys">
-        {(props) => <PerformanceAnalasys {...props} onChangeAuth={route.params.onChangeAuth} />}
-      </Drawer.Screen>
+      <Drawer.Screen
+  name="PerformanceAnalasys"
+  component={PerformanceAnalasys}
+  initialParams={{ onChangeAuth: route?.params?.onChangeAuth }}
+/>
+
     </Drawer.Navigator>
   );
 };

@@ -9,7 +9,7 @@ import timeOverLogo from "../../images/timeOverLogo.png";
 
 const SubmitTestModal = ({studentExamId,data, setFinishTest, finishTest, isTimeUp, examType }) => {
   const navigation = useNavigation();
-console.log(studentExamId,data, finishTest, isTimeUp, examType, "yohova")
+// console.log(studentExamId,data, finishTest, isTimeUp, examType, "yohova")
  const [loading, setLoading] = useState(false);
   // const examInstructionDetails = useSelector(getInstructions);
 
