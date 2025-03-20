@@ -13,6 +13,7 @@ import {
   Alert,
   TextInput,
   BackHandler,
+  ToastAndroid,
   FlatList,
 } from "react-native";
 import RenderHTML, { StaticRenderer } from "react-native-render-html";
@@ -271,9 +272,9 @@ const MockTest = ({ navigation, route }) => {
     const checkInterruption = async () => {
       const wasInterrupted = await AsyncStorage.getItem(TEST_INTERRUPTED_KEY);
       if (wasInterrupted === "true") {
-        setWasTestInterrupted(true); // Update state to trigger data reloading
+        setWasTestInterrupted(true); 
       } else {
-        loadInitialData(); // Load immediately if not interrupted
+        loadInitialData(); 
       }
     };
 
@@ -283,12 +284,12 @@ const MockTest = ({ navigation, route }) => {
   useEffect(() => {
     const loadRemainingTime = async () => {
       try {
-        const timeToSet = route?.params?.obj?.duration; // This is in minutes (as a string)
+        const timeToSet = route?.params?.obj?.duration;
   
         if (timeToSet) {
-          const totalSeconds = parseInt(timeToSet, 10) * 60; // Convert minutes to seconds
+          const totalSeconds = parseInt(timeToSet, 10) * 60; 
           // console.log(timeToSet, totalSeconds*60, "")
-          setRemainingTime(totalSeconds*60); // Store in state
+          setRemainingTime(totalSeconds*60); 
         }
       } catch (error) {
         console.error("Error loading remaining time:", error);
@@ -296,7 +297,7 @@ const MockTest = ({ navigation, route }) => {
     };
   
     loadRemainingTime();
-  }, [route?.params?.obj?.duration]); // Add dependency to re-run when route params change
+  }, [route?.params?.obj?.duration]); 
   
   useEffect(() => {
     if (remainingTime > 0 && !timerRef.current) {
@@ -318,7 +319,7 @@ const MockTest = ({ navigation, route }) => {
         timerRef.current = null;
       }
     };
-  }, [remainingTime]); // Ensures the timer runs only when needed
+  }, [remainingTime]); 
   
   
   const formatTime = (seconds) => {
@@ -392,12 +393,12 @@ useEffect(() => {
         const savedTime = await AsyncStorage.getItem(REMAINING_TIME_KEY);
   
         
-        const timeToSet = route?.params?.obj?.duration; // This is in minutes (as a string)
+        const timeToSet = route?.params?.obj?.duration; 
   
         if (timeToSet) {
-          const totalSeconds = parseInt(timeToSet, 10) * 60; // Convert minutes to seconds
+          const totalSeconds = parseInt(timeToSet, 10) * 60; 
           // console.log(timeToSet, totalSeconds*60, "")
-          setRemainingTime(totalSeconds*60); // Store in state
+          setRemainingTime(totalSeconds*60); 
         }
       } catch (error) {
         console.error("Error loading stored data:", error);
@@ -407,9 +408,10 @@ useEffect(() => {
     loadStoredData();
   }, []);
 
-  const handleTextInputChange = (text) => {
-    setTextInputAnswer(text);
-  };
+  
+const handleTextInputChange = (text, questionId) => {
+  setTextInputValues((prevValues) => ({ ...prevValues, [questionId]: text }));
+};
  
   
     useFocusEffect(
@@ -462,6 +464,8 @@ useEffect(() => {
     }
   }, [allNum]);
 
+
+  
 
   const handleSubjectSelect = (sub) => {
     setExpand(false);
@@ -724,46 +728,83 @@ useEffect(() => {
     setSelectedOption(null); 
   }, [selectedNumber, allNum, pattern]);
 
-  const handleSelectAndNext = useCallback(
-    async (questionId) => {
-      console.log("Selected Option Before handleAnswerSelect:", selectedOption);
+  const handleSelectAndNext = useCallback(async (questionId) => {
+    const answer = textInputValues[questionId];
+  
+    if (!answer && exams[questionId - 1]?.qtype === 8) { 
+      // Alert.alert("Please enter the answer in the text field.");
+      return;
+    } else if (!selectedOption && exams[questionId - 1]?.qtype !== 8) { 
+      // Alert.alert("Please select an option."); 
+      return;
+    }
+  
+    await handleAnswerSelect(questionId, exams[questionId - 1]?.qtype === 8 ? answer : selectedOption);
+    moveToNextQuestion();
+  }, [exams, handleAnswerSelect, moveToNextQuestion, selectedOption, textInputValues]);
 
-      let optionToPass = selectedOption;
-      if (exams[questionId - 1]?.qtype === 8) {
-        optionToPass = textInputAnswer;
-      }
-
-
-      await handleAnswerSelect(questionId, optionToPass);
-      console.log("Selected Option After handleAnswerSelect:", selectedOption);
-
-
-      moveToNextQuestion();
-    },
-    [exams, handleAnswerSelect, moveToNextQuestion, selectedOption, textInputAnswer]
-  );
 
   const handleAnswerSelect = useCallback(
     async (questionId, option) => {
       console.log("handleAnswerSelect called with:", questionId, option);
-
+  
       const currentSubject = pattern.find(
         (subject) =>
           questionId >= subject.starting_no && questionId <= subject.ending_no
       );
-
+  
       if (!currentSubject) {
-        console.error(
-          "Question doesn't belong to any subject in the pattern."
-        );
+        console.error("Question doesn't belong to any subject in the pattern.");
         return;
       }
+  
+      let answerToStore = option;
+      if (exams[selectedNumber - 1]?.qtype === 8) {
+        // answerToStore = textInputAnswer;
+        answerToStore = textInputValues[questionId];
 
+         if (!answerToStore) {
+          if (Platform.OS === 'android') {
+            ToastAndroid.showWithGravity(
+              "Please enter the answer in the text field.",
+              ToastAndroid.SHORT,
+              ToastAndroid.CENTER
+            );
+          } else {
+            Alert.alert("Please enter the answer in the text field.");
+          }
+          return;
+        } else if (!option) { // Check for other question types without an answer
+          if (Platform.OS === 'android') {
+            ToastAndroid.showWithGravity(
+              "Please select an option.",
+              ToastAndroid.SHORT,
+              ToastAndroid.CENTER
+            );
+          } else {
+            Alert.alert("Please select an option.");
+          }
+          return;
+        }
+        setTextInputAnswer(""); 
+      } else if (!option){  
+         if (Platform.OS === 'android') {
+           ToastAndroid.showWithGravity(
+             "Please select an option.",
+             ToastAndroid.SHORT,
+             ToastAndroid.CENTER
+           );
+         } else {
+           Alert.alert("Please select an option.");
+         }
+         return;
+       }
+  
       const answeredCountForSubject = Object.keys(answeredQuestions).filter(
         (qId) =>
           qId >= currentSubject.starting_no && qId <= currentSubject.ending_no
       ).length;
-
+  
       if (answeredCountForSubject >= currentSubject.no_of_qus_answer) {
         Alert.alert(
           "Answer Limit Reached",
@@ -771,36 +812,30 @@ useEffect(() => {
         );
         return;
       }
-
+  
+  
       try {
-        let answerToStore = option;
-        if (exams[selectedNumber - 1]?.qtype === 8) {
-          answerToStore = textInputAnswer;
-          setTextInputAnswer("");
-        }
-
-
         const updatedAnswers = {
           ...answeredQuestions,
-          [questionId]: {selected_ans: answerToStore, submit_ans: answerToStore}
+          [questionId]: { selected_ans: answerToStore, submit_ans: answerToStore },
         };
-
+  
         setAnsweredQuestions(updatedAnswers);
         setSelectedAnswers((prev) => ({
           ...prev,
           [selectedNumber]: answerToStore,
         }));
-
+  
         const updatedSkipped = { ...skippedQuestions };
         delete updatedSkipped[questionId];
         setSkippedQuestions(updatedSkipped);
-
+  
         const updatedReviewed = { ...reviewedQuestions };
         delete updatedReviewed[questionId];
         setReviewedQuestions(updatedReviewed);
-
+  
         setSelectedOption(answerToStore);
-
+  
         await AsyncStorage.setItem(
           ANSWERED_QUESTIONS_KEY,
           JSON.stringify(updatedAnswers)
@@ -817,16 +852,7 @@ useEffect(() => {
         console.error("Error saving answer:", error);
       }
     },
-    [
-      answeredQuestions,
-      exams,
-      pattern,
-      selectedNumber,
-      skippedQuestions,
-      textInputAnswer,
-      reviewedQuestions,
-    ]
-  );
+    [answeredQuestions, exams, pattern, selectedNumber, skippedQuestions, textInputValues, reviewedQuestions]);
 
   const handleSkipQuestion = async () => {
     try {
@@ -1607,15 +1633,27 @@ const handleTagQuestion = async () => {
                 </View>
               ) : (
                 <View>
-                  <TextInput
-                         style={[styles.textInputStyle, { backgroundColor: theme.textColor1, borderColor: theme.textColor1, color: theme.textColor }]}
-                         value={textInputAnswer}
-                         onChangeText={handleTextInputChange}
-                         placeholder={`Enter Text`}
-                         keyboardType="numeric"
-                         placeholderTextColor={theme.textColor}
-                         multiline={true}
-                  />
+                    <TextInput
+      style={[
+        styles.textInputStyle,
+        {
+          backgroundColor: theme.textColor1,
+          borderColor: theme.textColor1,
+          color: theme.textColor,
+        },
+      ]}
+      value={textInputValues[selectedNumber] || ""}
+      onChangeText={(text) => handleTextInputChange(text, selectedNumber)}
+      placeholder={`Enter Text`}
+      keyboardType="numeric"
+      placeholderTextColor={theme.textColor}
+      multiline={true}
+      onSubmitEditing={() => {
+        handleSelectAndNext(selectedNumber);
+        setTextInputValues((prev) => ({ ...prev, [selectedNumber]: "" }));
+      }}
+      onBlur={() => handleAnswerSelect(selectedNumber, textInputValues[selectedNumber])} 
+          />
                 </View>
               )}
 
@@ -1716,6 +1754,7 @@ const handleTagQuestion = async () => {
              onPress={() => {
                   handleSelectAndNext(selectedNumber);
                   // setSelectedOption(textInputAnswer)
+                  handleAnswerSelect(selectedNumber, textInputValues[selectedNumber])
                   setTextInputAnswer('')
                 } }
             >
