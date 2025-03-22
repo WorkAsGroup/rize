@@ -45,7 +45,8 @@ const TAGGED_QUESTIONS_KEY = "taggedQuestions";
 const REVIEWED_QUESTIONS_KEY = "reviewedQuestions";
 const REMAINING_TIME_KEY = "remainingTime";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-const COMPLETED_EXAMS_KEY = "completedExams"; 
+const COMPLETED_EXAMS_KEY = "completedExams";
+const COMPLETED_MOCK_TESTS_KEY = "completedMockTests";
 
 const removeHtmlTags = (html) => {
     if (!html) return "";
@@ -136,10 +137,13 @@ const sanitizeHtml = (text) => {
       },
     },
   };
+
+  
   
 const MockTest = ({ navigation, route }) => {
   // console.log(route, "wrihfwoiehoi")
     const colorScheme = useColorScheme();
+    const [completedMockTests, setCompletedMockTests] = useState([]);
     const [data, setData] = useState([]);
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   const studentExamId = route?.params?.studentExamId;
@@ -200,6 +204,23 @@ const MockTest = ({ navigation, route }) => {
    getExamPattern()
 
   },[]);
+  
+  useEffect(() => {
+    const loadCompletedMockTests = async () => {
+        try {
+            let storedMockTests = await AsyncStorage.getItem(COMPLETED_MOCK_TESTS_KEY);
+            if (storedMockTests) {
+                setCompletedMockTests(JSON.parse(storedMockTests));
+            } else {
+                await AsyncStorage.setItem(COMPLETED_MOCK_TESTS_KEY, JSON.stringify([]));
+            }
+        } catch (error) {
+            console.error("Error loading completed mock tests:", error);
+        }
+    };
+
+    loadCompletedMockTests();
+}, []);
 
   useEffect(() => {
     const loadCompletedExams = async () => {
@@ -373,7 +394,7 @@ useEffect(() => {
           await AsyncStorage.removeItem(SKIPPED_QUESTIONS_KEY);
           await AsyncStorage.removeItem(REVIEWED_QUESTIONS_KEY);
           await AsyncStorage.removeItem(TAGGED_QUESTIONS_KEY);
-          await AsyncStorage.removeItem(REMAINING_TIME_KEY);
+          await AsyncStorage.removeItem(REMAINING_TIME_KEY);       
 
           for (let i = 1; i <= exams?.length; i++) {
             await AsyncStorage.removeItem(`questionStartTime_${i}`);
@@ -434,7 +455,7 @@ const handleTextInputChange = (text, questionId) => {
       await AsyncStorage.removeItem(REVIEWED_QUESTIONS_KEY);
       await AsyncStorage.removeItem(TAGGED_QUESTIONS_KEY);
       await AsyncStorage.removeItem(REMAINING_TIME_KEY);
-  
+
       for (let i = 1; i <= exams.length; i++) {
         await AsyncStorage.removeItem(`questionStartTime_${i}`);
       }
@@ -501,6 +522,7 @@ const handleTextInputChange = (text, questionId) => {
             text: "Yes",
             onPress: () => {
               setIsFirstLoad(true);
+              resetQuestionTimers;
               navigation.goBack();
             },
           },
@@ -509,6 +531,7 @@ const handleTextInputChange = (text, questionId) => {
       );
     } else {
       navigation.goBack();
+      resetQuestionTimers;
     }
     return true;
   }, [navigation, isFirstLoad]);
@@ -729,19 +752,41 @@ const handleTextInputChange = (text, questionId) => {
   }, [selectedNumber, allNum, pattern]);
 
   const handleSelectAndNext = useCallback(async (questionId) => {
-    const answer = textInputValues[questionId];
-  
-    if (!answer && exams[questionId - 1]?.qtype === 8) { 
-      // Alert.alert("Please enter the answer in the text field.");
-      return;
-    } else if (!selectedOption && exams[questionId - 1]?.qtype !== 8) { 
-      // Alert.alert("Please select an option."); 
+    console.log("handleSelectAndNext called for question:", questionId);
+    // const answer = textInputValues[questionId];
+    const currentQuestionType = exams[questionId - 1]?.qtype;
+
+    if (answeredQuestions[questionId]) {  
+      moveToNextQuestion();  
+      setSelectedOption(null);
       return;
     }
   
-    await handleAnswerSelect(questionId, exams[questionId - 1]?.qtype === 8 ? answer : selectedOption);
-    moveToNextQuestion();
-  }, [exams, handleAnswerSelect, moveToNextQuestion, selectedOption, textInputValues]);
+    const answer = textInputValues[questionId];
+    if (!answer && currentQuestionType === 8) {
+        ToastAndroid.showWithGravity(
+            "Please enter the answer in the text field.",
+            ToastAndroid.SHORT,
+            ToastAndroid.CENTER
+          );
+        return;
+    } else if (currentQuestionType !== 8 && !selectedOption) {
+      ToastAndroid.showWithGravity(
+          "Please select an option.",
+          ToastAndroid.SHORT,
+          ToastAndroid.CENTER
+        );
+        return;      
+  }
+
+  if (currentQuestionType === 8) { 
+    await handleAnswerSelect(questionId, answer);
+}
+
+moveToNextQuestion();
+setSelectedOption(null); 
+}, [exams, handleAnswerSelect, moveToNextQuestion,answeredQuestions, selectedOption, textInputValues]);
+
 
 
   const handleAnswerSelect = useCallback(
@@ -774,7 +819,7 @@ const handleTextInputChange = (text, questionId) => {
             Alert.alert("Please enter the answer in the text field.");
           }
           return;
-        } else if (!option) { // Check for other question types without an answer
+        } else if (!option) { 
           if (Platform.OS === 'android') {
             ToastAndroid.showWithGravity(
               "Please select an option.",
@@ -789,11 +834,11 @@ const handleTextInputChange = (text, questionId) => {
         setTextInputAnswer(""); 
       } else if (!option){  
          if (Platform.OS === 'android') {
-           ToastAndroid.showWithGravity(
-             "Please select an option.",
-             ToastAndroid.SHORT,
-             ToastAndroid.CENTER
-           );
+          //  ToastAndroid.showWithGravity(
+          //    "Please select an option.",
+          //    ToastAndroid.SHORT,
+          //    ToastAndroid.CENTER
+          //  );
          } else {
            Alert.alert("Please select an option.");
          }
@@ -817,7 +862,7 @@ const handleTextInputChange = (text, questionId) => {
       try {
         const updatedAnswers = {
           ...answeredQuestions,
-          [questionId]: { selected_ans: answerToStore, submit_ans: answerToStore },
+          [questionId]: { selected_ans: option, submit_ans: option },
         };
   
         setAnsweredQuestions(updatedAnswers);
@@ -833,8 +878,8 @@ const handleTextInputChange = (text, questionId) => {
         const updatedReviewed = { ...reviewedQuestions };
         delete updatedReviewed[questionId];
         setReviewedQuestions(updatedReviewed);
-  
-        setSelectedOption(answerToStore);
+        console.log("Setting selectedOption to:", option);
+        setSelectedOption(option);
   
         await AsyncStorage.setItem(
           ANSWERED_QUESTIONS_KEY,
@@ -893,84 +938,114 @@ const handleTextInputChange = (text, questionId) => {
   };
 
   const submitTestResult = async () => {
-    console.log("------------",obj)
-    const data = {
-        "exam_paper_id": obj.exam_paper_id,
-        "exam_session_id": 0,
-        "student_user_exam_id": 0,
-        "questions": []
-    };
+    try {
+        const data = {
+            "exam_paper_id": obj.exam_paper_id,
+            "exam_session_id": 0,
+            "student_user_exam_id": 0,
+            "questions": []
+        };
 
-    for (let i = 1; i <= exams.length; i++) { 
-        const questionId = exams[i - 1].id; 
-        const answeredQuestion = answeredQuestions[i];
-        const skippedQuestion = skippedQuestions[i];
-        const reviewedQuestion = reviewedQuestions[i];
-        const textInputAnswer = textInputValues[i];
+        for (let i = 1; i <= exams.length; i++) {
+            const questionId = exams[i - 1].id;
+            const answeredQuestion = answeredQuestions[i];
+            const skippedQuestion = skippedQuestions[i];
+            const reviewedQuestion = reviewedQuestions[i];
+            const textInputAnswer = textInputValues[i];
 
-        let status = "0"; 
-        let attemptAnswer = ""; 
-        let questionTime = 0; 
+            let status = "0";
+            let attemptAnswer = "";
+            let questionTime = 0;
 
-        if (answeredQuestion) {
-            status = "2";
-            attemptAnswer = answeredQuestion.selected_ans; 
-            try {
-                const questionStartTime = await AsyncStorage.getItem(`questionStartTime_${i}`);
-                if (questionStartTime) {
-                    questionTime = Math.floor((Date.now() - parseInt(questionStartTime, 10)) / 1000);
+            if (answeredQuestion) {
+                status = "2";
+                attemptAnswer = answeredQuestion.selected_ans;
+                try {
+                    const questionStartTime = await AsyncStorage.getItem(`questionStartTime_${i}`);
+                    if (questionStartTime) {
+                        questionTime = Math.floor((Date.now() - parseInt(questionStartTime, 10)) / 1000);
+                    }
+                } catch (error) {
+                    console.error('Error fetching question start time:', error);
                 }
-              } catch (error) {
-                console.error('Error fetching question start time:', error);
-              }
-        } else if (skippedQuestion) {
-            status = "1"; 
+            } else if (skippedQuestion) {
+                status = "1";
+            }
+
+            const subject = pattern.find(sub => i >= sub.starting_no && i <= sub.ending_no);
+
+            data.questions.push({
+                "question_id": questionId,
+                "status": exams[i - 1]?.qtype !== 8 ? status : "2", 
+                "question_time": questionTime,
+                "attempt_answer": exams[i - 1]?.qtype == 8 ? textInputAnswer : attemptAnswer, 
+                "reason_for_wrong": 0,
+                "comments": "",
+                "slno": i,
+                "subject_id": subject?.id,
+                "review": !!reviewedQuestion,
+                "is_disabled": false,
+            });
         }
 
-        const subject = pattern.find(sub => i >= sub.starting_no && i <= sub.ending_no);
+        console.log("Submit Data:", JSON.stringify(data));
+        setExam(data);
 
-        data.questions.push({
-            "question_id": questionId, 
-            "status": exams?.qtype !== 8 ? status: "2",
-            "question_time": questionTime,
-            "attempt_answer": exams?.qtype == 8 ? textInputAnswer : attemptAnswer, 
-            "reason_for_wrong": 0,
-            "comments": "",
-            "slno": i,
-            "subject_id": subject?.id, 
-            "review": !!reviewedQuestion,
-            "is_disabled": false,
-        });
-    }
 
-    console.log("Submit Data:", JSON.stringify(data)); 
-    setExam(data)
 
-    const completedExamsString = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
-        let completedExams = completedExamsString ? JSON.parse(completedExamsString) : [];
-        completedExams.push(obj.exam_paper_id); 
+        let completedMockTests = await AsyncStorage.getItem(COMPLETED_MOCK_TESTS_KEY);
+        completedMockTests = completedMockTests ? JSON.parse(completedMockTests) : [];
+
+        const existingTestIndex = completedMockTests.findIndex(
+            (test) => test.exam_pattern_id === obj.exam_pattern_id
+        );
+
+        if (existingTestIndex !== -1) {
+            completedMockTests[existingTestIndex] = {
+                exam_pattern_id: obj.exam_pattern_id,
+                results: data,
+            };
+        } else {
+            completedMockTests.push({
+                exam_pattern_id: obj.exam_pattern_id,
+                results: data,
+            });
+        }
+
+        await AsyncStorage.setItem(COMPLETED_MOCK_TESTS_KEY, JSON.stringify(completedMockTests));
+
+
+
+        let completedExams = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
+        completedExams = completedExams ? JSON.parse(completedExams) : [];
+        completedExams.push(obj.exam_paper_id);
         await AsyncStorage.setItem(COMPLETED_EXAMS_KEY, JSON.stringify(completedExams));
 
 
-    navigation.navigate("Login",{exam :data});
-    setRemainingTime(0); 
-    setTimeElapsed(0);   
-    if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-    }
+        navigation.navigate("Login", { exam: data });
 
-    try {
-      for (let i = 1; i <= exams.length; i++) {
-        await AsyncStorage.removeItem(`timeElapsed_${i}`);
-      }
-    } catch (error) {
-      console.error("Error clearing timeElapsed data:", error);
+
+        setRemainingTime(0); 
+        setTimeElapsed(0);   
+        if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+        }
+        
+        try {
+          for (let i = 1; i <= exams.length; i++) {
+            await AsyncStorage.removeItem(`timeElapsed_${i}`);
+          }
+        } catch (error) {
+          console.error("Error clearing timeElapsed data:", error);
+        }
+  
+      } catch (error) {
+        console.error("Error saving data:", error);
     }
 };
 
 
-  
 
   if (isLoading) {
     return (
@@ -1176,9 +1251,9 @@ const handleTagQuestion = async () => {
       renderItem={({ item: num }) => ( 
           <TouchableOpacity
               onPress={() => {
-                  if (filteredQuestionNumbers.includes(num)) {
+                  // if (filteredQuestionNumbers.includes(num)) {
                       setSelectedNumber(num);
-                  }
+                  // }
               }}
           >
               <View 
@@ -1575,6 +1650,7 @@ const handleTagQuestion = async () => {
                           <Text style={[styles.option, { color: "#FFF" }]}>
                             {option}
                           </Text>
+                          
                         </View>
 
                         <View>
@@ -1591,13 +1667,13 @@ const handleTagQuestion = async () => {
                               />
                             </View>
                           ) : (
+                            <View style={{alignContent:'center'}}>
                             <Text
                               style={[
                                 styles.option,
                                 {
                                   color: theme.textColor,
-                                  width: 226,
-                                  height: 60,
+                                  width:226,
                                   overflow: "scroll",
                                 },
                               ]}
@@ -1613,6 +1689,7 @@ const handleTagQuestion = async () => {
                                 contentWidth={windowWidth}
                               />
                             </Text>
+                            </View>
                           )}
                         </View>
 
@@ -1643,15 +1720,18 @@ const handleTagQuestion = async () => {
         },
       ]}
       value={textInputValues[selectedNumber] || ""}
-      onChangeText={(text) => handleTextInputChange(text, selectedNumber)}
+      onChangeText={(text) => {
+        handleTextInputChange(text, selectedNumber);
+        console.log("TextInput changed for question:", selectedNumber, "to:", text);
+    }}
       placeholder={`Enter Text`}
       keyboardType="numeric"
       placeholderTextColor={theme.textColor}
       multiline={true}
       onSubmitEditing={() => {
+        console.log("onSubmitEditing called for question:", selectedNumber);
         handleSelectAndNext(selectedNumber);
-        setTextInputValues((prev) => ({ ...prev, [selectedNumber]: "" }));
-      }}
+    }}
       onBlur={() => handleAnswerSelect(selectedNumber, textInputValues[selectedNumber])} 
           />
                 </View>
@@ -1751,12 +1831,19 @@ const handleTagQuestion = async () => {
                 alignItems: "center",
                 marginLeft: 10,
               }}
-             onPress={() => {
-                  handleSelectAndNext(selectedNumber);
-                  // setSelectedOption(textInputAnswer)
-                  handleAnswerSelect(selectedNumber, textInputValues[selectedNumber])
-                  setTextInputAnswer('')
-                } }
+              onPress={() => {
+                if (answeredQuestions[selectedNumber]) {
+                    moveToNextQuestion();
+                    return;
+                }
+          
+                handleSelectAndNext(selectedNumber);
+                if (exams[selectedNumber - 1]?.qtype !== 8) {  
+                    handleAnswerSelect(selectedNumber, selectedOption); 
+                    setSelectedOption(null); 
+                }
+                setTextInputAnswer('');
+            }}
             >
               <Text
                 style={[

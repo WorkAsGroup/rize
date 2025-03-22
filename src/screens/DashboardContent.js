@@ -32,7 +32,7 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
   const [studentUserId, setStudentUserId] = useState(null)
   // const { onChangeAuth } = route.params;
 
-
+  const [completedMockTests, setCompletedMockTests] = useState([]);
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   const [addExam, setAddExam] = useState(false)
@@ -174,6 +174,83 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
     }
   };
 
+  useEffect(() => {
+    const loadCompletedMockTests = async () => { // Load mock tests here
+      try {
+        let storedMockTests = await AsyncStorage.getItem(COMPLETED_MOCK_TESTS_KEY);
+        if (storedMockTests) {
+          setCompletedMockTests(JSON.parse(storedMockTests));
+        }
+      } catch (error) {
+        console.error("Error loading completed mock tests:", error);
+      }
+    };
+    loadCompletedMockTests();
+  }, []);
+
+
+  const submitAllStoredResults = useCallback(async () => {
+    try {
+        let completedExams = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
+        if (completedExams) {
+            completedExams = JSON.parse(completedExams);
+
+            const successfulSubmissions = []; 
+
+            for (const exam_paper_id of completedExams) {
+                const storedExamData = completedMockTests.find(test => test.results.exam_paper_id === exam_paper_id)?.results;
+
+                if (storedExamData) {
+                    const questions = JSON.stringify(
+                      storedExamData.questions.map(question => ({
+                        question_id: question.question_id,
+                        status: question.status,
+                        question_time: question.question_time,
+                        attempt_answer: question.attempt_answer,
+                        reason_for_wrong: question.reason_for_wrong,
+                        comments: question.comments,
+                        slno: question.slno,
+                        subject_id: question.subject_id,
+                        review: question.review,
+                        is_disabled: question.is_disabled
+                      }))
+                    );
+
+                    const data = {
+                        exam_paper_id: storedExamData.exam_paper_id,
+                        exam_session_id: 0,
+                        student_user_exam_id: studentExamId, 
+                        questions: questions, 
+                    };
+                    console.log("Submitting stored result for exam_paper_id:", exam_paper_id, data);
+                    const response = await getSubmitExamResults(data);
+                    console.log("Submission response:", response);
+
+                    if (response && response.status === 200) { 
+                        successfulSubmissions.push(exam_paper_id);
+                    }
+                }
+
+
+            }
+
+            const remainingExams = completedExams.filter(id => !successfulSubmissions.includes(id));
+            await AsyncStorage.setItem(COMPLETED_EXAMS_KEY, JSON.stringify(remainingExams));
+
+            console.log("Successfully submitted stored results. Cleared AsyncStorage.");
+
+        } else {
+            console.log("No completed exams found in AsyncStorage.");
+        }
+    } catch (error) {
+        console.error("Error submitting stored results:", error);
+    }
+},[completedMockTests, studentExamId]);
+
+
+useEffect(() => {
+  submitAllStoredResults(); 
+}, [submitAllStoredResults]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
