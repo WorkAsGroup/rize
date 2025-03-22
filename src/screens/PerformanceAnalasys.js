@@ -8,7 +8,7 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
-import { avgScoringTime, weekAvgScoringTime, getAutoLogin } from "../core/CommonService"
+import { avgScoringTime, weekAvgScoringTime, getAutoLogin, chapterWiseAvgScores } from "../core/CommonService"
 import React, { useEffect, useState } from "react";
 import { darkTheme, lightTheme } from "../theme/theme";
 import RNPickerSelect from "react-native-picker-select";
@@ -25,6 +25,7 @@ const PerformanceAnalasys = ({ route }) => {
   const colorScheme = useColorScheme();
   const [studentExamId, setStudentExamId] = useState("");
   const [avgTimeResults, setAvgTimeResults] = useState([]);
+  const [chaperWiseData, setChapteriseData] = useState([]);
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   const [token, setToken] = useState("")
   const handleLogout = async () => {
@@ -119,33 +120,37 @@ const PerformanceAnalasys = ({ route }) => {
 </ScrollView>
 
         {/* Graph */}
-        {avgTimeResults&&avgTimeResults?.periods?.length>0&& <PerformanceStatusGraph performanceSubOptions={performanceSubOptions} type={selectedSubject} data={avgTimeResults} weekData={weeksAvgScoringTime} />}
+        {/* {avgTimeResults&&avgTimeResults?.periods?.length>0 && <PerformanceStatusGraph performanceSubOptions={performanceSubOptions} type={selectedSubject} data={avgTimeResults} weekData={weeksAvgScoringTime} chaperWiseData={chaperWiseData} />} */}
+        <PerformanceStatusGraph performanceSubOptions={performanceSubOptions} type={selectedSubject} data={avgTimeResults} weekData={weeksAvgScoringTime} chaperWiseData={chaperWiseData} />
       </View>
     );
   };
 
 
   useEffect(() => {
-    const fetchUser = async () => {
-      await getUser();
-    };
-    fetchUser();
+    // const fetchUser = async () => {
+       getUser();
+    // };
+    // fetchUser();
   }, []);
   
   const getUser = async () => {
       try {
         const response = await getAutoLogin();
-        console.log("auto-login", response);
         if (response.data) {
           const nm = response.data.name;
           const id = response.data.student_user_id;
           const examId = response.data.examsData[0].student_user_exam_id;
+          console.log("auto-login", response);
+          console.log("auto-login_user_exam_id", examId);
+
         //   setName(nm);
         //   setStudentId(id);
         setToken(response.data.token)
           setStudentExamId(examId);
           getAvgScoreTime(examId)
           getWeekAvgScoreTime(examId)
+          getChapterAvgScore(examId)
         } else {
           console.warn("No user data received from API");
         }
@@ -162,9 +167,9 @@ const PerformanceAnalasys = ({ route }) => {
         token: token,
 
     }
-    console.log("called", fields)
+    // console.log("called", fields)
     const result = await avgScoringTime(fields)
-    console.log(result, "hellooo")
+    console.log(result, "avgScoringTime")
     setAvgTimeResults(result?.data?.data);
     
   }
@@ -179,8 +184,19 @@ const PerformanceAnalasys = ({ route }) => {
     }
     console.log("called", fields)
     const result = await weekAvgScoringTime(fields)
-    console.log(result, "hellooo")
+    console.log(result, "weekAvgScoringTime")
     setWeekAvgTimeResults(result?.data?.data);
+    
+  }
+  
+  const getChapterAvgScore = async(id) => {
+    const fields = {
+      student_user_exam_id: id ? id : studentExamId,
+
+    }
+    const result = await chapterWiseAvgScores(fields)
+    console.log(result?.data?.data, "chapterWiseAvgScores")
+    setChapteriseData(result?.data?.data);
     
   }
 

@@ -539,12 +539,12 @@ if(defaultItem) {
             ) : item.exam_session_id !== 0 && item.auto_save_id === 0 ? (
               // Replay & Results Button
               <View style={[styles.startExamBtn, { flexDirection: "row", marginRight: 10 }]}>
-                <TouchableOpacity
+               {selectedType !== "custom" && <TouchableOpacity
                   onPress={() => handleStartTest(item, "mockTest")}
                   style={[styles.textExamBtn, styles.replayButton]}
                 >
                   <Text style={styles.buttonText}>🔄</Text>
-                </TouchableOpacity>
+                </TouchableOpacity>}
                 <TouchableOpacity
                   onPress={() => handleCheckResults(item, "schedule_exam")}
                   style={[styles.textExamBtn, styles.resultsButton]}
@@ -590,8 +590,17 @@ if(defaultItem) {
         {item.marks?.length > 0 && (<ScrollView showsHorizontalScrollIndicator={false}
 
           horizontal contentContainerStyle={styles.marksContainer} >
+           <TouchableOpacity 
+  key={0} 
+  style={[styles.markButton, styles[`bgColor${0}`], styles[`borderColor${0}`]]}
+>
+  <Text style={[styles.markText, { color: theme.textColor }]}>
+    Total: {item.marks.reduce((total, mark) => total + Number(mark.subject_score || 0), 0)}
+  </Text>
+</TouchableOpacity>
+
           {item.marks.map((mark, index) => (
-            <TouchableOpacity key={index} style={[styles.markButton, styles[`bgColor${index}`], styles[`borderColor${index}`]]}>
+            <TouchableOpacity key={index} style={[styles.markButton, styles[`bgColor${index+1}`], styles[`borderColor${index}`]]}>
               <Text style={[styles.markText, { color: theme.textColor }]}>{mark.subject}: {mark.subject_score}</Text>
             </TouchableOpacity>
           ))}
@@ -601,18 +610,7 @@ if(defaultItem) {
     );
   };
 
-  const renderItems = ({ item }) => {
-    console.log(item, "badgeItem")
-    return (
-      <View style={{ width: "98%", margin: 5, flexDirection: 'column', padding: 5, backgroundColor: theme.textColor1, borderRadius: 15, justifyContent: 'center' , alignItems: 'center' }}>
-        <Image source={{ uri: item.badge_logo }} style={{ height: 50, width: 50, resizeMode: 'contain' }} />
-        <Text style={{ color: "#000" }}>
-          {item.badge_name}
-        </Text>
-        
-      </View>
-    )
-  };
+
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -629,35 +627,65 @@ if(defaultItem) {
   }
 
   const WeeklyPerformance = () => {
-    console.log(examResults, "results");
-
-    if (!examResults || !Array.isArray(examResults)) {
-      return <Text>No data available</Text>;
-    }
-
-    const periods = examResults || [];
-    const allSubjects = [...new Set(periods.flatMap((period) => period.subjects?.map((s) => s.subject_name) || []))];
-    const uniqueDates = [...new Set(periods.map((period) => period.date))];
-    const chartData = allSubjects.map((subject) => ({
-      name: subject,
-      data: periods.map((period) => {
-        const subjectData = period.subjects?.find((s) => s.subject_name === subject);
-        return subjectData
-          ? selectedPerformanceType === "score"
-            ? Number(subjectData.obtained_marks) || 0
-            : Number(subjectData.average_time_spent) || 0
-          : 0;
-      }),
-    }));
-
-    const xLabels = uniqueDates
-
+    const [loading, setLoading] = useState(true);
+    const [chartData, setChartData] = useState([]);
+    const [xLabels, setXLabels] = useState([]);
+    
+    useEffect(() => {
+      setLoading(true);
+  
+      if (!examResults || !Array.isArray(examResults)) {
+        setLoading(false);
+        return;
+      }
+  
+      const periods = examResults || [];
+      const allSubjects = [...new Set(periods.flatMap((period) => period.subjects?.map((s) => s.subject_name) || []))];
+      const uniqueDates = [...new Set(periods.map((period) => period.date))];
+  
+      const formattedChartData = allSubjects.map((subject) => ({
+        name: subject,
+        data: periods.map((period) => {
+          const subjectData = period.subjects?.find((s) => s.subject_name === subject);
+          return subjectData
+            ? selectedPerformanceType === "score"
+              ? Number(subjectData.obtained_marks) || 0
+              : Number(subjectData.average_time_spent) || 0
+            : 0;
+        }),
+      }));
+  
+      setChartData(formattedChartData);
+      setXLabels(uniqueDates);
+      setLoading(false);
+    }, [examResults, selectedPerformanceType]);
+  
     const subjectColors = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#A133FF"];
+    // const periods = examResults || [];
+    // const allSubjects = [...new Set(periods.flatMap((period) => period.subjects?.map((s) => s.subject_name) || []))];
+    // const uniqueDates = [...new Set(periods.map((period) => period.date))];
+    // const chartData = allSubjects.map((subject) => ({
+    //   name: subject,
+    //   data: periods.map((period) => {
+    //     const subjectData = period.subjects?.find((s) => s.subject_name === subject);
+    //     return subjectData
+    //       ? selectedPerformanceType === "score"
+    //         ? Number(subjectData.obtained_marks) || 0
+    //         : Number(subjectData.average_time_spent) || 0
+    //       : 0;
+    //   }),
+    // }));
+
+    // const xLabels = uniqueDates
+
+    // const subjectColors = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#A133FF"];
 
     return (
       <View style={{ backgroundColor: theme.conbk, padding: 10, borderRadius: 10 }}>
-       
-          {chartData?.length > 0 ? (
+        {loading ? (
+        <ActivityIndicator size="large" color={theme.tx1} style={{ marginTop: 20 }} />
+      ) : 
+          chartData?.length > 0 ? (
           <React.Fragment>
              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
             <View>
@@ -956,6 +984,7 @@ if(defaultItem) {
         <View style={{ flex: 1 }}>
           <FlatList
             data={leadData}
+            nestedScrollEnabled={true}
             renderItem={renderItem}
             keyExtractor={(item) => item.value}
             contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }} // 🔹 Added padding for spacing
@@ -975,27 +1004,63 @@ if(defaultItem) {
   const Achievements = () => {
     return (
       <View style={[styles.performanceCard, { backgroundColor: theme.conbk, marginTop: 20 }]}>
-        <View style={{display: "flex", flexDirection: "row", alignItems: "center", gap: 5}}>
-        <Text style={[styles.performanceTitle, { color: theme.textColor }]}>Achievements</Text>
-        <TouchableOpacity onPress={() =>setAchivementShow(true)}><Image source={require("../images/info.png")}  style={{height: 15, width: 15}}/></TouchableOpacity>
+        {/* Header Section */}
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 10}}>
+          <Text style={[styles.performanceTitle, { color: theme.textColor }]}>Achievements</Text>
+          <TouchableOpacity onPress={() => setAchivementShow(true)}>
+            <Image source={require("../images/info.png")} style={{ height: 15, width: 15 }} />
+          </TouchableOpacity>
         </View>
-        <FlatList
-          data={ach}
-          renderItem={renderItems}
-          keyExtractor={(item) => item.id ? item.id.toString() : Math.random().toString()}
-          ListEmptyComponent={<Text style={{ alignSelf: 'center', color: theme.textColor, padding: 15 }}>📝 Take a Test to Earn a Badge 🏅</Text>}
-        />
+  
+        {/* Make sure ScrollView is within a flexible container */}
+        <ScrollView 
+  nestedScrollEnabled={true} // ✅ Allows internal scrolling
+  style={{ maxHeight: windowHeight * 0.4 }} 
+  contentContainerStyle={{ 
+    flexDirection: "row", 
+    flexWrap: "wrap", 
+    justifyContent: "space-between", 
+    flexGrow: 1 
+  }}
+  showsVerticalScrollIndicator={false} 
+>
+          {ach.length > 0 ? (
+            ach.map((item, index) => (
+              <LinearGradient
+                key={index}
+                colors={["rgba(106, 17, 203, 0.15)", "rgba(37, 117, 252, 0.15)"]}
+                style={{
+                  width: "30%", // 3 items per row
+                  marginBottom: 10,
+                  padding: 5,
+                  backgroundColor: theme.textColor1,
+                  borderRadius: 15,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Image source={{ uri: item.badge_logo }} style={{ height: 75, width: 50, resizeMode: "contain" }} />
+              </LinearGradient>
+            ))
+          ) : (
+            <Text style={{ alignSelf: "center", color: theme.textColor, padding: 15 }}>
+              📝 Take a Test to Earn a Badge 🏅
+            </Text>
+          )}
+        </ScrollView>
       </View>
-
     );
-  }
+  };
+  
+  
+  
 
 
 console.log(items, "itemsvaluses")
   const handleSelect = (item) => {
     if (item.value === "add") {
       setAddExam(true);
-    } else {
+    } else{
     
       setSelectedOption(item);
       setStudentExamId(item.stUserExamId);
@@ -1053,7 +1118,7 @@ console.log(items, "itemsvaluses")
   data={items}
   labelField="label"
   valueField="value"
-  value={selectedOption}
+  value={selectedOption?.value === "add" ? null : selectedOption}
   onChange={(item) => handleSelect(item)}
   placeholder="Select"
 />
@@ -1363,10 +1428,10 @@ const styles = StyleSheet.create({
   borderColor1: { borderColor: "#2A42A533" },
   borderColor2: { borderColor: "#DCAA0933" },
   borderColor3: { borderColor: "#F0F8FF" },
-  bgColor0: { backgroundColor: "#1ABE171A" },
-  bgColor1: { backgroundColor: "#2A42A51A" },
-  bgColor2: { backgroundColor: "#DCAA091A" },
-  bgColor3: { backgroundColor: "#F0F8FF" },
+  bgColor0: { backgroundColor: "#B888D7" },
+  bgColor1: { backgroundColor: "#FFDAC1" },
+  bgColor2: { backgroundColor: "#C5E6C3" },
+  bgColor3: { backgroundColor: "#BFD7EA" },
   startExamBtn: {
     alignItems: 'center',
     justifyContent: 'center',

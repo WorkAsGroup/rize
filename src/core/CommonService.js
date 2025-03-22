@@ -35,6 +35,7 @@ export const endPoint = {
 	submitExam:"/api/v1/exams/finishExam",
 	prevpap:"/api/v1/exams/start-previouspaper-session",
 	updatepassword:"/api/v1/auth/update-password",
+	chapterwisePerformance: "/api/v1/reports/preformance/chapterWise",
 	
   };
 
@@ -351,6 +352,7 @@ export const getAutoLogin = async (fields) => {
 	};
 
 	const token = await AsyncStorage.getItem('authToken');
+	console.log("token-- ",token);
 
 	const data = {
 		token : token
@@ -645,6 +647,28 @@ export const avgScoringTime = async (fields) => {
 	 
 	  return await axios.post(
 		apiurl +"/api/v1/reports/preformance/weekTestActivity",
+		fields,
+		{ headers }
+	  );
+	} catch (error) {
+	  console.error("API Error:", error.response?.data || error.message);
+	  return error;
+	}
+  };
+
+  export const chapterWiseAvgScores = async (fields) => {
+	try {
+
+	  const headers = {
+		"content-type": "application/json",
+		"X-Content-Type-Options": "nosniff",
+		"X-Frame-Options": "SAMEORIGIN",
+		token: fields.token,
+	  };
+  
+	 console.log("fields in chap wise",fields);
+	  return await axios.post(
+		apiurl + endPoint.chapterwisePerformance,
 		fields,
 		{ headers }
 	  );

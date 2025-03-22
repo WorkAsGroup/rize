@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, Dimensions, ActivityIndicator, useColorScheme } from "react-native";
+import { View, Text, ScrollView, Dimensions, ActivityIndicator, useColorScheme, StyleSheet } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { darkTheme, lightTheme } from "../theme/theme";
+import { Dropdown } from "react-native-element-dropdown";
 
 
-const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData,  type }) => {
+const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData, chaperWiseData,  type }) => {
   const [chartData, setChartData] = useState({ labels: [], datasets: [] });
   const [weekChartData, setWeekChartData] = useState({ labels: [], datasets: [] });
   const [loading, setLoading] = useState(false);
+  const[chapData, setChapData] = useState(chaperWiseData)
+
+  console.log(chapData, 'errrr')
   const [overallScorePercent, setOverallScorePercent] = useState("")
+  const defaultValue = chapData.length > 0 ? { label: chapData[0].subject_name, value: chapData[0].subject_id } : null;
+  const [chapValue, setChapValue] = useState(defaultValue)
   const subjects = [
     { label: "overall", value: 1 },
     { label: "botany", value: 2 },
@@ -19,6 +25,10 @@ const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData,  type })
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   console.log(performanceSubOptions, "oiefowieh")
+
+  useEffect(() => {
+   setChapData(chaperWiseData);
+  },[chaperWiseData])
 
   useEffect(() => {
     setLoading(true);
@@ -134,7 +144,12 @@ const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData,  type })
     setTimeout(() => setLoading(false), 1000);
   }, [weekData]);
 
-  console.log(weekChartData, "yooov")
+  // console.log(weekChartData, "yooov")
+  const handleChangeSubject = (item) => {
+    setChapValue(item)
+  }
+
+
   return (
 
         <View style={[{display: "flex", flexDirection: "column", marginTop: 10 ,
@@ -264,6 +279,56 @@ const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData,  type })
     
       </View>
    </View>
+   <Text style={{ fontSize: 18, fontWeight: "bold", textAlign: "left",color: theme.textColor }}>Chapter-Wise Performance: Weak vs. Strong</Text>
+   <Dropdown 
+    style={{
+      backgroundColor: theme.background,
+      borderColor: theme.tx1,
+      borderWidth: 1,
+      minHeight: 45,
+      width: 250,
+      paddingHorizontal: 10,
+      borderRadius: 10,
+      marginTop: 10,
+
+    }}
+    containerStyle={{
+      backgroundColor: theme.textColor1,
+      borderColor: theme.brad,
+      maxHeight: 150,
+    }}
+    placeholderStyle={{
+      color: theme.textColor,
+      fontSize: 12,
+    }}
+    selectedTextStyle={{
+      color: theme.textColor,
+      fontSize: 12,
+    }}
+    itemTextStyle={{
+      fontSize: 11,
+      color: theme.textColor,
+    }}
+    data={chapData.map((item) => ({ label: item.subject_name, value: item.subject_id }))}  
+    labelField="label"
+    valueField="value"
+    value={chapValue || defaultValue}  // ✅ Sets the first item as default
+    onChange={(item) => handleChangeSubject(item)}
+    placeholder="Select"
+   />
+   <View style={styles.chapterGrid}>
+  {chapData
+    .filter((item) => item.subject_id === chapValue?.value) // Ensure chapValue is defined
+    .flatMap((item) => item.chapterData || []) // Ensure chapterData exists
+    .map((chapter, index) => (
+      <View key={index} style={[styles.chapterBox, { backgroundColor: chapter.color_code }]}>
+        <Text style={styles.chapterText}>
+          {chapter.chapter_name.length > 20 ? `${chapter.chapter_name.slice(0, 15)}...` : chapter.chapter_name}
+        </Text>
+      </View>
+    ))}
+</View>
+
         </View>
       
      
@@ -271,4 +336,26 @@ const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData,  type })
   );
 };
 
+const styles = StyleSheet.create({
+    container: { padding: 15, backgroundColor: '#fff' },
+    cardContainer: { backgroundColor: '#f9f9f9', padding: 15, borderRadius: 10, marginBottom: 15 },
+    row: { flexDirection: 'row', alignItems: 'center' },
+    icon: { width: 50, height: 50, marginRight: 10 },
+    congratsText: { fontSize: 16, fontWeight: 'bold' },
+    messageText: { fontSize: 12, color: '#585A5A' },
+    sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
+    statsRow: { flexDirection: 'row', justifyContent: 'space-between' },
+    statBox: { alignItems: 'center' },
+    statValue: { fontSize: 24, fontWeight: 'bold' },
+    statLabel: { fontSize: 12, color: '#585A5A' },
+    subjectList: { flexDirection: 'row', marginTop: 10 },
+    subjectCard: { padding: 10, borderWidth: 1, borderRadius: 8, marginRight: 10 },
+    selectedSubject: { backgroundColor: 'rgba(106, 17, 203, 0.1)' },
+    subjectName: { fontSize: 14, fontWeight: '500' },
+    subjectScore: { fontSize: 16, fontWeight: '600' },
+    chapterGrid: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 15 },
+    chapterBox: { width: '45%', height: 75, justifyContent: 'center', alignItems: 'center', margin: 5 },
+    chapterText: { fontSize: 12, fontWeight: '500', color: '#fff' },
+    noDataText: { textAlign: 'center', fontSize: 16 }
+});
 export default PerformanceStatusGraph;
