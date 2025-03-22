@@ -192,62 +192,55 @@ useEffect(() => {
 
 const submitAllStoredResults = useCallback(async () => {
   try {
+      let storedMockTests = await AsyncStorage.getItem(COMPLETED_MOCK_TESTS_KEY);
       let completedExams = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
-      if (completedExams) {
+
+      if (storedMockTests && completedExams) {
+          let parsedMockTests = JSON.parse(storedMockTests);
           completedExams = JSON.parse(completedExams);
 
-          const submissionsInProgress = new Set();
-          const successfulSubmissions = new Set();
 
-          const mockTestsToSubmit = completedMockTests.filter(test =>
-              test.results && completedExams.includes(test.results.exam_paper_id)
-          );
+          const submittedExams = new Set(); 
 
-          const submissionPromises = mockTestsToSubmit.map(async (mockTest) => {
-              const exam_paper_id = mockTest.results.exam_paper_id;
 
-              // Check if this exam_paper_id has already been successfully submitted
-              if (successfulSubmissions.has(exam_paper_id)) {
-                  console.log(`Exam with exam_paper_id ${exam_paper_id} already successfully submitted, skipping.`);
-                  return;
-              }
+          const updatedMockTests = await Promise.all(parsedMockTests.map(async (mockTest) => {
+              if (mockTest.results && completedExams.includes(mockTest.results.exam_paper_id) && !submittedExams.has(mockTest.results.exam_paper_id)) {
 
-              if (submissionsInProgress.has(exam_paper_id)) {
-                  console.log(`Submission for exam_paper_id ${exam_paper_id} already in progress, skipping.`);
-                  return;
-              }
-
-              submissionsInProgress.add(exam_paper_id);
-
-              try {
-                  const submissionSuccessful = await submitTestResult(mockTest.results, exam_paper_id, studentExamId);
-
-                  if (submissionSuccessful) {
-                      successfulSubmissions.add(exam_paper_id);
-                  } else {
-                      console.error(`Failed to submit results for exam_paper_id: ${exam_paper_id}`);
+                  const exam_paper_id = mockTest.results.exam_paper_id;
+                  submittedExams.add(exam_paper_id);
+                  try {
+                      const submissionSuccessful = await submitTestResult(mockTest.results, exam_paper_id, studentExamId);
+                      if (submissionSuccessful) {
+                        
+                          return null;
+                      } else {
+                          console.error(`Failed to submit results for exam_paper_id: ${exam_paper_id}`);
+                          return mockTest; 
+                      }
+                  } catch (error) {
+                      console.error(`Error submitting results for exam_paper_id ${exam_paper_id}:`, error);
+                      return mockTest; 
                   }
-              } catch (error) {
-                  console.error(`Error during submission for exam_paper_id ${exam_paper_id}:`, error);
-              } finally {
-                  submissionsInProgress.delete(exam_paper_id);
               }
-          });
+             return mockTest; 
+          }));
 
-          await Promise.all(submissionPromises);
 
-          const remainingExams = completedExams.filter(id => !successfulSubmissions.has(id));
+
+
+          const remainingMockTests = updatedMockTests.filter(test => test !== null);
+          const remainingExams = completedExams.filter(examId => !submittedExams.has(examId));
+
           await AsyncStorage.setItem(COMPLETED_EXAMS_KEY, JSON.stringify(remainingExams));
+          await AsyncStorage.setItem(COMPLETED_MOCK_TESTS_KEY, JSON.stringify(remainingMockTests));
+          setCompletedMockTests(remainingMockTests);
 
-          setCompletedMockTests(completedMockTests.filter(test =>
-              !successfulSubmissions.has(test.results?.exam_paper_id)
-          ));
-
-          if (successfulSubmissions.size > 0) {
-              Alert.alert("Success", `${successfulSubmissions.size} stored result(s) submitted successfully.`);
+          if (submittedExams.size > 0) { 
+              // Alert.alert("Success", `${submittedExams.size} stored result(s) submitted successfully.`);
           }
+
       } else {
-          console.log("No completed exams found in AsyncStorage.");
+          console.log("No completed exams or mock tests found in AsyncStorage.");
       }
 
   } catch (error) {
