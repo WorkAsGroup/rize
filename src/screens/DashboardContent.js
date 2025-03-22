@@ -70,7 +70,6 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
   ];
     const [items, setItems] = useState([]);
   const [selectedValue, setSelectedValue] = useState(1);
-  console.log("99999999", preExamResults);
   const options = [
     { label: 'Last 30 Days', value: 1 },
     { label: 'Last 2 Months', value: 2 },
@@ -121,8 +120,8 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
     // console.log(filterData, "heeeha");
     // setItems(filterData)
     // } 
-    const exams = AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
-    console.log("completed", exams)
+    // const exams = AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
+    // console.log("completed", exams)
   },[])
  
 
@@ -189,47 +188,71 @@ useEffect(() => {
     }
   };
   loadCompletedMockTests();
-}, [submitTestResult]);
+}, []);
 
-  const submitAllStoredResults = useCallback(async () => {
-    try {
-        let completedExams = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
-        if (completedExams) {
-            completedExams = JSON.parse(completedExams);
+const submitAllStoredResults = useCallback(async () => {
+  try {
+      let completedExams = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
+      if (completedExams) {
+          completedExams = JSON.parse(completedExams);
 
-            const successfulSubmissions = [];
+          const submissionsInProgress = new Set();
+          const successfulSubmissions = new Set();
 
-            for (const exam_paper_id of completedExams) {
-                const storedExamData = completedMockTests.find(test => test.results.exam_paper_id === exam_paper_id)?.results;
+          const mockTestsToSubmit = completedMockTests.filter(test =>
+              test.results && completedExams.includes(test.results.exam_paper_id)
+          );
 
-                if (storedExamData) {
-                    const submissionSuccessful = await submitTestResult(storedExamData, exam_paper_id, studentExamId);
-                    if (submissionSuccessful) {
-                        successfulSubmissions.push(exam_paper_id);
-                        console.log("-----------",submissionSuccessful);
-                    }
-                }
-            }
+          const submissionPromises = mockTestsToSubmit.map(async (mockTest) => {
+              const exam_paper_id = mockTest.results.exam_paper_id;
 
+              // Check if this exam_paper_id has already been successfully submitted
+              if (successfulSubmissions.has(exam_paper_id)) {
+                  console.log(`Exam with exam_paper_id ${exam_paper_id} already successfully submitted, skipping.`);
+                  return;
+              }
 
-            const remainingExams = completedExams.filter(id => !successfulSubmissions.includes(id));
-            await AsyncStorage.setItem(COMPLETED_EXAMS_KEY, JSON.stringify(remainingExams));
+              if (submissionsInProgress.has(exam_paper_id)) {
+                  console.log(`Submission for exam_paper_id ${exam_paper_id} already in progress, skipping.`);
+                  return;
+              }
 
+              submissionsInProgress.add(exam_paper_id);
 
-            const remainingMockTests = completedMockTests.filter(test => !successfulSubmissions.includes(test.results.exam_paper_id));
-            setCompletedMockTests(remainingMockTests);
+              try {
+                  const submissionSuccessful = await submitTestResult(mockTest.results, exam_paper_id, studentExamId);
 
-            await AsyncStorage.removeItem(COMPLETED_EXAMS_KEY);
-            await AsyncStorage.removeItem(COMPLETED_MOCK_TESTS_KEY);
+                  if (submissionSuccessful) {
+                      successfulSubmissions.add(exam_paper_id);
+                  } else {
+                      console.error(`Failed to submit results for exam_paper_id: ${exam_paper_id}`);
+                  }
+              } catch (error) {
+                  console.error(`Error during submission for exam_paper_id ${exam_paper_id}:`, error);
+              } finally {
+                  submissionsInProgress.delete(exam_paper_id);
+              }
+          });
 
-            console.log("Successfully submitted stored results. Cleared AsyncStorage and state.");
+          await Promise.all(submissionPromises);
 
-        } else {
-            console.log("No completed exams found in AsyncStorage.");
-        }
-    } catch (error) {
-        console.error("Error submitting stored results:", error);
-    }
+          const remainingExams = completedExams.filter(id => !successfulSubmissions.has(id));
+          await AsyncStorage.setItem(COMPLETED_EXAMS_KEY, JSON.stringify(remainingExams));
+
+          setCompletedMockTests(completedMockTests.filter(test =>
+              !successfulSubmissions.has(test.results?.exam_paper_id)
+          ));
+
+          if (successfulSubmissions.size > 0) {
+              Alert.alert("Success", `${successfulSubmissions.size} stored result(s) submitted successfully.`);
+          }
+      } else {
+          console.log("No completed exams found in AsyncStorage.");
+      }
+
+  } catch (error) {
+      console.error("Error in submitAllStoredResults:", error);
+  }
 }, [completedMockTests, studentExamId, submitTestResult]);
 
 
