@@ -352,7 +352,6 @@ export const getAutoLogin = async (fields) => {
 	};
 
 	const token = await AsyncStorage.getItem('authToken');
-	console.log("token-- ",token);
 
 	const data = {
 		token : token
@@ -478,7 +477,7 @@ export const getUpdatedEmail = async (fields) => {
 			return res.data;
 		})
 		.catch((error) => {
-			return error;
+			return error.response.data|| error.message;
 		});
 };
 
@@ -549,8 +548,8 @@ export const getSignUpDetails = async (fields) => {
 	  .post(apiurl + endPoint.login, fields, { headers: headers })
 	  .then((res) => res.data)
 	  .catch((error) => {
-		console.error("Error in login det:", error.response?.data || error.message);
-		return error;
+		console.error("Error in login det:", error.response.data, error.message);
+		return error.response.data|| error.message;
 	  }); 
   };
 
@@ -568,7 +567,7 @@ export const getSignUpDetails = async (fields) => {
 	  .then((res) => res.data)
 	  .catch((error) => {
 		console.error("Error in otp submit:", error.response?.data || error.message);
-		return error;
+		return error.response?.data || error.message;
 	  }); 
   };
 export const getConstituencies = async (fields) => {
@@ -655,7 +654,7 @@ export const avgScoringTime = async (fields) => {
 	  return error;
 	}
   };
-
+  
   export const chapterWiseAvgScores = async (fields) => {
 	try {
 
@@ -666,7 +665,7 @@ export const avgScoringTime = async (fields) => {
 		token: fields.token,
 	  };
   
-	 console.log("fields in chap wise",fields);
+	 
 	  return await axios.post(
 		apiurl + endPoint.chapterwisePerformance,
 		fields,
@@ -677,4 +676,3 @@ export const avgScoringTime = async (fields) => {
 	  return error;
 	}
   };
-  

@@ -173,12 +173,16 @@ export default function Login({ route }) {
                 navigation.navigate("AccountCreated", {
                     token: response.data.token,
                     onChangeAuth: route.params.onChangeAuth,
-                    exam: route.params.exam
+                    exam: route.params.exam,
+                    from: "login",
+                    studentId: response.data.student_user_id
                 });
                    }
             }
             } else if(response.statusCode == 404){
                 showToastError("User not found.");
+            }else if(response.statusCode == 401){
+                showToastError(response.message);
             } else {
                 // showToast("Uh Oh! No account found with the email / phone number.")
                 showToastError("Uh Oh! No account found.");

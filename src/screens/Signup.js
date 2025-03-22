@@ -163,16 +163,17 @@ export default function Signup({ navigation }) {
             if (response.statusCode === 201) {
                 navigation.navigate("OTPScreen", { 
                     mobile: mobileValue || emailValue, 
-                    studentId: response?.data?.student_user_id 
+                    studentId: response?.data?.student_user_id,
+                    from: "signUp",
                 });
                 showToast("OTP Sent Successfully");
             } else if (response.statusCode === 409) {
                 const existingUserIdentifier = mobileValue ? mobileValue: emailValue;
     
-                navigation.navigate("OTPScreen", { 
-                    mobile: existingUserIdentifier, 
-                    studentId: response?.data?.student_user_id 
-                });
+                // navigation.navigate("OTPScreen", { 
+                //     mobile: existingUserIdentifier, 
+                //     studentId: response?.data?.student_user_id 
+                // });
                 showToast("User already exists.");
     
             } else {

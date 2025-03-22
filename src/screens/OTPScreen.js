@@ -33,7 +33,7 @@ export default function OTPScreen({ navigation, route }) {
     const [loading, setLoading] = useState(false);
     const OTP_LENGTH = 6;
     const otpInputRef = useRef(null); 
-
+console.log(route.params, "OTP route")
     useEffect(() => {
         let timerId;
         if (isTimerActive && timeRemaining > 0) {
@@ -76,18 +76,23 @@ const handleSubmitOTP = async () => {
 
         if (response.statusCode === 200) {
             showToast("OTP verified successfully!", "success");
-
+console.log(response.data, route.params, "success")
             if (response.data && response.data.email_verified === 1) {
                 if (route.params?.onChangeAuth) { 
                     route.params.onChangeAuth(response.data.token); 
+                    setTimeout(() => {
+                        navigation.navigate("DashboardContent");
+                    },1000)
                 }
 
-                 navigation.navigate("DashboardContent");
+            
             } else {
+                console.log(mobile, response.data?.student_user_id || studentId, response.data, "AcParamrs")
                 navigation.navigate("AccountCreated", { 
                     mobile: mobile,
                     studentId: response.data?.student_user_id || studentId,
                     data: response.data,
+                    from: "signUp",
                 });
             }
         } else {
@@ -135,13 +140,13 @@ const handleSubmitOTP = async () => {
         let fields = {};
         if (/^[6-9]{1}[0-9]{9}$/.test(mobile)) { 
             fields = {
-                "mobile": mobile,
-                "email": "",
+                "mobile": route?.params?.mobile,
+                "email": route?.params?.email,
             };
         } else {
             fields = {
-                "mobile": "", 
-                "email": mobile, 
+               "mobile": route?.params?.mobile,
+                "email": route?.params?.email,
             };
         }
 
@@ -149,6 +154,7 @@ const handleSubmitOTP = async () => {
             const res = await reSendOTP(fields);
             if (res && res.data && res.data.student_user_id) {
                 setStudentId(res.data.student_user_id);
+                setOtp('')
                 showToast("OTP resent successfully!", "success"); 
             } else {
                 showToast("Failed to resend OTP. Please try again.", "error");

@@ -25,6 +25,7 @@ import ResultMainComponent from './src/screens/ResultsMainConponent';
 import InstructionAuth from './src/screens/InstructionAuth';
 import StartExam from './src/screens/StartExam';
 import PerformanceAnalasys from './src/screens/PerformanceAnalasys';
+import ResetPasswordOTP from './src/screens/ResetPasswordOTP';
 
 const Stack = createStackNavigator();
 
@@ -44,16 +45,17 @@ const AuthNavigator = ({ onChangeAuth }) => {
     <Stack.Screen name="Intro" component={Intro} />
     <Stack.Screen name="Login" component={Login} initialParams={{ onChangeAuth: onChangeAuth }} />
     <Stack.Screen name="Signup" component={Signup} />
-    <Stack.Screen name="OTPScreen" component={OTPScreen} />
+    <Stack.Screen name="OTPScreen" component={OTPScreen} initialParams={{ onChangeAuth: onChangeAuth }} />
     <Stack.Screen name="ResetPassword" component={ResetPassword} />
     <Stack.Screen name="ResetLink" component={ResetLink} />
-    <Stack.Screen name="AccountCreated" component={AccountCreated}  />
+    <Stack.Screen name="AccountCreated" component={AccountCreated} initialParams={{ onChangeAuth: onChangeAuth }}  />
     <Stack.Screen name="Instruction" component={Instruction} />
     <Stack.Screen name="Instruct" component={Instruct} />
     <Stack.Screen name="MockTest" component={MockTest} />
     <Stack.Screen name="Form" component={Form} /> 
     <Stack.Screen name="EmailVerification" component={EmailVerification} />
 
+   <Stack.Screen name="ResetPasswordOTP" component={ResetPasswordOTP} />
   </Stack.Navigator>
   );
 };

@@ -19,6 +19,8 @@ import { Dropdown } from 'react-native-element-dropdown';
 import ExamModalComponent from './ExamModalComponent';
 import AchivementsModel from './models/AchivementsModel';
 
+const COMPLETED_EXAMS_KEY = "completedExams"; 
+
 const Tab = createBottomTabNavigator();
 
 const windowWidth = Dimensions.get("window").width;
@@ -107,17 +109,19 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
    
   }, []);
 
-  // useEffect(() => {
-  //   console.log("response exams", items, examsData);
-  //   if(examsData.length>0&&items.length>0){
-  //     const filterData = items.filter((item) =>
-  //       examsData.some(exam => exam.exam_id === item.exam_id)
-  //   );
-  //   setStudentExamId(filterData[0].exam_id)
-  //   console.log(filterData, "heeeha");
-  //   setItems(filterData)
-  //   } 
-  // },[items, examsData])
+  useEffect(() => {
+    // console.log("response exams", items, examsData);
+    // if(examsData.length>0&&items.length>0){
+    //   const filterData = items.filter((item) =>
+    //     examsData.some(exam => exam.exam_id === item.exam_id)
+    // );
+    // setStudentExamId(filterData[0].exam_id)
+    // console.log(filterData, "heeeha");
+    // setItems(filterData)
+    // } 
+    const exams = AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
+    console.log("completed", exams)
+  },[])
  
 
   const submitTestResult = async () => {
@@ -222,6 +226,9 @@ useEffect(() => {
     try {
       const response = await getAutoLogin();
       console.log("auto-login", response);
+      if(response?.data?.examsData==null) {
+        setAddExam(true);
+      }
       if (response.data) {
         const nm = response.data.name;
         const id = response.data.student_user_id;
@@ -279,7 +286,7 @@ if(defaultItem) {
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
-      Alert.alert("Error", "Failed to get user data. Please check your connection and try again.");
+      // Alert.alert("Error", "Failed to get user data. Please check your connection and try again.");
     }
   };
 

@@ -21,7 +21,7 @@ const CustomDrawerContent = (props) => {
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   const navigation = useNavigation();
   const route = useRoute();
-  const currentRouteName = route.name;
+  const currentRouteName = route?.name;
   
   const getIconSource = (routeName) => {
     switch (routeName) {
@@ -70,7 +70,7 @@ const CustomDrawerContent = (props) => {
 
 const DashboardDrawer = ({ route }) => {
   console.log(route, "route")
-  const { onChangeAuth } = route.params;
+  const { onChangeAuth } = route?.params;
   const colorScheme = useColorScheme();
   const navigation = useNavigation();
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;

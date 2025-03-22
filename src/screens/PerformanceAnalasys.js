@@ -120,30 +120,27 @@ const PerformanceAnalasys = ({ route }) => {
 </ScrollView>
 
         {/* Graph */}
-        {/* {avgTimeResults&&avgTimeResults?.periods?.length>0 && <PerformanceStatusGraph performanceSubOptions={performanceSubOptions} type={selectedSubject} data={avgTimeResults} weekData={weeksAvgScoringTime} chaperWiseData={chaperWiseData} />} */}
-        <PerformanceStatusGraph performanceSubOptions={performanceSubOptions} type={selectedSubject} data={avgTimeResults} weekData={weeksAvgScoringTime} chaperWiseData={chaperWiseData} />
+        {avgTimeResults&&avgTimeResults?.periods?.length>0&& <PerformanceStatusGraph performanceSubOptions={performanceSubOptions} type={selectedSubject} data={avgTimeResults} weekData={weeksAvgScoringTime} chaperWiseData={chaperWiseData} />}
       </View>
     );
   };
 
 
   useEffect(() => {
-    // const fetchUser = async () => {
-       getUser();
-    // };
-    // fetchUser();
+    const fetchUser = async () => {
+      await getUser();
+    };
+    fetchUser();
   }, []);
   
   const getUser = async () => {
       try {
         const response = await getAutoLogin();
+        // console.log("auto-login", response);
         if (response.data) {
           const nm = response.data.name;
           const id = response.data.student_user_id;
           const examId = response.data.examsData[0].student_user_exam_id;
-          console.log("auto-login", response);
-          console.log("auto-login_user_exam_id", examId);
-
         //   setName(nm);
         //   setStudentId(id);
         setToken(response.data.token)
@@ -169,7 +166,7 @@ const PerformanceAnalasys = ({ route }) => {
     }
     // console.log("called", fields)
     const result = await avgScoringTime(fields)
-    console.log(result, "avgScoringTime")
+    // console.log(result, "hellooo")
     setAvgTimeResults(result?.data?.data);
     
   }
@@ -184,7 +181,7 @@ const PerformanceAnalasys = ({ route }) => {
     }
     console.log("called", fields)
     const result = await weekAvgScoringTime(fields)
-    console.log(result, "weekAvgScoringTime")
+    // console.log(result, "hellooo")
     setWeekAvgTimeResults(result?.data?.data);
     
   }
@@ -192,10 +189,13 @@ const PerformanceAnalasys = ({ route }) => {
   const getChapterAvgScore = async(id) => {
     const fields = {
       student_user_exam_id: id ? id : studentExamId,
+        duration_id:selectedValue,
+        token: token,
 
     }
+    // console.log("calledfwefwe", fields)
     const result = await chapterWiseAvgScores(fields)
-    console.log(result?.data?.data, "chapterWiseAvgScores")
+    // console.log(result, "helloooiiiiiiii")
     setChapteriseData(result?.data?.data);
     
   }

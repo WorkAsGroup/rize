@@ -79,7 +79,7 @@ const handleSubmitOTP = async () => {
             showToast("OTP verified successfully!", "success");
 
             const updatedStudentId = response.data?.student_user_id || studentId; 
-
+console.log(mobile, email, updatedStudentId, response.data, "datacheck")
                 navigation.navigate("ResetPasswordOTP", { 
                     mobile: mobile,
                     email: email,

@@ -147,7 +147,6 @@ const MockTest = ({ navigation, route }) => {
   const [selectedNumber, setSelectedNumber] = useState(1);
   const scrollRef = useRef(null);
   const [scrollViewLayoutComplete, setScrollViewLayoutComplete] = useState(false);
-  const [isLeavingTest, setIsLeavingTest] = useState(false);
   const [scrollViewWidth, setScrollViewWidth] = useState(0);
   const numberCircleRef = useRef(null);
   const scrollViewRef = useRef(null);
@@ -280,12 +279,7 @@ const MockTest = ({ navigation, route }) => {
     };
 
     checkInterruption();
-    return () => { 
-      if (!isLeavingTest && !submitModalVisible ) { 
-        AsyncStorage.setItem(TEST_INTERRUPTED_KEY, "true");
-      }
-    }
-  },[loadInitialData, isLeavingTest, submitModalVisible]);
+  }, [loadInitialData]);
 
   useEffect(() => {
     const loadRemainingTime = async () => {
@@ -505,9 +499,7 @@ const handleTextInputChange = (text, questionId) => {
           },
           {
             text: "Yes",
-            onPress:async () => {
-              setIsFirstLoad(true);
-              await resetQuestionTimers(); 
+            onPress: () => {
               setIsFirstLoad(true);
               navigation.goBack();
             },
@@ -516,11 +508,10 @@ const handleTextInputChange = (text, questionId) => {
         { cancelable: false }
       );
     } else {
-      setIsLeavingTest(true);
       navigation.goBack();
     }
     return true;
-  }, [navigation, isFirstLoad, resetQuestionTimers, submitModalVisible]);
+  }, [navigation, isFirstLoad]);
   
   useEffect(() => {
     if (!isFirstLoad) {
@@ -953,8 +944,7 @@ const handleTextInputChange = (text, questionId) => {
     }
 
     console.log("Submit Data:", JSON.stringify(data)); 
-    setExam(data);
-       setIsLeavingTest(true);
+    setExam(data)
 
     const completedExamsString = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
         let completedExams = completedExamsString ? JSON.parse(completedExamsString) : [];
@@ -1186,9 +1176,9 @@ const handleTagQuestion = async () => {
       renderItem={({ item: num }) => ( 
           <TouchableOpacity
               onPress={() => {
-                  // if (filteredQuestionNumbers.includes(num)) {
+                  if (filteredQuestionNumbers.includes(num)) {
                       setSelectedNumber(num);
-                  // }
+                  }
               }}
           >
               <View 
