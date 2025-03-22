@@ -189,7 +189,7 @@ useEffect(() => {
     }
   };
   loadCompletedMockTests();
-}, []);
+}, [submitTestResult]);
 
   const submitAllStoredResults = useCallback(async () => {
     try {
@@ -218,6 +218,9 @@ useEffect(() => {
 
             const remainingMockTests = completedMockTests.filter(test => !successfulSubmissions.includes(test.results.exam_paper_id));
             setCompletedMockTests(remainingMockTests);
+
+            await AsyncStorage.removeItem(COMPLETED_EXAMS_KEY);
+            await AsyncStorage.removeItem(COMPLETED_MOCK_TESTS_KEY);
 
             console.log("Successfully submitted stored results. Cleared AsyncStorage and state.");
 

@@ -35,6 +35,7 @@ import {
 } from "../core/CommonService";
 import { useFocusEffect } from "@react-navigation/native";
 var striptags = require("striptags");
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const TEST_INTERRUPTED_KEY = "testInterrupted";
 const windowWidth = Dimensions.get("window").width;
@@ -44,7 +45,6 @@ const SKIPPED_QUESTIONS_KEY = "skippedQuestions";
 const TAGGED_QUESTIONS_KEY = "taggedQuestions";
 const REVIEWED_QUESTIONS_KEY = "reviewedQuestions";
 const REMAINING_TIME_KEY = "remainingTime";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 const COMPLETED_EXAMS_KEY = "completedExams";
 const COMPLETED_MOCK_TESTS_KEY = "completedMockTests";
 
