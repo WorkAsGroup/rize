@@ -165,7 +165,6 @@ const MockTest = ({ navigation, route }) => {
   const [reviewedQuestions, setReviewedQuestions] = useState({});
   const [selectedSubjectId, setSelectedSubjectId] = useState(null);
   const [remainingTime, setRemainingTime] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [selectedOption, setSelectedOption] = useState(null);
   const [filteredQuestionNumbers, setFilteredQuestionNumbers] = useState([]);
@@ -241,7 +240,6 @@ const MockTest = ({ navigation, route }) => {
   
   const loadInitialData = useCallback(async () => {
     setQuestionsLoading(true);
-    setIsLoading(true);
     try {
       if (wasTestInterrupted) {
         await resetQuestionTimers();
@@ -263,7 +261,6 @@ const MockTest = ({ navigation, route }) => {
       console.error("Error loading data:", error);
     } finally {
       setQuestionsLoading(false);
-      setIsLoading(false);
     }
   }, [wasTestInterrupted]);
 
@@ -548,7 +545,7 @@ const handleTextInputChange = (text, questionId) => {
     };
   }, [handleBackPress, isFirstLoad]);
   const getExamPattern = async () => {
-    setIsLoading(true);
+    setQuestionsLoading(true);
     const data = {
       exam_pattern_id: obj.exam_pattern_id,
     };
@@ -570,7 +567,7 @@ const handleTextInputChange = (text, questionId) => {
     } catch (error) {
       console.error("Error examPattern:", error);
     } finally {
-      setIsLoading(false);
+      setQuestionsLoading(false);
     }
   };
 
@@ -656,11 +653,11 @@ const handleTextInputChange = (text, questionId) => {
 
       console.log("Subject Counts:", subjectCounts);
       console.log("Exams Response:", examsResponse);
-      setIsLoading(false);
+      setQuestionsLoading(false);
     } catch (error) {
       console.error("Error fetching exams:", error);
     } finally {
-        setIsLoading(false);
+        // setIsLoading(false);
       setQuestionsLoading(false);
     }
   };
@@ -1047,18 +1044,18 @@ setSelectedOption(null);
 
 
 
-  if (isLoading) {
-    return (
-      <View
-        style={[
-          styles.container,
-          { justifyContent: "center", alignItems: "center" },
-        ]}
-      >
-        <ActivityIndicator size="large" color={theme.textColor} />
-      </View>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <View
+  //       style={[
+  //         styles.container,
+  //         { justifyContent: "center", alignItems: "center" },
+  //       ]}
+  //     >
+  //       <ActivityIndicator size="large" color={theme.textColor} />
+  //     </View>
+  //   );
+  // }
 // console.log(remainingTime, "remainingTime")
 
 

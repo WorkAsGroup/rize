@@ -20,6 +20,8 @@ import ExamModalComponent from './ExamModalComponent';
 import AchivementsModel from './models/AchivementsModel';
 
 const COMPLETED_EXAMS_KEY = "completedExams"; 
+const COMPLETED_MOCK_TESTS_KEY = "completedMockTests";
+
 
 const Tab = createBottomTabNavigator();
 
@@ -124,70 +126,70 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
   },[])
  
 
-  const submitTestResult = async () => {
-    if (!preExamResults) {
-      if (route.params.exam) {
-        setPreExamResults(route.params.exam);
-      }
-    }
-
-    const questions = JSON.stringify(
-      preExamResults.questions.map(question => ({
-        question_id: question.question_id,
-        status: question.status,
-        question_time: question.question_time,
-        attempt_answer: question.attempt_answer,
-        reason_for_wrong: question.reason_for_wrong,
-        comments: question.comments,
-        slno: question.slno,
-        subject_id: question.subject_id,
-        review: question.review,
-        is_disabled: question.is_disabled
-      }))
-    );
-
-    console.log(typeof questions, "questionaryr");
-
-    const data = {
-      exam_paper_id: preExamResults.exam_paper_id,
-      exam_session_id: 0,
-      student_user_exam_id: studentExamId,
-      questions: questions,
-    };
-    const prevData ={
-      exam_paper_id: preExamResults.exam_paper_id,
-      exam_session_id: 0,
-      student_user_exam_id: studentExamId,
-      questions: questions,
-      type: "previous_exam",
-      uid: uid ? uid: route?.params?.exam?.uid,
-    }
-
-    console.log("Submit Data:",route?.params?.exam,selectedType, JSON.stringify(selectedType==="previous" ? prevData:data));
+  const submitTestResult = useCallback(async (examData, exam_paper_id, studentExamId) => {
     try {
-      const response = await getSubmitExamResults(selectedType==="previous" ? prevData:data);
-      console.log("Submit Response:", response);
-      setPreExamResults(null);
+        const questions = JSON.stringify(
+            examData.questions.map(question => ({
+                question_id: question.question_id,
+                status: question.status,
+                question_time: question.question_time,
+                attempt_answer: question.attempt_answer,
+                reason_for_wrong: question.reason_for_wrong,
+                comments: question.comments,
+                slno: question.slno,
+                subject_id: question.subject_id,
+                review: question.review,
+                is_disabled: question.is_disabled
+            }))
+        );
+
+        const data = {
+            exam_paper_id: exam_paper_id,
+            exam_session_id: 0,
+            student_user_exam_id: studentExamId,
+            questions: questions,
+        };
+        const prevData = {
+            exam_paper_id: exam_paper_id,
+            exam_session_id: 0,
+            student_user_exam_id: studentExamId,
+            questions: questions,
+            type: "previous_exam",
+            uid: examData.uid, 
+        }
+
+        console.log("Submit Data:", selectedType, JSON.stringify(selectedType === "previous" ? prevData : data));
+        const response = await getSubmitExamResults(selectedType === "previous" ? prevData : data);
+        console.log("Submit Response submitted:", response);
+
+        if (response && response.status === 200) {
+            return true; 
+        } else {
+            return false;
+        }
     } catch (error) {
-      console.error("Error submitting results:", error);
-      // ... handle error
+        console.error("Error submitting results:", error);
+        return false;
+    }
+}, [selectedType]);
+
+useEffect(() => {
+  const loadCompletedMockTests = async () => {
+    try {
+      let storedMockTests = await AsyncStorage.getItem(COMPLETED_MOCK_TESTS_KEY);
+      if (storedMockTests) {
+        const parsedMockTests = JSON.parse(storedMockTests);
+
+        const validMockTests = parsedMockTests.filter(test => test.results); 
+
+        setCompletedMockTests(validMockTests);
+      }
+    } catch (error) {
+      console.error("Error loading completed mock tests:", error);
     }
   };
-
-  useEffect(() => {
-    const loadCompletedMockTests = async () => { // Load mock tests here
-      try {
-        let storedMockTests = await AsyncStorage.getItem(COMPLETED_MOCK_TESTS_KEY);
-        if (storedMockTests) {
-          setCompletedMockTests(JSON.parse(storedMockTests));
-        }
-      } catch (error) {
-        console.error("Error loading completed mock tests:", error);
-      }
-    };
-    loadCompletedMockTests();
-  }, []);
-
+  loadCompletedMockTests();
+}, []);
 
   const submitAllStoredResults = useCallback(async () => {
     try {
@@ -195,49 +197,29 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
         if (completedExams) {
             completedExams = JSON.parse(completedExams);
 
-            const successfulSubmissions = []; 
+            const successfulSubmissions = [];
 
             for (const exam_paper_id of completedExams) {
                 const storedExamData = completedMockTests.find(test => test.results.exam_paper_id === exam_paper_id)?.results;
 
                 if (storedExamData) {
-                    const questions = JSON.stringify(
-                      storedExamData.questions.map(question => ({
-                        question_id: question.question_id,
-                        status: question.status,
-                        question_time: question.question_time,
-                        attempt_answer: question.attempt_answer,
-                        reason_for_wrong: question.reason_for_wrong,
-                        comments: question.comments,
-                        slno: question.slno,
-                        subject_id: question.subject_id,
-                        review: question.review,
-                        is_disabled: question.is_disabled
-                      }))
-                    );
-
-                    const data = {
-                        exam_paper_id: storedExamData.exam_paper_id,
-                        exam_session_id: 0,
-                        student_user_exam_id: studentExamId, 
-                        questions: questions, 
-                    };
-                    console.log("Submitting stored result for exam_paper_id:", exam_paper_id, data);
-                    const response = await getSubmitExamResults(data);
-                    console.log("Submission response:", response);
-
-                    if (response && response.status === 200) { 
+                    const submissionSuccessful = await submitTestResult(storedExamData, exam_paper_id, studentExamId);
+                    if (submissionSuccessful) {
                         successfulSubmissions.push(exam_paper_id);
+                        console.log("-----------",submissionSuccessful);
                     }
                 }
-
-
             }
+
 
             const remainingExams = completedExams.filter(id => !successfulSubmissions.includes(id));
             await AsyncStorage.setItem(COMPLETED_EXAMS_KEY, JSON.stringify(remainingExams));
 
-            console.log("Successfully submitted stored results. Cleared AsyncStorage.");
+
+            const remainingMockTests = completedMockTests.filter(test => !successfulSubmissions.includes(test.results.exam_paper_id));
+            setCompletedMockTests(remainingMockTests);
+
+            console.log("Successfully submitted stored results. Cleared AsyncStorage and state.");
 
         } else {
             console.log("No completed exams found in AsyncStorage.");
@@ -245,7 +227,7 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
     } catch (error) {
         console.error("Error submitting stored results:", error);
     }
-},[completedMockTests, studentExamId]);
+}, [completedMockTests, studentExamId, submitTestResult]);
 
 
 useEffect(() => {
