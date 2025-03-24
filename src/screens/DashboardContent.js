@@ -4,7 +4,7 @@ import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 // import { LineChart } from 'react-native-svg-charts';
 import { useNavigation } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { getAutoLogin, getYearsData, getMockExams, getAchievements, getExamType, getLeaderBoards, getPreviousPapers, getCustomExams, getDashboardExamResult, getSubmitExamResults, getPreviousPapRes } from '../core/CommonService';
+import { getAutoLogin, getYearsData, addExams, getMockExams, getAchievements, getExamType, getLeaderBoards, getPreviousPapers, getCustomExams, getDashboardExamResult, getSubmitExamResults, getPreviousPapRes } from '../core/CommonService';
 import { darkTheme, lightTheme } from '../theme/theme';
 import LinearGradient from "react-native-linear-gradient";
 import RNPickerSelect from 'react-native-picker-select';
@@ -18,6 +18,7 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import { Dropdown } from 'react-native-element-dropdown';
 import ExamModalComponent from './ExamModalComponent';
 import AchivementsModel from './models/AchivementsModel';
+import { useRef } from 'react';
 
 const COMPLETED_EXAMS_KEY = "completedExams"; 
 const COMPLETED_MOCK_TESTS_KEY = "completedMockTests";
@@ -33,7 +34,7 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
   const [open, setOpen] = useState(false);
   const [studentUserId, setStudentUserId] = useState(null)
   // const { onChangeAuth } = route.params;
-
+  const [completedExams, setCompletedExams] = useState([]);
   const [completedMockTests, setCompletedMockTests] = useState([]);
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
@@ -63,6 +64,7 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
   const [preExamResults, setPreExamResults] = useState(null);
   const [achivementShow, setAchivementShow] = useState(false);
   const [hasLoadedResults, setHasLoadedResults] = useState(false);
+  const hasSubmitted = useRef(false);
   const chartData = [
     { data: [50, 70, 60, 90, 80], color: '#6A5ACD', strokeWidth: 2 },
     { data: [90, 50, 20, 50, 50], color: 'green', strokeWidth: 2 },
@@ -105,72 +107,25 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
     if(!route?.params?.exam) {
       retrieveExam();
     }
-
-
    
   }, []);
 
   useEffect(() => {
-    // console.log("response exams", items, examsData);
-    // if(examsData.length>0&&items.length>0){
-    //   const filterData = items.filter((item) =>
-    //     examsData.some(exam => exam.exam_id === item.exam_id)
-    // );
-    // setStudentExamId(filterData[0].exam_id)
-    // console.log(filterData, "heeeha");
-    // setItems(filterData)
-    // } 
-    // const exams = AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
-    // console.log("completed", exams)
-  },[])
+    const loadCompletedExams = async () => { 
+      try {
+        let storedExams = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
+        if (storedExams) {
+          setCompletedExams(JSON.parse(storedExams));
+        }
+      } catch (error) {
+        console.error("Error loading completed exams:", error);
+      }
+    };
+    loadCompletedExams();
+  }, []);
  
 
-  const submitTestResult = useCallback(async (examData, exam_paper_id, studentExamId) => {
-    try {
-        const questions = JSON.stringify(
-            examData.questions.map(question => ({
-                question_id: question.question_id,
-                status: question.status,
-                question_time: question.question_time,
-                attempt_answer: question.attempt_answer,
-                reason_for_wrong: question.reason_for_wrong,
-                comments: question.comments,
-                slno: question.slno,
-                subject_id: question.subject_id,
-                review: question.review,
-                is_disabled: question.is_disabled
-            }))
-        );
 
-        const data = {
-            exam_paper_id: exam_paper_id,
-            exam_session_id: 0,
-            student_user_exam_id: studentExamId,
-            questions: questions,
-        };
-        const prevData = {
-            exam_paper_id: exam_paper_id,
-            exam_session_id: 0,
-            student_user_exam_id: studentExamId,
-            questions: questions,
-            type: "previous_exam",
-            uid: examData.uid, 
-        }
-
-        console.log("Submit Data:", selectedType, JSON.stringify(selectedType === "previous" ? prevData : data));
-        const response = await getSubmitExamResults(selectedType === "previous" ? prevData : data);
-        console.log("Submit Response submitted:", response);
-
-        if (response && response.status === 200) {
-            return true; 
-        } else {
-            return false;
-        }
-    } catch (error) {
-        console.error("Error submitting results:", error);
-        return false;
-    }
-}, [selectedType]);
 
 useEffect(() => {
   const loadCompletedMockTests = async () => {
@@ -190,69 +145,211 @@ useEffect(() => {
   loadCompletedMockTests();
 }, []);
 
-const submitAllStoredResults = useCallback(async () => {
+const submitTestResult = useCallback(async (examData, exam_paper_id, stExId) => {
+  console.log(exam_paper_id, stExId, "wifnowrnd");
   try {
-      let storedMockTests = await AsyncStorage.getItem(COMPLETED_MOCK_TESTS_KEY);
-      let completedExams = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
+    const questions = JSON.stringify(
+      examData.questions.map(question => ({
+        question_id: question.question_id,
+        status: question.status,
+        question_time: question.question_time,
+        attempt_answer: question.attempt_answer,
+        reason_for_wrong: question.reason_for_wrong,
+        comments: question.comments,
+        slno: question.slno,
+        subject_id: question.subject_id,
+        review: question.review,
+        is_disabled: question.is_disabled
+      }))
+    );
 
-      if (storedMockTests && completedExams) {
-          let parsedMockTests = JSON.parse(storedMockTests);
-          completedExams = JSON.parse(completedExams);
+    const data = {
+      exam_paper_id,
+      exam_session_id: 0,
+      student_user_exam_id: stExId,
+      questions,
+    };
 
+    const prevData = {
+      ...data,
+      type: "previous_exam",
+      uid: examData.uid,
+    };
 
-          const submittedExams = new Set(); 
+    console.log("Submit Data:", selectedType, examData.uid, prevData, data, exam_paper_id, stExId); // Enhanced logging
 
+    const response = await getSubmitExamResults(selectedType === "previous" ? prevData : data);
+    console.log("Submit Response:", response);
 
-          const updatedMockTests = await Promise.all(parsedMockTests.map(async (mockTest) => {
-              if (mockTest.results && completedExams.includes(mockTest.results.exam_paper_id) && !submittedExams.has(mockTest.results.exam_paper_id)) {
-
-                  const exam_paper_id = mockTest.results.exam_paper_id;
-                  submittedExams.add(exam_paper_id);
-                  try {
-                      const submissionSuccessful = await submitTestResult(mockTest.results, exam_paper_id, studentExamId);
-                      if (submissionSuccessful) {
-                        
-                          return null;
-                      } else {
-                          console.error(`Failed to submit results for exam_paper_id: ${exam_paper_id}`);
-                          return mockTest; 
-                      }
-                  } catch (error) {
-                      console.error(`Error submitting results for exam_paper_id ${exam_paper_id}:`, error);
-                      return mockTest; 
-                  }
-              }
-             return mockTest; 
-          }));
-
-
-
-
-          const remainingMockTests = updatedMockTests.filter(test => test !== null);
-          const remainingExams = completedExams.filter(examId => !submittedExams.has(examId));
-
-          await AsyncStorage.setItem(COMPLETED_EXAMS_KEY, JSON.stringify(remainingExams));
-          await AsyncStorage.setItem(COMPLETED_MOCK_TESTS_KEY, JSON.stringify(remainingMockTests));
-          setCompletedMockTests(remainingMockTests);
-
-          if (submittedExams.size > 0) { 
-              // Alert.alert("Success", `${submittedExams.size} stored result(s) submitted successfully.`);
-          }
-
-      } else {
-          console.log("No completed exams or mock tests found in AsyncStorage.");
-      }
-
-  } catch (error) {
-      console.error("Error in submitAllStoredResults:", error);
+    if (response && response.status === 200) {
+      return true; 
+    } else {
+      console.error("Submission failed with status:", response?.status); 
+      return false; 
+    }  } catch (error) {
+    console.error("Error submitting results:", error);
+    return false;
   }
-}, [completedMockTests, studentExamId, submitTestResult]);
+}, [selectedType]);
 
+const submitAllStoredResults = useCallback(async (exId) => {
+  console.log(exId, "oirofn");
+  try {
+    if (hasSubmitted.current) {
+      console.log("Submission already in progress, skipping...");
+      return;
+    }
+    hasSubmitted.current = true;
+
+    let completedExams = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
+    completedExams = completedExams ? JSON.parse(completedExams) : [];
+
+    if (!Array.isArray(completedExams) || completedExams.length === 0) {
+      console.log("No completed exams found in AsyncStorage.");
+      return;
+    }
+
+    const successfulSubmissions = new Set();
+    const submissionsInProgress = new Set();
+
+          // .filter(test => test.results && completedExams.some(exam => exam.exam_paper_id === test.results.exam_paper_id))
+
+          const submissionPromises = completedMockTests
+          .filter(test => test.results && completedExams.some(exam => exam.exam_paper_id === test.results?.exam_paper_id)) //  <- Re-added the filter
+          .map(async (mockTest) => {
+            const { exam_paper_id } = mockTest.results || {};
+
+        if (!exam_paper_id) {
+          console.error("exam_paper_id is missing for mockTest:", mockTest);
+          return;
+        }
+
+        if (successfulSubmissions.has(exam_paper_id) || submissionsInProgress.has(exam_paper_id)) {
+          console.log(`Skipping duplicate submission for exam_paper_id: ${exam_paper_id}`);
+          return;
+        }
+
+        submissionsInProgress.add(exam_paper_id);
+        console.log("exam_paper_id",exam_paper_id);
+        try {
+          const submissionSuccessful = await submitTestResult(mockTest.results, exam_paper_id, exId);
+          console.log("submissionSuccessful",submissionSuccessful);
+
+          if (submissionSuccessful) {
+            successfulSubmissions.add(exam_paper_id);
+          }
+        } catch (error) {
+          console.error(`Error submitting exam_paper_id ${exam_paper_id}:`, error);
+        } finally {
+          submissionsInProgress.delete(exam_paper_id);
+        }
+      });
+
+    await Promise.all(submissionPromises);
+
+    const remainingExams = completedExams.filter(exam => !successfulSubmissions.has(exam.exam_paper_id));
+
+    // setCompletedMockTests(completedMockTests.filter(test => !successfulSubmissions.has(test.results?.exam_paper_id)));
+    setCompletedExams(remainingExams);
+    await AsyncStorage.setItem(COMPLETED_EXAMS_KEY, JSON.stringify(remainingExams));
+
+    if (successfulSubmissions.size > 0) {
+      Alert.alert("Success", `${successfulSubmissions.size} stored result(s) submitted successfully.`);
+    }
+  } catch (error) {
+    console.error("Error in submitAllStoredResults:", error);
+  } finally {
+    hasSubmitted.current = false;
+  }
+}, [completedMockTests, submitTestResult,AsyncStorage.getItem]);
+
+const saveWithOutExistedExamID = async (compExams) => {
+
+  try {
+    for (const exam of compExams) {
+      const payload = {
+        student_user_id: studentUserId,
+        exam_id: parseInt(exam.exam_id),
+        target_year: 2025,
+      };
+
+      const response = await addExams(payload);
+      const submit = await submitAllStoredResults(response.data.student_user_exam_id);
+      console.log("Payload Sent:", payload, "Response:", submit, response);
+    }
+
+    console.log("All exams processed:", compExams);
+  } catch (error) {
+    console.error("Error processing exams:", error);
+  }
+};
+
+
+const saveWithExistedExamID = async (exist) => {
+  try {
+    for (const exam of exist) {
+      const submit = await submitAllStoredResults(exam.student_user_exam_id);
+      console.log(submit, 'with');
+    }
+
+    console.log("All exams processed:", exist);
+  } catch (error) {
+    console.error("Error processing exams:", error);
+  }
+};
+
+const checkUserIdExamExist = async (xdata) => {
+
+  try {
+    let completedExams = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
+    completedExams = completedExams ? JSON.parse(completedExams) : [];
+    console.log("called", completedExams, xdata)
+    if (!Array.isArray(completedExams)) {
+      console.error("Invalid format in AsyncStorage for completed exams.");
+      return;
+    }
+
+    if (xdata.length > 0) {
+      const res = xdata.filter((item) => completedExams.some((ex) => item.exam_id === ex.exam_id));
+      const nonExist = completedExams.filter((item) => xdata.every((ex) => item.exam_id !== ex.exam_id));
+
+      console.log(xdata, res, nonExist, "existededqe");
+      if (res.length > 0) {
+        saveWithExistedExamID(res);
+      }
+      if (nonExist.length > 0) {
+        saveWithOutExistedExamID(nonExist);
+        console.log("not existed");
+      }
+    } else {
+      saveWithOutExistedExamID(completedExams);
+      console.log("not existed");
+    }
+  } catch (error) {
+    console.error("Error checking user exam existence:", error);
+  }
+};
 
 useEffect(() => {
-  submitAllStoredResults(); 
-}, [submitAllStoredResults]);
+  if(addExam==false) {
+    fetchData();
+  }
+  },[addExam]);
+  
+  useEffect(() => {
+     if(items.length===0) {
+      checkUserIdExamExist([])
+     }
+  },[items])
+const getEx = async() => {
+  let completedExams = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
 
+  console.log(completedExams, "woifowrif")
+}
+useEffect(() => {
+  console.log(examsData)
+getEx();
+},[])
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -303,68 +400,76 @@ useEffect(() => {
   const getUser = async () => {
     try {
       const response = await getAutoLogin();
-      console.log("auto-login", response);
-      if(response?.data?.examsData==null) {
-        setAddExam(true);
-      }
-      if (response.data) {
-        const nm = response.data.name;
-        const id = response.data.student_user_id;
-        setStudentUserId(id)
-        setExamsData(response.data.examsData)
-        const examId = response.data.examsData[0].student_user_exam_id;
-        const exams = await getExamType();
-       console.log(response?.data?.examsData, "e[okpqeof")
-        if (response?.data?.examsData&&response.data.examsData?.length > 0 && exams.data?.length > 0) {
-          // Create a Set of exam_ids present in response.data.examsData
-          const examsDataSet = new Set(response.data.examsData.map(exam => exam.exam_id));
-      
-          // Merge and filter exams where exam_id exists in both
-          const filteredMergedData = exams.data
-              .filter(item => examsDataSet.has(item.exam_id)) // Keep only matching exam_id
-              .map(item => ({
-                  ...item, // Retain properties from exams.data
-                  ...response.data.examsData.find(exam => exam.exam_id === item.exam_id) // Merge matching exam_id data
-              }));
-         
-  const dropdownItems = [
-   
-    ...filteredMergedData.map((option) => ({
-      label: option.exam_type,
-      value: option.exam_id,
-      isDefault: option.is_default,
-      stUserExamId:  option.student_user_exam_id
-    })),
-    { label: "➕ Add", value: "add", custom: true },
-  ];
-  setItems(dropdownItems);
-  const defaultItem = dropdownItems.find((item) => item.is_default === 1);
-if(defaultItem) {
-  console.log(defaultItem,dropdownItems,examsDataSet, "defaultItem")
-  setSelectedOption(defaultItem);
-
-  setStudentExamId(defaultItem.stUserExamId);
-} else {
-  setSelectedOption(dropdownItems[0]);
-  setStudentExamId(dropdownItems[0].stUserExamId);
-}
-// Ensure safe access
-          console.log(filteredMergedData, "Filtered Merged Data", response.data.examsData, exams.data);
-      }
-      
-      else {
-        setStudentExamId(examId)
-      }
- 
-        setName(nm);
-        setStudentId(id);
-      
-      } else {
+      console.log("auto-login-", response);
+  
+      if (!response?.data) {
         console.warn("No user data received from API");
+        return; // Early exit if no data
       }
+  
+      const { name: nm, student_user_id: id, examsData } = response.data;
+      setName(nm);
+      setStudentId(id);
+      setStudentUserId(id);
+      setExamsData(examsData);
+  
+  
+      if (!examsData || examsData.length === 0) {
+        setAddExam(true);
+        return; // Early exit if no examsData
+      }
+  
+      const exams = await getExamType();
+  
+      if (exams?.data?.length > 0) {
+        // Use a Map for efficient lookup of examsData
+        const examsDataMap = new Map(examsData.map(exam => [exam.exam_id, exam]));
+  
+        const mergedExamsData = exams.data.map(exam => {
+          const existingExamData = examsDataMap.get(exam.exam_id);
+          // Use spread operator conditionally, providing a default empty object if existingExamData is undefined
+          return { ...exam, ...(existingExamData || {}) };
+        });
+  
+        // Filter out entries where is_default is not present (meaning it wasn't in examsData)
+        const filteredMergedData = mergedExamsData.filter(exam => exam.hasOwnProperty('is_default'));
+        checkUserIdExamExist(filteredMergedData);
+  
+        const dropdownItems = [
+          ...filteredMergedData.map(option => ({
+            label: option.exam_type,
+            value: option.exam_id,
+            isDefault: option.is_default,
+            stUserExamId: option.student_user_exam_id,
+          })),
+          { label: "➕ Add", value: "add", custom: true },
+        ];
+  
+        setItems(dropdownItems);
+  
+        const defaultItem = dropdownItems.find(item => item.isDefault === 1);
+        setSelectedOption(defaultItem || dropdownItems[0]);
+        setStudentExamId((defaultItem || dropdownItems[0]).stUserExamId);
+  
+        console.log(filteredMergedData, "Filtered Merged Data", examsData, exams.data);
+  
+      } else { // Handle the case where getExamType returns no data or an error
+        console.warn("No exam type data received from API");
+        if (examsData && examsData.length > 0) {
+            // Fallback to first exam in examsData if no exam types are available.
+          setStudentExamId(examsData[0].student_user_exam_id);
+          setItems([{
+            label: examsData[0].exam_type || "Default Exam", //Provide a default label
+            value: examsData[0].exam_id,
+            stUserExamId: examsData[0].student_user_exam_id,
+          }]);
+          setSelectedOption(items[0]);
+        }
+      }
+  
     } catch (error) {
       console.error("Error fetching user data:", error);
-      // Alert.alert("Error", "Failed to get user data. Please check your connection and try again.");
+      Alert.alert("Error", "Failed to get user data. Please check your connection and try again."); // Reinstated the Alert for better user experience
     }
   };
 
@@ -414,6 +519,7 @@ if(defaultItem) {
       "student_user_exam_id": studentExamId
     };
     try {
+      console.log("getLeader Boards fields", data);
       const response = await getLeaderBoards(data);
       console.log("getLeaderBoards", JSON.stringify(response.data));
       if (response.data && Array.isArray(response.data)) {
@@ -544,7 +650,7 @@ if(defaultItem) {
       };
 
       const response = await getPreviousPapRes(dat);
-      console.log("getLeaderBoards Response:", JSON.stringify(response));
+      console.log("getPreviousPapRes Response:", JSON.stringify(response));
 
       let sessionId = null; // Initialize sessionId
       if (response && response.data && response.data.exam_session_id) {
@@ -572,10 +678,10 @@ if(defaultItem) {
       "previous_exam_paper_id": previous_id,
       "student_user_exam_id": studentExamId
     };
-    console.log("getLeaderBoards", dat , item);
+    console.log("getLeader Boards handlePrv", dat , item);
 
     const response = await getPreviousPapRes(dat);
-    console.log("getLeaderBoards", JSON.stringify(response));
+    console.log("getLeader Boards handlePrvs", JSON.stringify(response));
     if (response) {
       console.log("0000", response)
     }
@@ -746,30 +852,13 @@ if(defaultItem) {
     }, [examResults, selectedPerformanceType]);
   
     const subjectColors = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#A133FF"];
-    // const periods = examResults || [];
-    // const allSubjects = [...new Set(periods.flatMap((period) => period.subjects?.map((s) => s.subject_name) || []))];
-    // const uniqueDates = [...new Set(periods.map((period) => period.date))];
-    // const chartData = allSubjects.map((subject) => ({
-    //   name: subject,
-    //   data: periods.map((period) => {
-    //     const subjectData = period.subjects?.find((s) => s.subject_name === subject);
-    //     return subjectData
-    //       ? selectedPerformanceType === "score"
-    //         ? Number(subjectData.obtained_marks) || 0
-    //         : Number(subjectData.average_time_spent) || 0
-    //       : 0;
-    //   }),
-    // }));
-
-    // const xLabels = uniqueDates
-
-    // const subjectColors = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#A133FF"];
 
     return (
       <View style={{ backgroundColor: theme.conbk, padding: 10, borderRadius: 10 }}>
-        {loading ? (
-        <ActivityIndicator size="large" color={theme.tx1} style={{ marginTop: 20 }} />
-      ) : 
+        {
+      //   loading ? (
+      //   <ActivityIndicator size="large" color={theme.tx1} style={{ marginTop: 20 }} />
+      // ) : 
           chartData?.length > 0 ? (
           <React.Fragment>
              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>

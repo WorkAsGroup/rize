@@ -196,7 +196,7 @@ export const getAchievements = async (fields) => {
 	  .post(apiurl + endPoint.resultExamData, fields, { headers: headers })
 	  .then((res) => res.data)
 	  .catch((error) => {
-		console.error("Error in leader board:", error.response?.data || error.message);
+		console.error("Error in exam result:", error.response?.data || error.message);
 		return error;
 	  }); 
   };
@@ -214,7 +214,7 @@ export const getAchievements = async (fields) => {
 	  .post(apiurl + endPoint.attempts, fields, { headers: headers })
 	  .then((res) => res.data)
 	  .catch((error) => {
-		console.error("Error in leader board:", error.response?.data || error.message);
+		console.error("Error in attempts:", error.response?.data || error.message);
 		return error;
 	  }); 
   };

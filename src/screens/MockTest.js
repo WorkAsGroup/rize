@@ -141,7 +141,7 @@ const sanitizeHtml = (text) => {
   
   
 const MockTest = ({ navigation, route }) => {
-  // console.log(route, "wrihfwoiehoi")
+  console.log(route.params, "wrihfwoiehoi")
     const colorScheme = useColorScheme();
     const [completedMockTests, setCompletedMockTests] = useState([]);
     const [data, setData] = useState([]);
@@ -174,6 +174,7 @@ const MockTest = ({ navigation, route }) => {
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const timerInterval = useRef(null);
   const obj = route?.params?.obj;
+  const examIdData = route?.params?.examIdData
   const [textInputAnswer, setTextInputAnswer] = useState("");
   const [uid, setUid] = useState("");
   const [session_id, setSessionid] = useState(route?.params?.session_id);
@@ -1015,7 +1016,13 @@ setSelectedOption(null);
 
         let completedExams = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
         completedExams = completedExams ? JSON.parse(completedExams) : [];
-        completedExams.push(obj.exam_paper_id);
+        var examData = {
+          exam_id: examIdData?.[0]?.exam_id,
+          exam_paper_id: obj.exam_paper_id,
+          exam_type: examIdData?.[0]?.exam_type, // Corrected syntax here
+        };
+        console.log(examData, "erridata")
+        completedExams.push(examData);
         await AsyncStorage.setItem(COMPLETED_EXAMS_KEY, JSON.stringify(completedExams));
 
 

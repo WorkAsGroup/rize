@@ -61,6 +61,7 @@ export default function Intro({ navigation }) {
     const loadCompletedExams = async () => {
       try {
         const completedExamsString = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
+        console.log(JSON.parse(completedExamsString), "completed")
         if (completedExamsString) {
           setCompletedExams(JSON.parse(completedExamsString));
         }
@@ -117,6 +118,7 @@ export default function Intro({ navigation }) {
   const getExam = async () => {
     try {
       const exams = await getExamType();
+      console.log(exams, "exams")
       setOpt(exams.data);
       const type = exams.data.map((exam) => exam.exam_type);
       setOptions(type);
@@ -160,11 +162,14 @@ export default function Intro({ navigation }) {
   };
 
   const handleStartTest = (item) => {
-    navigation.navigate("Instruction", { obj: item });
+    const examData = opt.filter((ex) => ex.exam_id == item.exam_id)
+    // console.log(item, examData, opt, "woefhwiufiwuebfiwe")
+    navigation.navigate("Instruction", { obj: item, exam_id_Data: examData });
   };
 
   const renderMockTest = ({ item }) => {
-    const isExamCompleted = completedExams.includes(item.exam_paper_id);
+    const isExamCompleted = completedExams?.some((ex) => ex.exam_paper_id === item.exam_paper_id);
+
     return (
       <View
         style={[styles.mockTestWrapper, { borderColor: theme.tx1, marginTop: 20 }]}
@@ -248,51 +253,7 @@ export default function Intro({ navigation }) {
   const renderItem = useCallback(() => {
     return (
       <View style={styles.itemContainer}>
-        {/* <View style={{ width: windowWidth / 1.2, marginTop: 20, marginBottom: 10 }}>
-          <Text style={[styles.feature, { color: theme.textColor }]}>
-            Select Exam
-          </Text>
-        </View>
-
-        <LinearGradient
-          colors={theme.mcb}
-          start={{ x: 0, y: 1 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.dropdownLinearGradient, { borderColor: theme.tx1, borderWidth: 1 }]}
-        >
-          <TouchableOpacity onPress={toggleDropdown} style={styles.dropdownButton}>
-            <Text style={[styles.dropdownButtonText, { color: theme.textColor }]}>
-              {selectedOption || "Select an option"}
-            </Text>
-            <Image
-              style={{
-                height: 20,
-                width: 20,
-                tintColor: theme.textColor,
-                resizeMode: "contain",
-              }}
-              source={require("../images/down.png")}
-            />
-          </TouchableOpacity>
-          {isOpen && (
-            <View
-              style={[
-                styles.dropdown,
-                { top: 50, backgroundColor: theme.background, borderColor: theme.brad },
-              ]}
-            >
-              {options.map((option) => (
-                <TouchableOpacity
-                  key={option}
-                  style={[styles.option, { backgroundColor: theme.textColor1 }]}
-                  onPress={() => handleOptionSelect(option)}
-                >
-                  <Text style={{ color: theme.textColor }}>{option}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </LinearGradient> */}
+     
         <View style={{ width: windowWidth / 1.2, marginTop: 20, marginLeft: "auto", }}>
           <Text style={[styles.feature, { color: theme.textColor }]}>
             Select Exam

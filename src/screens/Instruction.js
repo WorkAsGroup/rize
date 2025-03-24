@@ -22,6 +22,7 @@ export default function Instruction({ navigation,route }) {
     const colorScheme = useColorScheme();
     const theme = colorScheme === "dark" ? darkTheme : lightTheme;
     const obj = route?.params?.obj;
+    const examIdData = route?.params?.exam_id_Data
     console.log("mocktest1", obj );
 
 
@@ -285,7 +286,7 @@ export default function Instruction({ navigation,route }) {
                             </View>
 
                             <TouchableOpacity activeOpacity={0.8} onPress={() => {
-                                navigation.navigate("MockTest",{obj : obj})
+                                navigation.navigate("MockTest",{obj : obj, examIdData: examIdData})
                             }}> 
                                 <LinearGradient
                                     colors={[theme.tx1, theme.tx2]}
