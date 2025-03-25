@@ -95,7 +95,6 @@ const DashboardContent = ({ route,navigation, onChangeAuth  }) => {
       if (examData !== null) {
         setPreExamResults(JSON.parse(examData));
         console.error("999 AsyncStorage:", preExamResults);
-        // submitTestResult();
       }
 
     } catch (error) {
@@ -170,15 +169,34 @@ const submitTestResult = useCallback(async (examData, exam_paper_id, stExId) => 
       questions,
     };
 
-    const prevData = {
-      ...data,
-      type: "previous_exam",
-      uid: examData.uid,
-    };
+    let response;
 
-    console.log("Submit Data:", selectedType, examData.uid, prevData, data, exam_paper_id, stExId); // Enhanced logging
 
-    const response = await getSubmitExamResults(selectedType === "previous" ? prevData : data);
+    // const prevData = {
+    //   ...data,
+    //   type: "previous_exam",
+    //   uid: examData.uid,
+    // };
+
+    // console.log("Submit Data:", selectedType, examData.uid, prevData, data, exam_paper_id, stExId); // Enhanced logging
+
+ if (selectedType === "previous" && examData.uid) {
+      const prevData = {
+        ...data,
+        type: "previous_exam",
+        uid: examData.uid,
+      };
+      console.log("Submitting previous exam data:", prevData);
+      response = await getSubmitExamResults(prevData);
+    } else {
+     
+      console.log("Submitting current exam data:", data);
+      response = await getSubmitExamResults(data);
+    }
+    if (!response) {  
+      console.error("No response received from server.");
+      return false;
+    }
     console.log("Submit Response:", response);
 
     if (response && response.status === 200) {
@@ -186,11 +204,12 @@ const submitTestResult = useCallback(async (examData, exam_paper_id, stExId) => 
     } else {
       console.error("Submission failed with status:", response?.status); 
       return false; 
-    }  } catch (error) {
+    }  
+  } catch (error) {
     console.error("Error submitting results:", error);
     return false;
   }
-}, [selectedType]);
+}, [selectedType,getSubmitExamResults]);
 
 const submitAllStoredResults = useCallback(async (exId) => {
   console.log(exId, "oirofn");
@@ -202,7 +221,13 @@ const submitAllStoredResults = useCallback(async (exId) => {
     hasSubmitted.current = true;
 
     let completedExams = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
+    console.log("Raw completedExams from AsyncStorage:", completedExams);
     completedExams = completedExams ? JSON.parse(completedExams) : [];
+    
+    let completedMockTests = await AsyncStorage.getItem(COMPLETED_MOCK_TESTS_KEY);
+    console.log("Raw completedMockTests from AsyncStorage:", completedMockTests);
+   completedMockTests = completedMockTests ? JSON.parse(completedMockTests) : [];
+
 
     if (!Array.isArray(completedExams) || completedExams.length === 0) {
       console.log("No completed exams found in AsyncStorage.");
