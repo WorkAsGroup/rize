@@ -1,6 +1,8 @@
 {
   "buildFiles": [
     "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-async-storage/async-storage/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-google-signin/google-signin/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-picker/picker/android/src/main/jni/CMakeLists.txt",
     "/Users/akki/Documents/GitHub/rize/node_modules/react-native-gesture-handler/android/build/generated/source/codegen/jni/CMakeLists.txt",
     "/Users/akki/Documents/GitHub/rize/node_modules/react-native-reanimated/android/build/generated/source/codegen/jni/CMakeLists.txt",
     "/Users/akki/Documents/GitHub/rize/node_modules/react-native-safe-area-context/android/src/main/jni/CMakeLists.txt",
@@ -70,6 +72,7 @@
       "abi": "x86_64",
       "output": "/Users/akki/Documents/GitHub/rize/android/app/build/intermediates/cxx/Debug/06v20493/obj/x86_64/libappmodules.so",
       "runtimeFiles": [
+        "/Users/akki/Documents/GitHub/rize/android/app/build/intermediates/cxx/Debug/06v20493/obj/x86_64/libreact_codegen_rnpicker.so",
         "/Users/akki/Documents/GitHub/rize/android/app/build/intermediates/cxx/Debug/06v20493/obj/x86_64/libreact_codegen_safeareacontext.so",
         "/Users/akki/Documents/GitHub/rize/android/app/build/intermediates/cxx/Debug/06v20493/obj/x86_64/libreact_codegen_rnscreens.so",
         "/Users/akki/Documents/GitHub/rize/android/app/build/intermediates/cxx/Debug/06v20493/obj/x86_64/libreact_codegen_rnsvg.so",
@@ -88,10 +91,25 @@
         "/Users/akki/.gradle/caches/8.10.2/transforms/712459f74e1b69cabe04723869743a98/transformed/fbjni-0.6.0/prefab/modules/fbjni/libs/android.x86_64/libfbjni.so"
       ]
     },
+    "react_codegen_RNGoogleSignInCGen::@337b7b353bd94a4215c0": {
+      "artifactName": "react_codegen_RNGoogleSignInCGen",
+      "abi": "x86_64",
+      "runtimeFiles": []
+    },
     "react_codegen_rnasyncstorage::@1596841e19ec5b9eeffe": {
       "artifactName": "react_codegen_rnasyncstorage",
       "abi": "x86_64",
       "runtimeFiles": []
+    },
+    "react_codegen_rnpicker::@e8bb2e9e833f47d0d516": {
+      "artifactName": "react_codegen_rnpicker",
+      "abi": "x86_64",
+      "output": "/Users/akki/Documents/GitHub/rize/android/app/build/intermediates/cxx/Debug/06v20493/obj/x86_64/libreact_codegen_rnpicker.so",
+      "runtimeFiles": [
+        "/Users/akki/.gradle/caches/8.10.2/transforms/ffea390e40bce9ede11ecb704e97298f/transformed/react-android-0.76.6-debug/prefab/modules/reactnative/libs/android.x86_64/libreactnative.so",
+        "/Users/akki/.gradle/caches/8.10.2/transforms/ffea390e40bce9ede11ecb704e97298f/transformed/react-android-0.76.6-debug/prefab/modules/jsi/libs/android.x86_64/libjsi.so",
+        "/Users/akki/.gradle/caches/8.10.2/transforms/712459f74e1b69cabe04723869743a98/transformed/fbjni-0.6.0/prefab/modules/fbjni/libs/android.x86_64/libfbjni.so"
+      ]
     }
   }
 }

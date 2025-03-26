@@ -156,7 +156,7 @@ export const getAchievements = async (fields) => {
 	console.log("Making request to:", apiurl + endPoint.achivementBadges, "with data:", fields);
 	
 	return await axios
-	  .get(apiurl + endPoint.achivementBadges, fields, { headers: headers })
+	  .post(apiurl + endPoint.achivementBadges, fields, { headers: headers })
 	  .then((res) => res.data)
 	  .catch((error) => {
 		console.error("Error in achivementBadges:", error.response?.data || error.message);
@@ -196,7 +196,7 @@ export const getAchievements = async (fields) => {
 	  .post(apiurl + endPoint.resultExamData, fields, { headers: headers })
 	  .then((res) => res.data)
 	  .catch((error) => {
-		console.error("Error in exam result:", error.response?.data || error.message);
+		console.error("Error in leader board:", error.response?.data || error.message);
 		return error;
 	  }); 
   };
@@ -214,7 +214,7 @@ export const getAchievements = async (fields) => {
 	  .post(apiurl + endPoint.attempts, fields, { headers: headers })
 	  .then((res) => res.data)
 	  .catch((error) => {
-		console.error("Error in attempts:", error.response?.data || error.message);
+		console.error("Error in leader board:", error.response?.data || error.message);
 		return error;
 	  }); 
   };
@@ -421,7 +421,7 @@ export const getPreExamdata = async (fields) => {
 			return error;
 		});
 };
-export const addExam = async (fields) => {
+export const addExams = async (fields) => {
 	const headers = {
 		"content-type": "application/json",
 		"X-Content-Type-Options": "nosniff",

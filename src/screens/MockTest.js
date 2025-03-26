@@ -1098,23 +1098,23 @@ const handleReviewTag = async (questionId) => {
 
 
 
-const handleTagQuestion = async () => {
-  try {
-    const updatedTags = { ...taggedQuestions };
-    if (updatedTags[selectedNumber]) {
-      delete updatedTags[selectedNumber];
-    } else {
-      updatedTags[selectedNumber] = true;
-    }
-    setTaggedQuestions(updatedTags);
-    await AsyncStorage.setItem(
-      TAGGED_QUESTIONS_KEY,
-      JSON.stringify(updatedTags)
-    );
-  } catch (error) {
-    console.error("Error tagging question:", error);
-  }
-};
+// const handleTagQuestion = async () => {
+//   try {
+//     const updatedTags = { ...taggedQuestions };
+//     if (updatedTags[selectedNumber]) {
+//       delete updatedTags[selectedNumber];
+//     } else {
+//       updatedTags[selectedNumber] = true;
+//     }
+//     setTaggedQuestions(updatedTags);
+//     await AsyncStorage.setItem(
+//       TAGGED_QUESTIONS_KEY,
+//       JSON.stringify(updatedTags)
+//     );
+//   } catch (error) {
+//     console.error("Error tagging question:", error);
+//   }
+// };
 
   return (
     <LinearGradient
@@ -1544,72 +1544,7 @@ const handleTagQuestion = async () => {
                  />
            
               </View>
-              {/* {exams?.qtype == 7 && exams?.qtype !== 8 && exams?.qtype == 3  &&(
-                                  <View>
-                                  {["A", "B", "C", "D"].map((option, index) => {
-                                      const optionText = index === 0 ? exams[selectedNumber - 1]?.option1 :
-                                          index === 1 ? exams[selectedNumber - 1]?.option2 :
-                                              index === 2 ? exams[selectedNumber - 1]?.option3 :
-                                                  exams[selectedNumber - 1]?.option4;
-  
-                                      const cleanedOptionText = removeHtmlTags(optionText);
-                                      const imagesInOption = extractImages(optionText);
-                                      const isImageUrl = imagesInOption.length > 0;
-  
-                                      const isSelected = selectedAnswers[selectedNumber]?.selected_ans?.includes(option);  
-                                      return (
-                                          <TouchableOpacity
-                                              key={option}
-                                              style={[
-                                                  styles.opt,
-                                                  {
-                                                      borderColor: theme.textColor,
-                                                      borderRadius: 25,
-                                                      backgroundColor: isSelected ? theme.textColor : "transparent",                                                  }
-                                              ]}
-                                              onPress={() => {
-                                                  setSelectedOption(option);
-                                                  handleAnswerSelect(selectedNumber, option);
-                                              }}
-                                          >
-                                              <View style={[styles.optbg, { backgroundColor: theme.gray }]}>
-                                                  <Text style={[styles.option, { color: "#FFF" }]}>
-                                                      {option}
-                                                  </Text>
-                                              </View>
-  
-                                              <View>
-                                                  {isImageUrl ? (
-                                                      <View style={{ backgroundColor: '#FFF' }}>
-                                                          <Image
-                                                              source={{ uri: imagesInOption[0] }}
-                                                              style={{ width: 80, height: 40, borderRadius: 25, resizeMode: 'contain' }}
-                                                          />
-                                                      </View>
-                                                  ) : (
-                                                      <Text style={[
-                                                          styles.option,
-                                                          { color: theme.textColor, width: 220 }
-                                                      ]}>
-                                                          {cleanedOptionText || "Option not available"}
-                                                      </Text>
-                                                  )}
-                                              </View>
-  
-                                              <View
-                                                  style={[
-                                                      styles.select,
-                                                      {
-                                                          borderColor: theme.textColor,
-                                                          backgroundColor: isSelected ? theme.textColor : "transparent",
-                                                      }
-                                                  ]}
-                                              />
-                                          </TouchableOpacity>
-                                      );
-                                  })}
-                              </View>
-                            )} */}
+           
               {exams[selectedNumber - 1]?.qtype !== 8 ? (
                 <View>
                   {["A", "B", "C", "D"].map((option, index) => {

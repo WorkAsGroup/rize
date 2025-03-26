@@ -572,174 +572,223 @@ useEffect(() => {
   }, [selectedNumber]);  
 
  
-  
+    useEffect(() => {
+      return () => {
+        if (questionTimerRef.current) {
+          clearInterval(questionTimerRef.current);
+        }
+      };
+    }, []);
 
   const getExam = async () => {
-    console.log("objobjobj", obj);
-    setQuestionsLoading(true);
-
-    const datas = {
-      exam_paper_id: parseInt(obj.exam_paper_id),
-      exam_session_id: session_id ? session_id : 0,
-      type: "schedule_exam",
-    };
-
-    try {
-      const examsResponse = await getPreExam(datas);
-      setExams(examsResponse.data);
-
-      const subjectCounts = {};
-
-      examsResponse?.data?.forEach((exam) => {
-        const subjectValue =
-          exam.subject !== undefined ? exam.subject : "Unknown Subject";
-
-        subjectCounts[subjectValue] = (subjectCounts[subjectValue] || 0) + 1;
-      });
-
-      for (const subjectValue in subjectCounts) {
-        if (subjectCounts.hasOwnProperty(subjectValue)) {
-          console.log(
-            `Subject Value: ${subjectValue}, Object Count: ${subjectCounts[subjectValue]}`
+     console.log("objobjobj", obj);
+     setQuestionsLoading(true);
+ 
+     const datas = {
+       exam_paper_id: parseInt(obj.exam_paper_id),
+       exam_session_id: session_id ? session_id : 0,
+       type: "schedule_exam",
+     };
+ 
+     try {
+       const examsResponse = await getPreExam(datas);
+       setExams(examsResponse.data);
+ 
+       const subjectCounts = {};
+ 
+       examsResponse?.data?.forEach((exam) => {
+         const subjectValue =
+           exam.subject !== undefined ? exam.subject : "Unknown Subject";
+ 
+         subjectCounts[subjectValue] = (subjectCounts[subjectValue] || 0) + 1;
+       });
+ 
+       for (const subjectValue in subjectCounts) {
+         if (subjectCounts.hasOwnProperty(subjectValue)) {
+           console.log(
+             `Subject Value: ${subjectValue}, Object Count: ${subjectCounts[subjectValue]}`
+           );
+         }
+       }
+ 
+       console.log("Subject Counts:", subjectCounts);
+       console.log("Exams Response:", examsResponse);
+       setQuestionsLoading(false);
+     } catch (error) {
+       console.error("Error fetching exams:", error);
+     } finally {
+         // setIsLoading(false);
+       setQuestionsLoading(false);
+     }
+   };
+    const ClearResponseData = async () => {
+      try {
+        if (selectedNumber) {
+          const updatedAnswers = { ...answeredQuestions };
+          delete updatedAnswers[selectedNumber];
+          setAnsweredQuestions(updatedAnswers);
+  
+          const updatedSelectedAnswers = { ...selectedAnswers };
+          delete updatedSelectedAnswers[selectedNumber];
+          setSelectedAnswers(updatedSelectedAnswers);
+  
+          setSelectedOption(null);
+  
+          const updatedReviewed = { ...reviewedQuestions };
+          delete updatedReviewed[selectedNumber];
+          setReviewedQuestions(updatedReviewed);
+  
+          await AsyncStorage.setItem(
+            ANSWERED_QUESTIONS_KEY,
+            JSON.stringify(updatedAnswers)
+          );
+          await AsyncStorage.setItem(
+            REVIEWED_QUESTIONS_KEY,
+            JSON.stringify(updatedReviewed)
           );
         }
+      } catch (error) {
+        console.error("Error clearing response data:", error);
       }
-
-      console.log("Subject Counts:", subjectCounts);
-      console.log("Exams Response:", examsResponse);
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Error fetching exams:", error);
-    } finally {
-        setIsLoading(false);
-      setQuestionsLoading(false);
-    }
-  };
-
-  
-  
-
-    // // Format time in HH:MM:SS
-    // const formatedTime = (seconds) => {
-    //     const hours = Math.floor(seconds / 3600);
-    //     const minutes = Math.floor((seconds % 3600) / 60);
-    //     const remainingSeconds = seconds % 60;
-    //     return `${hours}:${minutes.toString().padStart(2, "0")}:${remainingSeconds
-    //       .toString()
-    //       .padStart(2, "0")}`;
-    //   };
-  const ClearResponseData = async () => {
-    try {
-      if (selectedNumber) {
-        const updatedAnswers = { ...answeredQuestions };
-        delete updatedAnswers[selectedNumber];
-        setAnsweredQuestions(updatedAnswers);
-
-        const updatedSelectedAnswers = { ...selectedAnswers };
-        delete updatedSelectedAnswers[selectedNumber];
-        setSelectedAnswers(updatedSelectedAnswers);
-
-        setSelectedOption(null);
-
-        const updatedReviewed = { ...reviewedQuestions };
-        delete updatedReviewed[selectedNumber];
-        setReviewedQuestions(updatedReviewed);
-
-        await AsyncStorage.setItem(
-          ANSWERED_QUESTIONS_KEY,
-          JSON.stringify(updatedAnswers)
-        );
-        await AsyncStorage.setItem(
-          REVIEWED_QUESTIONS_KEY,
-          JSON.stringify(updatedReviewed)
-        );
-      }
-    } catch (error) {
-      console.error("Error clearing response data:", error);
-    }
-  };
-
+    };
   const moveToNextQuestion = useCallback(() => {
-    console.log("Current Subject:", currentSubject);
-    console.log("Current Index in Subject:", currentIndexInSubject);
-    const currentSubject = pattern.find(
-      (subject) =>
-        selectedNumber >= subject.starting_no &&
-        selectedNumber <= subject.ending_no
-    );
-
-    if (!currentSubject) {
-      console.error(
-        "Current question does not belong to any subject in the pattern."
+      console.log("Current Subject:", currentSubject);
+      console.log("Current Index in Subject:", currentIndexInSubject);
+      const currentSubject = pattern.find(
+        (subject) =>
+          selectedNumber >= subject.starting_no &&
+          selectedNumber <= subject.ending_no
       );
-      return; 
-    }
-
-    const currentSubjectQuestions = allNum.filter(
-      (num) =>
-        num >= currentSubject.starting_no && num <= currentSubject.ending_no
-    );
-
-    const currentIndexInSubject = currentSubjectQuestions.indexOf(selectedNumber);
-
-
-    if (currentIndexInSubject < currentSubjectQuestions.length - 1) {
-      const nextQuestionInSubject = currentSubjectQuestions[currentIndexInSubject + 1];
-      setSelectedNumber(nextQuestionInSubject);
-
-    } else {
-    const nextSubjectIndex = pattern.findIndex(subject => subject.id === currentSubject.id) + 1;
-    if (nextSubjectIndex < pattern.length) {
-      const nextSubject = pattern[nextSubjectIndex];
-      setSelectedNumber(nextSubject.starting_no);
-    }
-
-
-    }
-
-    setSelectedOption(null); 
-  }, [selectedNumber, allNum, pattern]);
-
-  const handleSelectAndNext = useCallback(
-    async (questionId) => {
-      console.log("Selected Option Before handleAnswerSelect:", selectedOption);
-
-      let optionToPass = selectedOption;
-      if (exams[questionId - 1]?.qtype === 8) {
-        optionToPass = textInputAnswer;
+  
+      if (!currentSubject) {
+        console.error(
+          "Current question does not belong to any subject in the pattern."
+        );
+        return; 
       }
-
-
-      await handleAnswerSelect(questionId, optionToPass);
-      console.log("Selected Option After handleAnswerSelect:", selectedOption);
-
-
-      moveToNextQuestion();
-    },
-    [exams, handleAnswerSelect, moveToNextQuestion, selectedOption, textInputAnswer]
-  );
-
-  const handleAnswerSelect = useCallback(
+  
+      const currentSubjectQuestions = allNum.filter(
+        (num) =>
+          num >= currentSubject.starting_no && num <= currentSubject.ending_no
+      );
+  
+      const currentIndexInSubject = currentSubjectQuestions.indexOf(selectedNumber);
+  
+  
+      if (currentIndexInSubject < currentSubjectQuestions.length - 1) {
+        const nextQuestionInSubject = currentSubjectQuestions[currentIndexInSubject + 1];
+        setSelectedNumber(nextQuestionInSubject);
+  
+      } else {
+      const nextSubjectIndex = pattern.findIndex(subject => subject.id === currentSubject.id) + 1;
+      if (nextSubjectIndex < pattern.length) {
+        const nextSubject = pattern[nextSubjectIndex];
+        setSelectedNumber(nextSubject.starting_no);
+      }
+  
+  
+      }
+  
+      setSelectedOption(null); 
+    }, [selectedNumber, allNum, pattern]);
+  
+    const handleSelectAndNext = useCallback(async (questionId) => {
+      console.log("handleSelectAndNext called for question:", questionId);
+      // const answer = textInputValues[questionId];
+      const currentQuestionType = exams[questionId - 1]?.qtype;
+  
+      if (answeredQuestions[questionId]) {  
+        moveToNextQuestion();  
+        setSelectedOption(null);
+        return;
+      }
+    
+      const answer = textInputValues[questionId];
+      if (!answer && currentQuestionType === 8) {
+          ToastAndroid.showWithGravity(
+              "Please enter the answer in the text field.",
+              ToastAndroid.SHORT,
+              ToastAndroid.CENTER
+            );
+          return;
+      } else if (currentQuestionType !== 8 && !selectedOption) {
+        ToastAndroid.showWithGravity(
+            "Please select an option.",
+            ToastAndroid.SHORT,
+            ToastAndroid.CENTER
+          );
+          return;      
+    }
+  
+    if (currentQuestionType === 8) { 
+      await handleAnswerSelect(questionId, answer);
+  }
+  
+  moveToNextQuestion();
+  setSelectedOption(null); 
+  }, [exams, handleAnswerSelect, moveToNextQuestion,answeredQuestions, selectedOption, textInputValues]);
+  
+ const handleAnswerSelect = useCallback(
     async (questionId, option) => {
       console.log("handleAnswerSelect called with:", questionId, option);
-
+  
       const currentSubject = pattern.find(
         (subject) =>
           questionId >= subject.starting_no && questionId <= subject.ending_no
       );
-
+  
       if (!currentSubject) {
-        console.error(
-          "Question doesn't belong to any subject in the pattern."
-        );
+        console.error("Question doesn't belong to any subject in the pattern.");
         return;
       }
+  
+      let answerToStore = option;
+      if (exams[selectedNumber - 1]?.qtype === 8) {
+        // answerToStore = textInputAnswer;
+        answerToStore = textInputValues[questionId];
 
+         if (!answerToStore) {
+          if (Platform.OS === 'android') {
+            ToastAndroid.showWithGravity(
+              "Please enter the answer in the text field.",
+              ToastAndroid.SHORT,
+              ToastAndroid.CENTER
+            );
+          } else {
+            Alert.alert("Please enter the answer in the text field.");
+          }
+          return;
+        } else if (!option) { 
+          if (Platform.OS === 'android') {
+            ToastAndroid.showWithGravity(
+              "Please select an option.",
+              ToastAndroid.SHORT,
+              ToastAndroid.CENTER
+            );
+          } else {
+            Alert.alert("Please select an option.");
+          }
+          return;
+        }
+        setTextInputAnswer(""); 
+      } else if (!option){  
+         if (Platform.OS === 'android') {
+          //  ToastAndroid.showWithGravity(
+          //    "Please select an option.",
+          //    ToastAndroid.SHORT,
+          //    ToastAndroid.CENTER
+          //  );
+         } else {
+           Alert.alert("Please select an option.");
+         }
+         return;
+       }
+  
       const answeredCountForSubject = Object.keys(answeredQuestions).filter(
         (qId) =>
           qId >= currentSubject.starting_no && qId <= currentSubject.ending_no
       ).length;
-
+  
       if (answeredCountForSubject >= currentSubject.no_of_qus_answer) {
         Alert.alert(
           "Answer Limit Reached",
@@ -747,36 +796,30 @@ useEffect(() => {
         );
         return;
       }
-
+  
+  
       try {
-        let answerToStore = option;
-        if (exams[selectedNumber - 1]?.qtype === 8) {
-          answerToStore = textInputAnswer;
-          setTextInputAnswer("");
-        }
-
-
         const updatedAnswers = {
           ...answeredQuestions,
-          [questionId]: {selected_ans: answerToStore, submit_ans: answerToStore}
+          [questionId]: { selected_ans: option, submit_ans: option },
         };
-
+  
         setAnsweredQuestions(updatedAnswers);
         setSelectedAnswers((prev) => ({
           ...prev,
           [selectedNumber]: answerToStore,
         }));
-
+  
         const updatedSkipped = { ...skippedQuestions };
         delete updatedSkipped[questionId];
         setSkippedQuestions(updatedSkipped);
-
+  
         const updatedReviewed = { ...reviewedQuestions };
         delete updatedReviewed[questionId];
         setReviewedQuestions(updatedReviewed);
-
-        setSelectedOption(answerToStore);
-
+        console.log("Setting selectedOption to:", option);
+        setSelectedOption(option);
+  
         await AsyncStorage.setItem(
           ANSWERED_QUESTIONS_KEY,
           JSON.stringify(updatedAnswers)
@@ -793,16 +836,8 @@ useEffect(() => {
         console.error("Error saving answer:", error);
       }
     },
-    [
-      answeredQuestions,
-      exams,
-      pattern,
-      selectedNumber,
-      skippedQuestions,
-      textInputAnswer,
-      reviewedQuestions,
-    ]
-  );
+    [answeredQuestions, exams, pattern, selectedNumber, skippedQuestions, textInputValues, reviewedQuestions]);
+
 
   const handleSkipQuestion = async () => {
     try {
@@ -993,835 +1028,770 @@ const handleReviewTag = async (questionId) => {
 
 
 
-const handleTagQuestion = async () => {
-  try {
-    const updatedTags = { ...taggedQuestions };
-    if (updatedTags[selectedNumber]) {
-      delete updatedTags[selectedNumber];
-    } else {
-      updatedTags[selectedNumber] = true;
-    }
-    setTaggedQuestions(updatedTags);
-    await AsyncStorage.setItem(
-      TAGGED_QUESTIONS_KEY,
-      JSON.stringify(updatedTags)
-    );
-  } catch (error) {
-    console.error("Error tagging question:", error);
-  }
-};
 
-  return (
-    <LinearGradient
-      colors={theme.back}
-      style={styles.container}
-      start={{ x: 0, y: 1 }}
-      end={{ x: 1, y: 1 }}
-    >
-      <SubmitTestModal
-        studentExamId={studentExamId}
-        data={data}
-        examType={examtype}
-        setFinishTest={setFinishTest}
-        finishTest={finishTest}
-        isTimeUp={false}
-      />
-      {questionsLoading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={theme.textColor} />
-        </View>
-      )}
-      <View style={{ flex: 1 }}>
-        <View style={{ flexDirection: "row", marginTop: 10 }}>
-          <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>
-            {obj.exam_name}
-          </Text>
-          <Text
-            style={[
-              styles.mockSubtitle,
-              { color: theme.textColor, marginLeft: 40 },
-            ]}
+
+return (
+  <LinearGradient
+    colors={theme.back}
+    style={styles.container}
+    start={{ x: 0, y: 1 }}
+    end={{ x: 1, y: 1 }}
+  >
+    <SubmitTestModal
+      studentExamId={studentExamId}
+      data={data}
+      examType={examtype}
+      setFinishTest={setFinishTest}
+      finishTest={finishTest}
+      isTimeUp={false}
+    />
+    {questionsLoading && (
+      <View style={styles.loadingOverlay}>
+        <ActivityIndicator size="large" color={theme.textColor} />
+      </View>
+    )}
+    <View style={{ flex: 1 }}>
+      <View style={{ flexDirection: "row", marginTop: 10 }}>
+        <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>
+          {obj.examName}
+        </Text>
+        <Text
+          style={[
+            styles.mockSubtitle,
+            { color: theme.textColor, marginLeft: 40 },
+          ]}
+        >
+          Remaining Time
+        </Text>
+        <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>
+          {formatTime(remainingTime)}
+        </Text>
+      </View>
+      <ScrollView>
+        <View style={{ paddingHorizontal: 20 }}>
+          <LinearGradient
+            colors={theme.mcb1}
+            start={{ x: 0, y: 1 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.header}
           >
-            Remaining Time
-          </Text>
-          <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>
-            {formatTime(remainingTime)}
-          </Text>
-        </View>
-        <ScrollView>
-          <View style={{ paddingHorizontal: 20 }}>
-            <LinearGradient
-              colors={theme.mcb1}
-              start={{ x: 0, y: 1 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.header}
-            >
-              <View style={styles.headerline}>
-                {[...new Set(pattern.map((item) => item.subject))].map(
-                  (subject, index) => {
-                    const sub = pattern.find(
-                      (item) => item.subject === subject
-                    );
-                    if (!sub) {
-                      return null;
-                    }
+            <View style={styles.headerline}>
+              {[...new Set(pattern.map((item) => item.subject))].map(
+                (subject, index) => {
+                  const sub = pattern.find(
+                    (item) => item.subject === subject
+                  );
+                  if (!sub) {
+                    return null;
+                  }
 
-                    return (
-                      <TouchableOpacity
-                        key={index}
-                        onPress={() => handleSubjectSelect(sub)}
+                  return (
+                    <TouchableOpacity
+                      key={index}
+                      onPress={() => handleSubjectSelect(sub)}
+                    >
+                      <LinearGradient
+                        colors={
+                          selectedSubjectId == sub.id
+                            ? [theme.bg1, theme.bg2]
+                            : theme.bmc
+                        }
+                        style={[
+                          styles.headerline1,
+                          {
+                            borderWidth: selectedSubjectId === sub.id ? 0 : 1,
+                            borderColor:
+                              selectedSubjectId === sub.id
+                                ? theme.textColor1
+                                : theme.textColor,
+                          },
+                        ]}
+                        start={{ x: 0, y: 1 }}
+                        end={{ x: 1, y: 1 }}
                       >
-                        <LinearGradient
-                          colors={
-                            selectedSubjectId == sub.id
-                              ? [theme.bg1, theme.bg2]
-                              : theme.bmc
-                          }
+                        <Text
                           style={[
-                            styles.headerline1,
+                            styles.headtext,
                             {
-                              borderWidth: selectedSubjectId === sub.id ? 0 : 1,
-                              borderColor:
+                              color:
                                 selectedSubjectId === sub.id
                                   ? theme.textColor1
                                   : theme.textColor,
                             },
                           ]}
-                          start={{ x: 0, y: 1 }}
-                          end={{ x: 1, y: 1 }}
+                        >
+                          {sub.subject}
+                        </Text>
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  );
+                }
+              )}
+            </View>
+
+            {!expand && (
+              <View
+                style={{
+                  flexDirection: "column",
+                  paddingStart: 20,
+                  paddingEnd: 20,
+                }}
+              >
+                <View
+                  style={{
+                    alignItems: "flex-end",
+                    marginTop: 15,
+                    marginRight: 20,
+                  }}
+                >
+                  <Text
+                    style={[styles.mockSubtitle, { color: theme.textColor }]}
+                  >
+                    Total Questions :{exams.length}
+                  </Text>
+                </View>
+
+                <View style={styles.numberContainer}>
+                  {/* <TouchableOpacity onPress={scrollLeft}> */}
+                  <Image
+                    style={[styles.img, { tintColor: theme.textColor }]}
+                    source={require("../images/to.png")}
+                  />
+                  {/* </TouchableOpacity> */}
+
+                  <FlatList
+    ref={flatListRef}
+    horizontal
+    data={allNum}
+    keyExtractor={(item) => item.toString()}
+    showsHorizontalScrollIndicator={false}
+    contentContainerStyle={styles.numberScrollView}
+    renderItem={({ item: num }) => ( 
+        <TouchableOpacity
+            onPress={() => {
+                // if (filteredQuestionNumbers.includes(num)) {
+                    setSelectedNumber(num);
+                // }
+            }}
+        >
+            <View 
+                style={[
+                    styles.numberCircle,
+                    {
+                        backgroundColor: answeredQuestions[num] ? "#04A953" : skippedQuestions[num] ? "#DE6C00" : reviewedQuestions[num] ? "#36A1F5" : theme.gray,
+                        borderColor: num === selectedNumber ? "#fff" : "transparent",
+                        borderWidth: num === selectedNumber ? 1 : 0,
+                    },
+                ]}
+            >
+                <Text style={{ color: "#FFF", fontSize: 16 }}>{num}</Text>
+            </View>
+        </TouchableOpacity>
+    )}
+    getItemLayout={getItemLayout} 
+  />
+
+
+                  {/* <TouchableOpacity onPress={scrollRight}> */}
+                  <Image
+                    style={[styles.img, { tintColor: theme.textColor }]}
+                    source={require("../images/fro.png")}
+                  />
+                  {/* </TouchableOpacity> */}
+                </View>
+              </View>
+            )}
+
+            {expand && (
+              <View
+                style={{
+                  flexDirection: "column",
+                  paddingStart: 10,
+                  paddingEnd: 20,
+                }}
+              >
+                {pattern.map((subject, index) => {
+                  const subjectNumbers = [];
+                  if (
+                    selectedSubject &&
+                    subject.subject === selectedSubject.subject
+                  ) {
+                    for (
+                      let i = subject.starting_no;
+                      i <= subject.ending_no && i <= exams.length;
+                      i++
+                    ) {
+                      subjectNumbers.push(i);
+                    }
+                  }
+                  if (subjectNumbers.length > 0) {
+                    return (
+                      <View key={index}>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            marginTop: 15,
+                            marginLeft: 15,
+                          }}
                         >
                           <Text
                             style={[
-                              styles.headtext,
+                              styles.mockSubtitle,
+                              { color: theme.textColor, marginRight: 100 },
+                            ]}
+                          >
+                            {subject.section_name}
+                          </Text>
+                          <Text
+                            style={[
+                              styles.mockSubtitle,
+                              { color: theme.textColor },
+                            ]}
+                          >
+                            Total Questions :
+                          </Text>
+                          <Text
+                            style={[
+                              styles.mockSubtitle,
+                              { color: theme.textColor, marginLeft: -8 },
+                            ]}
+                          >
+                            {subject.ending_no - subject.starting_no + 1}
+                          </Text>{" "}
+                          {/* Calculate total questions per subject */}
+                        </View>
+
+                        <View
+                          style={{
+                            width: windowWidth * 0.9,
+                            paddingStart: 30,
+                            marginTop: 10,
+                          }}
+                        >
+                          <View style={styles.gridContainer}>
+                            {subjectNumbers.map((num) => {
+                              let backgroundColor = theme.gray;
+                              let borderColor = "transparent";
+                              let borderWidth = 0;
+
+                              if (answeredQuestions[num])
+                                backgroundColor = "#04A953";
+                              else if (skippedQuestions[num])
+                                backgroundColor = "#DE6C00";
+                              else if (reviewedQuestions[num])
+                                backgroundColor = "#36A1F5";
+
+                              if (num === selectedNumber) {
+                                borderColor = "#fff";
+                                borderWidth = 1;
+                              }
+                              return (
+                                <TouchableOpacity
+                                  key={num}
+                                  onPress={() => {
+                                    setSelectedNumber(num);
+                                    setExpand(false);
+                                  }}
+                                  style={styles.gridItem}
+                                >
+                                  <View
+                                    style={[
+                                      styles.numberCircle1,
+                                      {
+                                        backgroundColor,
+                                        borderColor,
+                                        borderWidth,
+                                      },
+                                    ]}
+                                  >
+                                    <Text
+                                      style={[
+                                        styles.numberText,
+                                        { color: "#FFF" },
+                                      ]}
+                                    >
+                                      {num}
+                                    </Text>
+                                  </View>
+                                </TouchableOpacity>
+                              );
+                            })}
+                          </View>
+                        </View>
+                      </View>
+                    );
+                  } else {
+                    return null;
+                  }
+                })}
+              </View>
+            )}
+
+            <View
+              style={{ marginTop: 15, flexDirection: "row", marginBottom: 5 }}
+            >
+              <View style={{ alignItems: "center" }}>
+                <Text style={[styles.res, { color: theme.textColor }]}>
+                  Not Seen
+                </Text>
+                <Text style={[styles.res, { color: theme.textColor }]}>
+                  {exams.length -
+                    Object.keys(answeredQuestions).length -
+                    Object.keys(skippedQuestions).length}
+                </Text>
+              </View>
+              <View style={{ alignItems: "center" }}>
+                <Text style={[styles.res, { color: "#04A953" }]}>
+                  Answered
+                </Text>
+                <Text style={[styles.res, { color: "#04A953" }]}>
+                  {Object.keys(answeredQuestions).length}
+                </Text>
+              </View>
+              <View style={{ alignItems: "center" }}>
+                <Text style={[styles.res, { color: "#DE6C00" }]}>
+                  Skipped
+                </Text>
+                <Text style={[styles.res, { color: "#DE6C00" }]}>
+                  {Object.keys(skippedQuestions).length}
+                </Text>
+              </View>
+              <View style={{ alignItems: "center" }}>
+                <Text style={[styles.res, { color: "#36A1F5" }]}>Review</Text>
+                <Text style={[styles.res, { color: "#36A1F5" }]}>
+                  {Object.keys(reviewedQuestions).length}
+                </Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              onPress={() => {
+                setExpand(!expand);
+              }}
+            >
+              {!expand && (
+                <Image
+                  source={require("../images/down.png")}
+                  style={{
+                    height: 30,
+                    width: 30,
+                    resizeMode: "contain",
+                    tintColor: theme.textColor,
+                  }}
+                />
+              )}
+              {expand && (
+                <Image
+                  source={require("../images/up.png")}
+                  style={{
+                    height: 30,
+                    width: 30,
+                    resizeMode: "contain",
+                    tintColor: theme.textColor,
+                  }}
+                />
+              )}
+            </TouchableOpacity>
+          </LinearGradient>
+        </View>
+
+        <View style={{ paddingHorizontal: 20, marginTop: 10 }}>
+          <LinearGradient
+            colors={theme.mcb1}
+            start={{ x: 0, y: 1 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.header}
+          >
+            <View style={{ flexDirection: "row", marginTop: 8 }}>
+              <Svg height="35" width={windowWidth * 0.35}>
+                <Defs>
+                  <SvgLinearGradient id="grad" x1="0" y1="1" x2="1" y2="1">
+                    <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
+                    <Stop offset="1" stopColor={theme.bg2} stopOpacity="1" />
+                  </SvgLinearGradient>
+                </Defs>
+                <SvgText
+                  fill="url(#grad)"
+                  fontSize="16"
+                  fontWeight="bold"
+                  x="55"
+                  y="15"
+                  textAnchor="middle"
+                  alignmentBaseline="middle"
+                >
+                  {selectedNumber && `Question # ${selectedNumber}`}
+                </SvgText>
+              </Svg>
+              <View style={{ flexDirection: "row" }}>
+                <Text
+                  style={[styles.mockSubtitle, { color: theme.textColor }]}
+                >
+                  Time spent:
+                </Text>
+                <Text
+                  style={[styles.mockSubtitle, { color: theme.textColor }]}
+                >
+                  {formatTime(timeElapsed)}
+                </Text>
+              </View>
+            </View>
+            <View>
+   
+              <RenderHTML
+                 source={sanitizeHtml((exams[selectedNumber - 1]?.question) || "<p>No Question provided.</p>",)}
+                 contentWidth={windowWidth}
+              //    tagsStyles={{
+              //      p: { marginBottom: 0, display: "inline", flexWrap: "wrap" }, // Ensure paragraph stays inline
+              //      img: { display: "inline-block", verticalAlign: "middle", maxWidth: "100%" }, // Force inline images
+              //      span: { display: "inline", flexWrap: "wrap" }, // Ensure span elements wrap properly
+              //    }}
+                
+               />
+         
+            </View>
+         
+            {exams[selectedNumber - 1]?.qtype !== 8 ? (
+              <View>
+                {["A", "B", "C", "D"].map((option, index) => {
+                  const optionText =
+                    index === 0
+                      ? exams[selectedNumber - 1]?.option1
+                      : index === 1
+                      ? exams[selectedNumber - 1]?.option2
+                      : index === 2
+                      ? exams[selectedNumber - 1]?.option3
+                      : exams[selectedNumber - 1]?.option4;
+
+                  // const cleanedOptionText = removeHtmlTags(optionText);
+                  const imagesInOption = extractImages(optionText);
+                  const isImageUrl = imagesInOption.length > 0;
+
+                  const isSelected =
+                    selectedAnswers[selectedNumber] === option;
+
+                  return (
+                    <TouchableOpacity
+                      key={option}
+                      style={[
+                        styles.opt,
+                        {
+                          borderColor: theme.textColor,
+                          borderRadius: 25,
+                          backgroundColor: "transparent",
+                        },
+                      ]}
+                      onPress={() => {
+                        setSelectedOption(option);
+                        handleAnswerSelect(selectedNumber, option);
+                      }}
+                    >
+                      <View
+                        style={[
+                          styles.optbg,
+                          { backgroundColor: theme.gray },
+                        ]}
+                      >
+                        <Text style={[styles.option, { color: "#FFF" }]}>
+                          {option}
+                        </Text>
+                        
+                      </View>
+
+                      <View>
+                        {isImageUrl ? (
+                          <View style={{ backgroundColor: "#FFF" }}>
+                            <Image
+                              source={{ uri: imagesInOption[0] }}
+                              style={{
+                                width: 80,
+                                height: 40,
+                                borderRadius: 25,
+                                resizeMode: "contain",
+                              }}
+                            />
+                          </View>
+                        ) : (
+                          <View style={{alignContent:'center'}}>
+                          <Text
+                            style={[
+                              styles.option,
                               {
-                                color:
-                                  selectedSubjectId === sub.id
-                                    ? theme.textColor1
-                                    : theme.textColor,
+                                color: theme.textColor,
+                                width:226,
+                                overflow: "scroll",
                               },
                             ]}
                           >
-                            {sub.subject}
+                            {/* {cleanedOptionText || "Option not available"} */}
+                            <RenderHTML
+                              source={sanitizeHtml(
+                                optionText || "<p>No question provided.</p>"
+                              )}
+                              renderersProps={renderersProps}
+                              // baseFontStyle={baseFontStyle}
+                              // {...DEFAULT_PROPS}
+                              contentWidth={windowWidth}
+                            />
                           </Text>
-                        </LinearGradient>
-                      </TouchableOpacity>
-                    );
-                  }
-                )}
-              </View>
-
-              {!expand && (
-                <View
-                  style={{
-                    flexDirection: "column",
-                    paddingStart: 20,
-                    paddingEnd: 20,
-                  }}
-                >
-                  <View
-                    style={{
-                      alignItems: "flex-end",
-                      marginTop: 15,
-                      marginRight: 20,
-                    }}
-                  >
-                    <Text
-                      style={[styles.mockSubtitle, { color: theme.textColor }]}
-                    >
-                      Total Questions :{exams.length}
-                    </Text>
-                  </View>
-
-                  <View style={styles.numberContainer}>
-                    {/* <TouchableOpacity onPress={scrollLeft}> */}
-                    <Image
-                      style={[styles.img, { tintColor: theme.textColor }]}
-                      source={require("../images/to.png")}
-                    />
-                    {/* </TouchableOpacity> */}
-
-                    <FlatList
-      ref={flatListRef}
-      horizontal
-      data={allNum}
-      keyExtractor={(item) => item.toString()}
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.numberScrollView}
-      renderItem={({ item: num }) => ( 
-          <TouchableOpacity
-              onPress={() => {
-                  if (filteredQuestionNumbers.includes(num)) {
-                      setSelectedNumber(num);
-                  }
-              }}
-          >
-              <View 
-                  style={[
-                      styles.numberCircle,
-                      {
-                          backgroundColor: answeredQuestions[num] ? "#04A953" : skippedQuestions[num] ? "#DE6C00" : reviewedQuestions[num] ? "#36A1F5" : theme.gray,
-                          borderColor: num === selectedNumber ? "#fff" : "transparent",
-                          borderWidth: num === selectedNumber ? 1 : 0,
-                      },
-                  ]}
-              >
-                  <Text style={{ color: "#FFF", fontSize: 16 }}>{num}</Text>
-              </View>
-          </TouchableOpacity>
-      )}
-      getItemLayout={getItemLayout} 
-    />
-
-
-                    {/* <TouchableOpacity onPress={scrollRight}> */}
-                    <Image
-                      style={[styles.img, { tintColor: theme.textColor }]}
-                      source={require("../images/fro.png")}
-                    />
-                    {/* </TouchableOpacity> */}
-                  </View>
-                </View>
-              )}
-
-              {expand && (
-                <View
-                  style={{
-                    flexDirection: "column",
-                    paddingStart: 10,
-                    paddingEnd: 20,
-                  }}
-                >
-                  {pattern.map((subject, index) => {
-                    const subjectNumbers = [];
-                    if (
-                      selectedSubject &&
-                      subject.subject === selectedSubject.subject
-                    ) {
-                      for (
-                        let i = subject.starting_no;
-                        i <= subject.ending_no && i <= exams.length;
-                        i++
-                      ) {
-                        subjectNumbers.push(i);
-                      }
-                    }
-                    if (subjectNumbers.length > 0) {
-                      return (
-                        <View key={index}>
-                          <View
-                            style={{
-                              flexDirection: "row",
-                              marginTop: 15,
-                              marginLeft: 15,
-                            }}
-                          >
-                            <Text
-                              style={[
-                                styles.mockSubtitle,
-                                { color: theme.textColor, marginRight: 100 },
-                              ]}
-                            >
-                              {subject.section_name}
-                            </Text>
-                            <Text
-                              style={[
-                                styles.mockSubtitle,
-                                { color: theme.textColor },
-                              ]}
-                            >
-                              Total Questions :
-                            </Text>
-                            <Text
-                              style={[
-                                styles.mockSubtitle,
-                                { color: theme.textColor, marginLeft: -8 },
-                              ]}
-                            >
-                              {subject.ending_no - subject.starting_no + 1}
-                            </Text>{" "}
-                            {/* Calculate total questions per subject */}
                           </View>
+                        )}
+                      </View>
 
-                          <View
-                            style={{
-                              width: windowWidth * 0.9,
-                              paddingStart: 30,
-                              marginTop: 10,
-                            }}
-                          >
-                            <View style={styles.gridContainer}>
-                              {subjectNumbers.map((num) => {
-                                let backgroundColor = theme.gray;
-                                let borderColor = "transparent";
-                                let borderWidth = 0;
-
-                                if (answeredQuestions[num])
-                                  backgroundColor = "#04A953";
-                                else if (skippedQuestions[num])
-                                  backgroundColor = "#DE6C00";
-                                else if (reviewedQuestions[num])
-                                  backgroundColor = "#36A1F5";
-
-                                if (num === selectedNumber) {
-                                  borderColor = "#fff";
-                                  borderWidth = 1;
-                                }
-                                return (
-                                  <TouchableOpacity
-                                    key={num}
-                                    onPress={() => {
-                                      setSelectedNumber(num);
-                                      setExpand(false);
-                                    }}
-                                    style={styles.gridItem}
-                                  >
-                                    <View
-                                      style={[
-                                        styles.numberCircle1,
-                                        {
-                                          backgroundColor,
-                                          borderColor,
-                                          borderWidth,
-                                        },
-                                      ]}
-                                    >
-                                      <Text
-                                        style={[
-                                          styles.numberText,
-                                          { color: "#FFF" },
-                                        ]}
-                                      >
-                                        {num}
-                                      </Text>
-                                    </View>
-                                  </TouchableOpacity>
-                                );
-                              })}
-                            </View>
-                          </View>
-                        </View>
-                      );
-                    } else {
-                      return null;
-                    }
-                  })}
-                </View>
-              )}
-
-              <View
-                style={{ marginTop: 15, flexDirection: "row", marginBottom: 5 }}
-              >
-                <View style={{ alignItems: "center" }}>
-                  <Text style={[styles.res, { color: theme.textColor }]}>
-                    Not Seen
-                  </Text>
-                  <Text style={[styles.res, { color: theme.textColor }]}>
-                    {exams.length -
-                      Object.keys(answeredQuestions).length -
-                      Object.keys(skippedQuestions).length}
-                  </Text>
-                </View>
-                <View style={{ alignItems: "center" }}>
-                  <Text style={[styles.res, { color: "#04A953" }]}>
-                    Answered
-                  </Text>
-                  <Text style={[styles.res, { color: "#04A953" }]}>
-                    {Object.keys(answeredQuestions).length}
-                  </Text>
-                </View>
-                <View style={{ alignItems: "center" }}>
-                  <Text style={[styles.res, { color: "#DE6C00" }]}>
-                    Skipped
-                  </Text>
-                  <Text style={[styles.res, { color: "#DE6C00" }]}>
-                    {Object.keys(skippedQuestions).length}
-                  </Text>
-                </View>
-                <View style={{ alignItems: "center" }}>
-                  <Text style={[styles.res, { color: "#36A1F5" }]}>Review</Text>
-                  <Text style={[styles.res, { color: "#36A1F5" }]}>
-                    {Object.keys(reviewedQuestions).length}
-                  </Text>
-                </View>
-              </View>
-
-              <TouchableOpacity
-                onPress={() => {
-                  setExpand(!expand);
-                }}
-              >
-                {!expand && (
-                  <Image
-                    source={require("../images/down.png")}
-                    style={{
-                      height: 30,
-                      width: 30,
-                      resizeMode: "contain",
-                      tintColor: theme.textColor,
-                    }}
-                  />
-                )}
-                {expand && (
-                  <Image
-                    source={require("../images/up.png")}
-                    style={{
-                      height: 30,
-                      width: 30,
-                      resizeMode: "contain",
-                      tintColor: theme.textColor,
-                    }}
-                  />
-                )}
-              </TouchableOpacity>
-            </LinearGradient>
-          </View>
-
-          <View style={{ paddingHorizontal: 20, marginTop: 10 }}>
-            <LinearGradient
-              colors={theme.mcb1}
-              start={{ x: 0, y: 1 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.header}
-            >
-              <View style={{ flexDirection: "row", marginTop: 8 }}>
-                <Svg height="35" width={windowWidth * 0.35}>
-                  <Defs>
-                    <SvgLinearGradient id="grad" x1="0" y1="1" x2="1" y2="1">
-                      <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
-                      <Stop offset="1" stopColor={theme.bg2} stopOpacity="1" />
-                    </SvgLinearGradient>
-                  </Defs>
-                  <SvgText
-                    fill="url(#grad)"
-                    fontSize="16"
-                    fontWeight="bold"
-                    x="55"
-                    y="15"
-                    textAnchor="middle"
-                    alignmentBaseline="middle"
-                  >
-                    {selectedNumber && `Question # ${selectedNumber}`}
-                  </SvgText>
-                </Svg>
-                <View style={{ flexDirection: "row" }}>
-                  <Text
-                    style={[styles.mockSubtitle, { color: theme.textColor }]}
-                  >
-                    Time spent:
-                  </Text>
-                  <Text
-                    style={[styles.mockSubtitle, { color: theme.textColor }]}
-                  >
-                    {formatTime(timeElapsed)}
-                  </Text>
-                </View>
-              </View>
-              <View>
-                {/* <RenderContent html={questionHtml1} />
-                                {images.length > 0 && images.map((imageUrl, index) => (
-                                    <View style={{ backgroundColor: '#FFF' }}>
-                                        <Image
-                                            key={index}
-                                            source={{ uri: imageUrl }}
-                                            style={{ height: 70, width: windowWidth * 0.5, resizeMode: 'contain' }}
-                                        />
-                                    </View>
-                                ))} */}
-                <RenderHTML
-                   source={sanitizeHtml((exams[selectedNumber - 1]?.question) || "<p>No Question provided.</p>",)}
-                   contentWidth={windowWidth}
-                //    tagsStyles={{
-                //      p: { marginBottom: 0, display: "inline", flexWrap: "wrap" }, // Ensure paragraph stays inline
-                //      img: { display: "inline-block", verticalAlign: "middle", maxWidth: "100%" }, // Force inline images
-                //      span: { display: "inline", flexWrap: "wrap" }, // Ensure span elements wrap properly
-                //    }}
-                  
-                 />
-           
-              </View>
-              {/* {exams?.qtype == 7 && exams?.qtype !== 8 && exams?.qtype == 3  &&(
-                                  <View>
-                                  {["A", "B", "C", "D"].map((option, index) => {
-                                      const optionText = index === 0 ? exams[selectedNumber - 1]?.option1 :
-                                          index === 1 ? exams[selectedNumber - 1]?.option2 :
-                                              index === 2 ? exams[selectedNumber - 1]?.option3 :
-                                                  exams[selectedNumber - 1]?.option4;
-  
-                                      const cleanedOptionText = removeHtmlTags(optionText);
-                                      const imagesInOption = extractImages(optionText);
-                                      const isImageUrl = imagesInOption.length > 0;
-  
-                                      const isSelected = selectedAnswers[selectedNumber]?.selected_ans?.includes(option);  
-                                      return (
-                                          <TouchableOpacity
-                                              key={option}
-                                              style={[
-                                                  styles.opt,
-                                                  {
-                                                      borderColor: theme.textColor,
-                                                      borderRadius: 25,
-                                                      backgroundColor: isSelected ? theme.textColor : "transparent",                                                  }
-                                              ]}
-                                              onPress={() => {
-                                                  setSelectedOption(option);
-                                                  handleAnswerSelect(selectedNumber, option);
-                                              }}
-                                          >
-                                              <View style={[styles.optbg, { backgroundColor: theme.gray }]}>
-                                                  <Text style={[styles.option, { color: "#FFF" }]}>
-                                                      {option}
-                                                  </Text>
-                                              </View>
-  
-                                              <View>
-                                                  {isImageUrl ? (
-                                                      <View style={{ backgroundColor: '#FFF' }}>
-                                                          <Image
-                                                              source={{ uri: imagesInOption[0] }}
-                                                              style={{ width: 80, height: 40, borderRadius: 25, resizeMode: 'contain' }}
-                                                          />
-                                                      </View>
-                                                  ) : (
-                                                      <Text style={[
-                                                          styles.option,
-                                                          { color: theme.textColor, width: 220 }
-                                                      ]}>
-                                                          {cleanedOptionText || "Option not available"}
-                                                      </Text>
-                                                  )}
-                                              </View>
-  
-                                              <View
-                                                  style={[
-                                                      styles.select,
-                                                      {
-                                                          borderColor: theme.textColor,
-                                                          backgroundColor: isSelected ? theme.textColor : "transparent",
-                                                      }
-                                                  ]}
-                                              />
-                                          </TouchableOpacity>
-                                      );
-                                  })}
-                              </View>
-                            )} */}
-              {exams[selectedNumber - 1]?.qtype !== 8 ? (
-                <View>
-                  {["A", "B", "C", "D"].map((option, index) => {
-                    const optionText =
-                      index === 0
-                        ? exams[selectedNumber - 1]?.option1
-                        : index === 1
-                        ? exams[selectedNumber - 1]?.option2
-                        : index === 2
-                        ? exams[selectedNumber - 1]?.option3
-                        : exams[selectedNumber - 1]?.option4;
-
-                    // const cleanedOptionText = removeHtmlTags(optionText);
-                    const imagesInOption = extractImages(optionText);
-                    const isImageUrl = imagesInOption.length > 0;
-
-                    const isSelected =
-                      selectedAnswers[selectedNumber] === option;
-
-                    return (
-                      <TouchableOpacity
-                        key={option}
+                      <View
                         style={[
-                          styles.opt,
+                          styles.select,
                           {
                             borderColor: theme.textColor,
-                            borderRadius: 25,
-                            backgroundColor: "transparent",
+                            backgroundColor: isSelected
+                              ? theme.textColor
+                              : "transparent",
                           },
                         ]}
-                        onPress={() => {
-                          setSelectedOption(option);
-                          handleAnswerSelect(selectedNumber, option);
-                        }}
-                      >
-                        <View
-                          style={[
-                            styles.optbg,
-                            { backgroundColor: theme.gray },
-                          ]}
-                        >
-                          <Text style={[styles.option, { color: "#FFF" }]}>
-                            {option}
-                          </Text>
-                        </View>
-
-                        <View>
-                          {isImageUrl ? (
-                            <View style={{ backgroundColor: "#FFF" }}>
-                              <Image
-                                source={{ uri: imagesInOption[0] }}
-                                style={{
-                                  width: 80,
-                                  height: 40,
-                                  borderRadius: 25,
-                                  resizeMode: "contain",
-                                }}
-                              />
-                            </View>
-                          ) : (
-                            <Text
-                              style={[
-                                styles.option,
-                                {
-                                  color: theme.textColor,
-                                  width: 226,
-                                  height: 60,
-                                  overflow: "scroll",
-                                },
-                              ]}
-                            >
-                              {/* {cleanedOptionText || "Option not available"} */}
-                              <RenderHTML
-                                source={sanitizeHtml(
-                                  optionText || "<p>No question provided.</p>"
-                                )}
-                                renderersProps={renderersProps}
-                                // baseFontStyle={baseFontStyle}
-                                // {...DEFAULT_PROPS}
-                                contentWidth={windowWidth}
-                              />
-                            </Text>
-                          )}
-                        </View>
-
-                        <View
-                          style={[
-                            styles.select,
-                            {
-                              borderColor: theme.textColor,
-                              backgroundColor: isSelected
-                                ? theme.textColor
-                                : "transparent",
-                            },
-                          ]}
-                        />
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              ) : (
-                <View>
-                  <TextInput
-                         style={[styles.textInputStyle, { backgroundColor: theme.textColor1, borderColor: theme.textColor1, color: theme.textColor }]}
-                         value={textInputAnswer}
-                         onChangeText={handleTextInputChange}
-                         placeholder={`Enter Text`}
-                         keyboardType="numeric"
-                         placeholderTextColor={theme.textColor}
-                         multiline={true}
-                  />
-                </View>
-              )}
-
-              <View
-                style={{
-                  marginTop: 10,
-                  width: windowWidth * 0.8,
-                  paddingStart: 10,
-                }}
-              >
-                <View style={{ flexDirection: "row" }}>
-                  {/* <TouchableOpacity style={[styles.ins, { backgroundColor: theme.textColor1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]}>
-                                        <Image
-                                            style={{ height: 20, width: 20, resizeMode: 'contain', tintColor: theme.textColor }}
-                                            source={require("../images/caution.png")}
-                                        />
-                                    </TouchableOpacity> */}
-                                    <TouchableOpacity onPress={handleReviewTag} style={[styles.ins, { backgroundColor: theme.textColor1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]}>
-                                        <Image
-                                            style={{ height: 20, width: 20, resizeMode: 'contain', tintColor: theme.textColor }}
-                                            source={require("../images/tag.png")}
-                                        />
-                                    </TouchableOpacity>
-                                    {/* <TouchableOpacity style={[styles.ins, { backgroundColor: theme.textColor1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]} onPress={() => navigation.navigate("Instruct")}>
-                                        <Image
-                                            style={{ height: 20, width: 20, resizeMode: 'contain', tintColor: theme.textColor }}
-                                            source={require("../images/info.png")}
-                                        />
-                                    </TouchableOpacity>  */}
-
-                  <TouchableOpacity
-                    style={{ marginLeft: 15, marginTop: 5 }}
-                    onPress={ClearResponseData}
-                  >
-                    <Text
-                      style={[
-                        styles.ans,
-                        {
-                          color: "red",
-                          fontWeight: "700",
-                          textDecorationLine: "underline",
-                        },
-                      ]}
-                    >
-                      Clear Response
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                      />
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
-            </LinearGradient>
-          </View>
-        </ScrollView>
+            ) : (
+              <View>
+                  <TextInput
+    style={[
+      styles.textInputStyle,
+      {
+        backgroundColor: theme.textColor1,
+        borderColor: theme.textColor1,
+        color: theme.textColor,
+      },
+    ]}
+    value={textInputValues[selectedNumber] || ""}
+    onChangeText={(text) => {
+      handleTextInputChange(text, selectedNumber);
+      console.log("TextInput changed for question:", selectedNumber, "to:", text);
+  }}
+    placeholder={`Enter Text`}
+    keyboardType="numeric"
+    placeholderTextColor={theme.textColor}
+    multiline={true}
+    onSubmitEditing={() => {
+      console.log("onSubmitEditing called for question:", selectedNumber);
+      handleSelectAndNext(selectedNumber);
+  }}
+    onBlur={() => handleAnswerSelect(selectedNumber, textInputValues[selectedNumber])} 
+        />
+              </View>
+            )}
 
-        <View>
-          <View
-            style={{
-              marginTop: 10,
-              flexDirection: "row",
-              justifyContent: "center",
-              marginBottom: 15,
-              paddingHorizontal: 10,
-            }}
-          >
-            <TouchableOpacity
+            <View
               style={{
-                height: 36,
-                borderWidth: 1,
-                borderColor: theme.textColor,
-                borderRadius: 16,
-                justifyContent: "center",
-                alignItems: "center",
-                marginLeft: 15,
-              }}
-              onPress={() => {
-                handleSkipQuestion();
-                setSelectedOption(null);
+                marginTop: 10,
+                width: windowWidth * 0.8,
+                paddingStart: 10,
               }}
             >
-              <Text
-                style={[
-                  styles.ans,
-                  { color: theme.textColor, fontWeight: "700" },
-                ]}
-              >
-                Skip Question
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
+              <View style={{ flexDirection: "row" }}>
+                {/* <TouchableOpacity style={[styles.ins, { backgroundColor: theme.textColor1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]}>
+                                      <Image
+                                          style={{ height: 20, width: 20, resizeMode: 'contain', tintColor: theme.textColor }}
+                                          source={require("../images/caution.png")}
+                                      />
+                                  </TouchableOpacity> */}
+                                  <TouchableOpacity onPress={handleReviewTag} style={[styles.ins, { backgroundColor: theme.textColor1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]}>
+                                      <Image
+                                          style={{ height: 20, width: 20, resizeMode: 'contain', tintColor: theme.textColor }}
+                                          source={require("../images/tag.png")}
+                                      />
+                                  </TouchableOpacity>
+                                  {/* <TouchableOpacity style={[styles.ins, { backgroundColor: theme.textColor1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]} onPress={() => navigation.navigate("Instruct")}>
+                                      <Image
+                                          style={{ height: 20, width: 20, resizeMode: 'contain', tintColor: theme.textColor }}
+                                          source={require("../images/info.png")}
+                                      />
+                                  </TouchableOpacity>  */}
+
+                <TouchableOpacity
+                  style={{ marginLeft: 15, marginTop: 5 }}
+                  onPress={ClearResponseData}
+                >
+                  <Text
+                    style={[
+                      styles.ans,
+                      {
+                        color: "red",
+                        fontWeight: "700",
+                        textDecorationLine: "underline",
+                      },
+                    ]}
+                  >
+                    Clear Response
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </LinearGradient>
+        </View>
+      </ScrollView>
+
+      <View>
+        <View
+          style={{
+            marginTop: 10,
+            flexDirection: "row",
+            justifyContent: "center",
+            marginBottom: 15,
+            paddingHorizontal: 10,
+          }}
+        >
+          <TouchableOpacity
+            style={{
+              height: 36,
+              borderWidth: 1,
+              borderColor: theme.textColor,
+              borderRadius: 16,
+              justifyContent: "center",
+              alignItems: "center",
+              marginLeft: 15,
+            }}
+            onPress={() => {
+              handleSkipQuestion();
+              setSelectedOption(null);
+            }}
+          >
+            <Text
+              style={[
+                styles.ans,
+                { color: theme.textColor, fontWeight: "700" },
+              ]}
+            >
+              Skip Question
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{
+              height: 36,
+              borderWidth: 1,
+              borderColor: theme.textColor,
+              borderRadius: 16,
+              justifyContent: "center",
+              alignItems: "center",
+              marginLeft: 10,
+            }}
+            onPress={() => {
+              if (answeredQuestions[selectedNumber]) {
+                  moveToNextQuestion();
+                  return;
+              }
+        
+              handleSelectAndNext(selectedNumber);
+              if (exams[selectedNumber - 1]?.qtype !== 8) {  
+                  handleAnswerSelect(selectedNumber, selectedOption); 
+                  setSelectedOption(null); 
+              }
+              setTextInputAnswer('');
+          }}
+          >
+            <Text
+              style={[
+                styles.ans,
+                { color: theme.textColor, fontWeight: "700" },
+              ]}
+            >
+              Submit Selection
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleSubmitTest}>
+            <LinearGradient
+              colors={theme.background}
               style={{
                 height: 36,
-                borderWidth: 1,
-                borderColor: theme.textColor,
                 borderRadius: 16,
                 justifyContent: "center",
                 alignItems: "center",
                 marginLeft: 10,
               }}
-             onPress={() => {
-                  handleSelectAndNext(selectedNumber);
-                  // setSelectedOption(textInputAnswer)
-                  setTextInputAnswer('')
-                } }
+              start={{ x: 0, y: 1 }}
+              end={{ x: 1, y: 1 }}
             >
               <Text
                 style={[
                   styles.ans,
-                  { color: theme.textColor, fontWeight: "700" },
+                  { color: theme.textColor1, fontWeight: "700" },
                 ]}
               >
-                Submit Selection
+                Submit Test
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+        {/* <View style={{ marginTop: 10, flexDirection: 'row', justifyContent: 'center',marginBottom:5}}>
+                
+                  
+                  </View> */}
+      </View>
+    </View>
+
+    {/* Submit Test Modal */}
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={submitModalVisible}
+      onRequestClose={() => {
+        setSubmitModalVisible(!submitModalVisible);
+      }}
+    >
+      <View style={styles.centeredView}>
+        {/* <TouchableOpacity>
+                      <Image
+                          style={{ tintColor: theme.textColor, marginRight: 10, height: 45, width: 45, left: 150, top: 40, position: 'absolute' }}
+                          source={require("../images/delete.png")}
+                      />
+                  </TouchableOpacity> */}
+        <View style={[styles.modalView, { backgroundColor: theme.bmc1 }]}>
+          <Text style={[styles.modalText, { color: theme.textColor }]}>
+            Do you want to submit the exam.
+          </Text>
+          <View style={{ flexDirection: "row", width: "100%" }}>
+            <TouchableOpacity
+              style={[
+                styles.button,
+                { backgroundColor: theme.background[0] },
+              ]}
+              onPress={() => {
+                setSubmitModalVisible(false);
+                submitTestResult();
+                setIsFirstLoad(true);
+              }}
+            >
+              <Text style={[styles.textStyle, { color: theme.textColor1 }]}>
+                Ok
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleSubmitTest}>
-              <LinearGradient
-                colors={theme.background}
-                style={{
-                  height: 36,
-                  borderRadius: 16,
-                  justifyContent: "center",
-                  alignItems: "center",
-                  marginLeft: 10,
-                }}
-                start={{ x: 0, y: 1 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Text
-                  style={[
-                    styles.ans,
-                    { color: theme.textColor1, fontWeight: "700" },
-                  ]}
-                >
-                  Submit Test
-                </Text>
-              </LinearGradient>
+            <TouchableOpacity
+              style={[
+                styles.button,
+                { backgroundColor: theme.background[1] },
+              ]}
+              // onPress={() => {
+              //     setSubmitModalVisible(false);
+              //     navigation.navigate("Signup");
+              // }}
+              onPress={() => setSubmitModalVisible(false)}
+            >
+              <Text style={[styles.textStyle, { color: theme.textColor1 }]}>
+                Cancel
+              </Text>
             </TouchableOpacity>
           </View>
-          {/* <View style={{ marginTop: 10, flexDirection: 'row', justifyContent: 'center',marginBottom:5}}>
-                  
-                    
-                    </View> */}
+          {/* <TouchableOpacity
+                          style={[styles.button, { backgroundColor: theme.gray, marginTop: 10 }]}
+                          onPress={() => setSubmitModalVisible(false)}
+                      >
+                          <Text style={[styles.textStyle, { color: '#FFF' }]}>Cancel</Text>
+                      </TouchableOpacity> */}
         </View>
       </View>
-
-      {/* Submit Test Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={submitModalVisible}
-        onRequestClose={() => {
-          setSubmitModalVisible(!submitModalVisible);
-        }}
-      >
-        <View style={styles.centeredView}>
-          {/* <TouchableOpacity>
-                        <Image
-                            style={{ tintColor: theme.textColor, marginRight: 10, height: 45, width: 45, left: 150, top: 40, position: 'absolute' }}
-                            source={require("../images/delete.png")}
-                        />
-                    </TouchableOpacity> */}
-          <View style={[styles.modalView, { backgroundColor: theme.bmc1 }]}>
-            <Text style={[styles.modalText, { color: theme.textColor }]}>
-              Do you want to submit the exam.
-            </Text>
-            <View style={{ flexDirection: "row", width: "100%" }}>
-              <TouchableOpacity
-                style={[
-                  styles.button,
-                  { backgroundColor: theme.background[0] },
-                ]}
-                onPress={() => {
-                  setSubmitModalVisible(false);
-                  submitTestResult();
-                  setIsFirstLoad(true);
-                }}
-              >
-                <Text style={[styles.textStyle, { color: theme.textColor1 }]}>
-                  Ok
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.button,
-                  { backgroundColor: theme.background[1] },
-                ]}
-                // onPress={() => {
-                //     setSubmitModalVisible(false);
-                //     navigation.navigate("Signup");
-                // }}
-                onPress={() => setSubmitModalVisible(false)}
-              >
-                <Text style={[styles.textStyle, { color: theme.textColor1 }]}>
-                  Cancel
-                </Text>
-              </TouchableOpacity>
-            </View>
-            {/* <TouchableOpacity
-                            style={[styles.button, { backgroundColor: theme.gray, marginTop: 10 }]}
-                            onPress={() => setSubmitModalVisible(false)}
-                        >
-                            <Text style={[styles.textStyle, { color: '#FFF' }]}>Cancel</Text>
-                        </TouchableOpacity> */}
-          </View>
-        </View>
-      </Modal>
-    </LinearGradient>
-  );
+    </Modal>
+  </LinearGradient>
+);
 }
 
 export default StartExam

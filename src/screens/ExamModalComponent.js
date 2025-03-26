@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { View, Text, Modal, StyleSheet, ActivityIndicator } from "react-native";
 import { Button, IconButton } from "react-native-paper";
 import DropDownPicker from "react-native-dropdown-picker";
-import { getExamType, addExam } from "../core/CommonService";
+import { getExamType, addExams } from "../core/CommonService";
 
 const ExamModalComponent = ({ show, setShow, studentUserId }) => {
   const [state, setState] = useState({
@@ -15,7 +15,7 @@ const ExamModalComponent = ({ show, setShow, studentUserId }) => {
   const [loading, setLoading] = useState(false);
   const [examsData, setExamsData] = useState([]);
 
-console.log(examsData, "errfir")
+// console.log(examsData, "errfir")
   // Dropdown states
   const [openExam, setOpenExam] = useState(false);
   const [openYear, setOpenYear] = useState(false);
@@ -67,7 +67,7 @@ console.log(examsData, "errfir")
             target_year: parseInt(selectedYear)
         }
 
-        const response  = addExam(payload)
+        const response  = addExams(payload)
         console.log(response)
         if(response) {
             setShow(false)

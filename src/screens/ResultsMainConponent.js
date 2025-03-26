@@ -114,7 +114,9 @@ const ResultMainComponent = () => {
       ) : (
         <ScrollView contentContainerStyle={{ padding: 20 }}>
           {loading ? (
+            <View style={styles.loadingCoatiner}>
             <ActivityIndicator size="large" color="#2575FC" />
+            </View>
           ) : (
             <>
             <View><TouchableOpacity onPress={handleResultBack}><Image style={{height: 25, width: 25}} source={require("../images/arrow.png")}/></TouchableOpacity></View>
@@ -169,6 +171,13 @@ const styles = {
     borderRadius: 5,
     padding: 5,
     marginRight: 10,
+  },
+  loadingCoatiner: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 500,
+    justifyContent: 'center',
   },
   backArrow: {
     fontSize: 20,
