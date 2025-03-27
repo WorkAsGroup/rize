@@ -10,8 +10,10 @@ import {
     Image,
 } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
+import RenderHtml from "react-native-render-html";
 import { darkTheme, lightTheme } from "../theme/theme";
 import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Text as SvgText } from "react-native-svg";
+var striptags = require("striptags");
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
@@ -20,8 +22,33 @@ export default function Instruction({ navigation,route }) {
     const colorScheme = useColorScheme();
     const theme = colorScheme === "dark" ? darkTheme : lightTheme;
     const obj = route?.params?.obj;
+    const examIdData = route?.params?.exam_id_Data
     console.log("mocktest1", obj );
 
+
+      const sanitizeHtml = (text) => {
+        if (text.length > 0) {
+          text = text.replace("&nbsp;", " ");
+          text = text.replace("<title>Hello, world!</title>", "");
+          text = text.replace(
+            `p{
+    padding:10px auto;
+    }`,
+            ""
+          );
+          text = striptags(text, "<p><img>");
+        }
+    
+        return { html: text };
+      };
+    
+
+    const renderersProps = {
+        img: {
+          initialDimensions: { width: 20, height: 20 },
+          enableExperimentalPercentWidth: true,
+        },
+      };
 
     return (
         <LinearGradient
@@ -39,7 +66,7 @@ export default function Instruction({ navigation,route }) {
                         />
                     </TouchableOpacity>
 
-                    <View style={{ flexDirection: 'row', alignItems: "flex-end", width: windowWidth / 1.12, justifyContent: 'flex-end', paddingEnd: 15 }}>
+                    {/* <View style={{ flexDirection: 'row', alignItems: "flex-end", width: windowWidth / 1.12, justifyContent: 'flex-end', paddingEnd: 15 }}>
                         <Image
                             style={{ height: 36, width: 36 }}
                             source={require("../images/bell.png")}
@@ -52,7 +79,7 @@ export default function Instruction({ navigation,route }) {
                             style={{ height: 36, width: 36, marginLeft: 10 }}
                             source={require("../images/option.png")}
                         />
-                    </View>
+                    </View> */}
                 </View>
                 <ScrollView style={{marginBottom:10}}>
                     <View style={[styles.mockTestWrapper, { borderColor: theme.tx1 }]}>
@@ -63,218 +90,139 @@ export default function Instruction({ navigation,route }) {
                             end={{ x: 1, y: 1 }}
                             style={styles.mockTestContainer}
                         >
-                            <View style={{ marginTop: 10 }}>
-                                <Text style={[styles.feature, { color: theme.textColor, marginBottom: 5, paddingStart: 10 }]}>Free Mock test</Text>
+                           
+   <View style={{ marginTop: 10 }}>
+                <Svg height="50" width={windowWidth * 0.9}>
+                  <Defs>
+                    <SvgLinearGradient id="grad" x1="0" y1="1" x2="1" y2="1">
+                      <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
+                      <Stop offset="1" stopColor={theme.bg2} stopOpacity="1" />
+                    </SvgLinearGradient>
+                  </Defs>
+                  <SvgText
+                    fill="url(#grad)"
+                    fontSize="24"
+                    fontWeight="bold"
+                    x="60"
+                    y="20"
+                    textAnchor="middle"
+                    alignmentBaseline="middle"
+                    fontFamily="CustomFont"
+                  >
+                    {" "}
+                    Instructions
+                  </SvgText>
+                </Svg>
 
-                                <Svg height="50" width={windowWidth * 0.9}>
-                                    <Defs>
-                                        <SvgLinearGradient id="grad" x1="0" y1="1" x2="1" y2="1">
-                                            <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
-                                            <Stop offset="1" stopColor={theme.bg2} stopOpacity="1" />
-                                        </SvgLinearGradient>
-                                    </Defs>
-                                    <SvgText
-                                        fill="url(#grad)"
-                                        fontSize="24"
-                                        fontWeight="bold"
-                                        x="60"
-                                        y="20"
-                                        textAnchor="middle"
-                                        alignmentBaseline="middle"
-                                        fontFamily="CustomFont"
+                <View style={{ marginTop: -20 }}>
+                  <View style={{ flexDirection: "row", padding: 10 }}>
+                    <Text
+                      style={{
+                        height: 10,
+                        width: 10,
+                        backgroundColor: theme.textColor,
+                        borderRadius: 10,
+                        borderWidth: 1,
+                        marginRight: 5,
+                        marginTop: 3,
+                      }}
+                    />
+                    <Text
+                      style={{
+                        color: theme.textColor,
+                        marginTop: -2,
+                        width: "85%",
+                        fontWeight: "700",
+                        fontSize: 16,
+                        marginLeft: 3,
+                      }}
+                    >
+                      for the "{obj.examName}"
+                    </Text>
+                  </View>
+       
+                  <View>
+                    <View style={styles.container1}>
+                      {/* Total Questions Card */}
+                      <View style={styles.frameBox}>
+                        <LinearGradient
+                          colors={[
+                            "rgb(180, 101, 218)",
+                            "rgb(207, 108, 201)",
+                            "rgb(238, 96, 156)",
+                            "rgb(238, 96, 156)",
+                          ]}
+                          start={{ x: 0, y: 1 }}
+                          end={{ x: 1, y: 1 }}
+                          style={styles.frameIconBox}
+                        >
+                          <Image
+                            source={require("../images/question-mark.png")}
+                            style={{ height: 20, width: 20 }}
+                          />
+                        </LinearGradient>
+                        <View style={styles.textContainer}>
+                          <Text
+                            style={[
+                              styles.frameDesc,
+                              { fontWeight: "600", fontSize: 14 },
+                            ]}
+                          >
+                            {obj?.no_of_ques}
+                          </Text>
+                          <Text style={[styles.frameDesc, { fontSize: 12 }]}>
+                            Total Questions
+                          </Text>
+                        </View>
+                      </View>
 
-                                    >
-                                        Syllabus
-                                    </SvgText>
-                                </Svg>
-
-
-                                <View style={{ marginTop: -20 }}>
-                                    <View style={{ flexDirection: 'row', padding: 10 }}>
-                                        <Text
-                                            style={{ height: 10, width: 10, backgroundColor: theme.textColor, borderRadius: 10, borderWidth: 1, marginRight: 5, marginTop: 3 }}
-
-                                        />
-                                        <Text style={{ color: theme.textColor, marginTop: -2, width: "85%", fontWeight: '400', fontSize: 16, marginLeft: 3 }}>
-                                            Total 11th & 12th class syllabus as per latest notification with 70%.
-                                        </Text>
-                                    </View>
-
-
-                                </View>
-
-                                <Svg height="40" width={windowWidth * 0.9}>
-                                    <Defs>
-                                        <SvgLinearGradient id="grad" x1="0" y1="1" x2="1" y2="1">
-                                            <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
-                                            <Stop offset="1" stopColor={theme.bg2} stopOpacity="1" />
-                                        </SvgLinearGradient>
-                                    </Defs>
-                                    <SvgText
-                                        fill="url(#grad)"
-                                        fontSize="24"
-                                        fontWeight="bold"
-                                        x="150"
-                                        y="20"
-                                        textAnchor="middle"
-                                        alignmentBaseline="middle"
-                                        fontFamily="CustomFont"
-
-                                    >
-                                        Please read the following
-                                    </SvgText>
-                                </Svg>
-
-                                <Svg height="40" width={windowWidth * 0.9} marginTop={-10}>
-                                    <Defs>
-                                        <SvgLinearGradient id="grad" x1="0" y1="1" x2="1" y2="1">
-                                            <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
-                                            <Stop offset="1" stopColor={theme.bg2} stopOpacity="1" />
-                                        </SvgLinearGradient>
-                                    </Defs>
-                                    <SvgText
-                                        fill="url(#grad)"
-                                        fontSize="24"
-                                        fontWeight="bold"
-                                        x="130"
-                                        y="20"
-                                        textAnchor="middle"
-                                        alignmentBaseline="middle"
-                                        fontFamily="CustomFont"
-
-                                    >
-                                        instructions carefully
-                                    </SvgText>
-                                </Svg>
-
-                                <Svg height="50" width={windowWidth * 0.9}>
-                                    <Defs>
-                                        <SvgLinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
-                                            <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
-                                            <Stop offset="1" stopColor={theme.bg2} stopOpacity="1" />
-                                        </SvgLinearGradient>
-                                    </Defs>
-                                    <SvgText
-                                        fill="url(#grad)"
-                                        fontSize="16"
-                                        fontWeight="bold"
-                                        x="50"
-                                        y="20"
-                                        textAnchor="middle"
-                                        alignmentBaseline="middle"
-                                    >
-                                        For MCQs -
-                                    </SvgText>
-                                </Svg>
-                                <View style={{ marginTop: -20 }}>
-                                    <View style={{ flexDirection: 'row', padding: 10 }}>
-                                        <Text
-                                            style={{ height: 10, width: 10, backgroundColor: theme.textColor, borderRadius: 10, borderWidth: 1, marginRight: 5, marginTop: 3 }}
-
-                                        />
-                                        <Text style={{ color: theme.textColor, marginTop: -2, width: "85%", fontWeight: '400', fontSize: 16, marginLeft: 3 }}>
-                                            1 Mark will be awarded for every correct answer and 0 Mark will be deducted for every incorrect answer
-                                        </Text>
-                                    </View>
-
-
-                                </View>
-
-                                <Svg height="50" width={windowWidth * 0.9}>
-                                    <Defs>
-                                        <SvgLinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
-                                            <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
-                                            <Stop offset="1" stopColor={theme.bg2} stopOpacity="1" />
-                                        </SvgLinearGradient>
-                                    </Defs>
-                                    <SvgText
-                                        fill="url(#grad)"
-                                        fontSize="16"
-                                        fontWeight="bold"
-                                        x="105"
-                                        y="20"
-                                        textAnchor="middle"
-                                        alignmentBaseline="middle"
-                                    >
-                                        Do's while taking the test
-                                    </SvgText>
-                                </Svg>
-                                <View style={{ marginTop: -20 }}>
-                                    <View style={{ flexDirection: 'row', padding: 10 }}>
-                                        <Text
-                                            style={{ height: 10, width: 10, backgroundColor: theme.textColor, borderRadius: 10, borderWidth: 1, marginRight: 5, marginTop: 3 }}
-
-                                        />
-                                        <Text style={{ color: theme.textColor, marginTop: -2, width: "85%", fontWeight: '400', fontSize: 16, marginLeft: 3 }}>
-                                            Make sure you begin the test with a plan. Start with your strongest section.                                        </Text>
-                                    </View>
-                                    <View style={{ flexDirection: 'row', paddingStart: 10, }}>
-                                        <Text
-                                            style={{ height: 10, width: 10, backgroundColor: theme.textColor, borderRadius: 10, borderWidth: 1, marginRight: 5, marginTop: 3 }}
-
-                                        />
-                                        <Text style={{ color: theme.textColor, marginTop: -2, width: "85%", fontWeight: '400', fontSize: 16, marginLeft: 3 }}>
-                                            Go through the entire paper and attempt the questions you know first.</Text>                                    </View>
-                                    <View style={{ flexDirection: 'row', paddingStart: 10, marginTop: 10 }}>
-                                        <Text
-                                            style={{ height: 10, width: 10, backgroundColor: theme.textColor, borderRadius: 10, borderWidth: 1, marginRight: 5, marginTop: 3 }}
-
-                                        />
-                                        <Text style={{ color: theme.textColor, marginTop: -2, width: "85%", fontWeight: '400', fontSize: 16, marginLeft: 3 }}>
-                                            Make sure you save at least 20-30 mins in the end to revisit your answers in an online test, you can change your answer at any time.                                       </Text>
-                                    </View>
-
-                                </View>
-
-                            </View>
-
-                            <Svg height="50" width={windowWidth * 0.9}>
-                                <Defs>
-                                    <SvgLinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
-                                        <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
-                                        <Stop offset="1" stopColor={theme.bg2} stopOpacity="1" />
-                                    </SvgLinearGradient>
-                                </Defs>
-                                <SvgText
-                                    fill="url(#grad)"
-                                    fontSize="16"
-                                    fontWeight="bold"
-                                    x="125"
-                                    y="20"
-                                    textAnchor="middle"
-                                    alignmentBaseline="middle"
-                                >
-                                    Don'ts while taking the test
-                                </SvgText>
-                            </Svg>
-                            <View style={{ marginTop: -20 }}>
-                                <View style={{ flexDirection: 'row', padding: 10 }}>
-                                    <Text
-                                        style={{ height: 10, width: 10, backgroundColor: theme.textColor, borderRadius: 10, borderWidth: 1, marginRight: 5, marginTop: 3 }}
-
-                                    />
-                                    <Text style={{ color: theme.textColor, marginTop: -2, width: "85%", fontWeight: '400', fontSize: 16, marginLeft: 3 }}>
-                                        Don't change the date and time of the device in between the test otherwise ,it will get auto submitted.                                        </Text>
-                                </View>
-                                <View style={{ flexDirection: 'row', paddingStart: 10, }}>
-                                    <Text
-                                        style={{ height: 10, width: 10, backgroundColor: theme.textColor, borderRadius: 10, borderWidth: 1, marginRight: 5, marginTop: 3 }}
-
-                                    />
-                                    <Text style={{ color: theme.textColor, marginTop: -2, width: "85%", fontWeight: '400', fontSize: 16, marginLeft: 3 }}>
-                                        Don't switch to web or app for the same test once you started in the current app.</Text>                                    </View>
-                                <View style={{ flexDirection: 'row', paddingStart: 10, marginTop: 10 }}>
-                                    <Text
-                                        style={{ height: 10, width: 10, backgroundColor: theme.textColor, borderRadius: 10, borderWidth: 1, marginRight: 5, marginTop: 3 }}
-
-                                    />
-                                    <Text style={{ color: theme.textColor, marginTop: -2, width: "85%", fontWeight: '400', fontSize: 16, marginLeft: 3 }}>
-                                        Don't submit the test before time. Try to use the entire duration of the test wisely.                                       </Text>
-                                </View>
-
-
-                            </View>
-
+                      {/* Total Duration Card */}
+                      <View style={styles.frameBox}>
+                        <LinearGradient
+                          colors={[
+                            "rgb(180, 101, 218)",
+                            "rgb(207, 108, 201)",
+                            "rgb(238, 96, 156)",
+                            "rgb(238, 96, 156)",
+                          ]}
+                          start={{ x: 0, y: 1 }}
+                          end={{ x: 1, y: 1 }}
+                          style={styles.frameIconBox}
+                        >
+                          <Image
+                            source={require("../images/time.png")}
+                            style={{ height: 20, width: 20 }}
+                          />
+                        </LinearGradient>
+                        <View style={styles.textContainer}>
+                          <Text
+                            style={[
+                              styles.frameDesc,
+                              { fontWeight: "600", fontSize: 14 },
+                            ]}
+                          >
+                            {obj?.duration ? obj?.duration : "-"}{" "}
+                          </Text>
+                          <Text style={[styles.frameDesc, { fontSize: 12 }]}>
+                            Total duration
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+                   <RenderHtml
+                                  source={sanitizeHtml(
+                                    obj.instructions || "<p>No instructions provided.</p>"
+                                  )}
+                                  renderersProps={renderersProps}
+                                  // baseFontStyle={baseFontStyle}
+                                  // {...DEFAULT_PROPS}
+                                  contentWidth={windowWidth}
+                                />
+               
+             
+              </View>
                             <Svg height="50" width={windowWidth * 0.9}>
                                 <Defs>
                                     <SvgLinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
@@ -338,7 +286,7 @@ export default function Instruction({ navigation,route }) {
                             </View>
 
                             <TouchableOpacity activeOpacity={0.8} onPress={() => {
-                                navigation.navigate("MockTest",{obj : obj})
+                                navigation.navigate("MockTest",{obj : obj, examIdData: examIdData})
                             }}> 
                                 <LinearGradient
                                     colors={[theme.tx1, theme.tx2]}
@@ -469,5 +417,44 @@ const styles = StyleSheet.create({
         width: "100%",
         padding: 8,
     },
-
+    container1: {
+        flexDirection: "row",
+        justifyContent: "center",
+    
+        paddingHorizontal: 10,
+        paddingVertical: 15,
+      },
+      frameBox: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#F3F6FA",
+        borderRadius: 10,
+        padding: 12,
+        marginHorizontal: 8,
+        minWidth: 140,
+        maxWidth: 180,
+        elevation: 2,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+      },
+      frameIconBox: {
+        backgroundColor: "#2575FC",
+        borderRadius: 50,
+        width: 40,
+        height: 40,
+        justifyContent: "center",
+        alignItems: "center",
+        marginRight: 10,
+      },
+      textContainer: {
+        flexDirection: "column",
+        alignItems: "flex-start",
+      },
+      frameDesc: {
+        color: "#000",
+        paddingVertical: 1,
+        fontWeight: "400",
+      },
 });

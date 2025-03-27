@@ -37,6 +37,62 @@ if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
   file(TOUCH_NOCREATE "/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/CMakeFiles/cmake.verify_globs")
 endif()
 
+# react_codegen_SRCS at /Users/akki/Documents/GitHub/rize/node_modules/@react-native-google-signin/google-signin/android/build/generated/source/codegen/jni/CMakeLists.txt:9 (file)
+file(GLOB NEW_GLOB LIST_DIRECTORIES true "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-google-signin/google-signin/android/build/generated/source/codegen/jni/*.cpp")
+set(OLD_GLOB
+  "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-google-signin/google-signin/android/build/generated/source/codegen/jni/RNGoogleSignInCGen-generated.cpp"
+  )
+if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
+  message("-- GLOB mismatch!")
+  file(TOUCH_NOCREATE "/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/CMakeFiles/cmake.verify_globs")
+endif()
+
+# react_codegen_SRCS at /Users/akki/Documents/GitHub/rize/node_modules/@react-native-google-signin/google-signin/android/build/generated/source/codegen/jni/CMakeLists.txt:9 (file)
+file(GLOB NEW_GLOB LIST_DIRECTORIES true "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-google-signin/google-signin/android/build/generated/source/codegen/jni/react/renderer/components/RNGoogleSignInCGen/*.cpp")
+set(OLD_GLOB
+  "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-google-signin/google-signin/android/build/generated/source/codegen/jni/react/renderer/components/RNGoogleSignInCGen/ComponentDescriptors.cpp"
+  "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-google-signin/google-signin/android/build/generated/source/codegen/jni/react/renderer/components/RNGoogleSignInCGen/EventEmitters.cpp"
+  "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-google-signin/google-signin/android/build/generated/source/codegen/jni/react/renderer/components/RNGoogleSignInCGen/Props.cpp"
+  "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-google-signin/google-signin/android/build/generated/source/codegen/jni/react/renderer/components/RNGoogleSignInCGen/RNGoogleSignInCGenJSI-generated.cpp"
+  "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-google-signin/google-signin/android/build/generated/source/codegen/jni/react/renderer/components/RNGoogleSignInCGen/ShadowNodes.cpp"
+  "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-google-signin/google-signin/android/build/generated/source/codegen/jni/react/renderer/components/RNGoogleSignInCGen/States.cpp"
+  )
+if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
+  message("-- GLOB mismatch!")
+  file(TOUCH_NOCREATE "/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/CMakeFiles/cmake.verify_globs")
+endif()
+
+# LIB_CUSTOM_SRCS at /Users/akki/Documents/GitHub/rize/node_modules/@react-native-picker/picker/android/src/main/jni/CMakeLists.txt:20 (file)
+file(GLOB NEW_GLOB LIST_DIRECTORIES true "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-picker/picker/android/src/main/jni/*.cpp")
+set(OLD_GLOB
+  "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-picker/picker/android/src/main/jni/RNCAndroidDialogPickerMeasurementsManager.cpp"
+  "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-picker/picker/android/src/main/jni/RNCAndroidDialogPickerShadowNode.cpp"
+  "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-picker/picker/android/src/main/jni/RNCAndroidDialogPickerState.cpp"
+  "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-picker/picker/android/src/main/jni/RNCAndroidDropdownPickerMeasurementsManager.cpp"
+  "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-picker/picker/android/src/main/jni/RNCAndroidDropdownPickerShadowNode.cpp"
+  "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-picker/picker/android/src/main/jni/RNCAndroidDropdownPickerState.cpp"
+  "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-picker/picker/android/src/main/jni/rnpicker.cpp"
+  )
+if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
+  message("-- GLOB mismatch!")
+  file(TOUCH_NOCREATE "/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/CMakeFiles/cmake.verify_globs")
+endif()
+
+# LIB_CODEGEN_SRCS at /Users/akki/Documents/GitHub/rize/node_modules/@react-native-picker/picker/android/src/main/jni/CMakeLists.txt:21 (file)
+file(GLOB NEW_GLOB LIST_DIRECTORIES true "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-picker/picker/android/src/main/jni/../../../build/generated/source/codegen/jni/react/renderer/components/rnpicker/*.cpp")
+set(OLD_GLOB
+  "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-picker/picker/android/src/main/jni/../../../build/generated/source/codegen/jni/react/renderer/components/rnpicker/ComponentDescriptors.cpp"
+  "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-picker/picker/android/src/main/jni/../../../build/generated/source/codegen/jni/react/renderer/components/rnpicker/EventEmitters.cpp"
+  "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-picker/picker/android/src/main/jni/../../../build/generated/source/codegen/jni/react/renderer/components/rnpicker/Props.cpp"
+  "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-picker/picker/android/src/main/jni/../../../build/generated/source/codegen/jni/react/renderer/components/rnpicker/ShadowNodes.cpp"
+  "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-picker/picker/android/src/main/jni/../../../build/generated/source/codegen/jni/react/renderer/components/rnpicker/States.cpp"
+  "/Users/akki/Documents/GitHub/rize/node_modules/@react-native-picker/picker/android/src/main/jni/../../../build/generated/source/codegen/jni/react/renderer/components/rnpicker/rnpickerJSI-generated.cpp"
+  )
+if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
+  message("-- GLOB mismatch!")
+  file(TOUCH_NOCREATE "/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/CMakeFiles/cmake.verify_globs")
+endif()
+
 # react_codegen_SRCS at /Users/akki/Documents/GitHub/rize/node_modules/react-native-gesture-handler/android/build/generated/source/codegen/jni/CMakeLists.txt:9 (file)
 file(GLOB NEW_GLOB LIST_DIRECTORIES true "/Users/akki/Documents/GitHub/rize/node_modules/react-native-gesture-handler/android/build/generated/source/codegen/jni/*.cpp")
 set(OLD_GLOB
@@ -132,7 +188,7 @@ if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
   file(TOUCH_NOCREATE "/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/CMakeFiles/cmake.verify_globs")
 endif()
 
-# LIB_CUSTOM_SRCS at /Users/akki/Documents/GitHub/rize/node_modules/react-native-screens/android/src/main/jni/CMakeLists.txt:22 (file)
+# LIB_CUSTOM_SRCS at /Users/akki/Documents/GitHub/rize/node_modules/react-native-screens/android/src/main/jni/CMakeLists.txt:23 (file)
 file(GLOB NEW_GLOB LIST_DIRECTORIES true "/Users/akki/Documents/GitHub/rize/node_modules/react-native-screens/android/src/main/jni/*.cpp")
 set(OLD_GLOB
   "/Users/akki/Documents/GitHub/rize/node_modules/react-native-screens/android/src/main/jni/rnscreens.cpp"
@@ -142,7 +198,7 @@ if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
   file(TOUCH_NOCREATE "/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/CMakeFiles/cmake.verify_globs")
 endif()
 
-# LIB_CUSTOM_SRCS at /Users/akki/Documents/GitHub/rize/node_modules/react-native-screens/android/src/main/jni/CMakeLists.txt:22 (file)
+# LIB_CUSTOM_SRCS at /Users/akki/Documents/GitHub/rize/node_modules/react-native-screens/android/src/main/jni/CMakeLists.txt:23 (file)
 file(GLOB NEW_GLOB LIST_DIRECTORIES true "/Users/akki/Documents/GitHub/rize/node_modules/react-native-screens/android/src/main/jni/../../../../common/cpp/react/renderer/components/rnscreens/*.cpp")
 set(OLD_GLOB
   "/Users/akki/Documents/GitHub/rize/node_modules/react-native-screens/android/src/main/jni/../../../../common/cpp/react/renderer/components/rnscreens/RNSFullWindowOverlayShadowNode.cpp"
@@ -159,7 +215,7 @@ if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
   file(TOUCH_NOCREATE "/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/CMakeFiles/cmake.verify_globs")
 endif()
 
-# LIB_CUSTOM_SRCS at /Users/akki/Documents/GitHub/rize/node_modules/react-native-screens/android/src/main/jni/CMakeLists.txt:22 (file)
+# LIB_CUSTOM_SRCS at /Users/akki/Documents/GitHub/rize/node_modules/react-native-screens/android/src/main/jni/CMakeLists.txt:23 (file)
 file(GLOB NEW_GLOB LIST_DIRECTORIES true "/Users/akki/Documents/GitHub/rize/node_modules/react-native-screens/android/src/main/jni/../../../../common/cpp/react/renderer/components/rnscreens/utils/*.cpp")
 set(OLD_GLOB
   )
@@ -168,7 +224,7 @@ if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
   file(TOUCH_NOCREATE "/Users/akki/Documents/GitHub/rize/android/app/.cxx/Debug/06v20493/x86_64/CMakeFiles/cmake.verify_globs")
 endif()
 
-# LIB_CODEGEN_SRCS at /Users/akki/Documents/GitHub/rize/node_modules/react-native-screens/android/src/main/jni/CMakeLists.txt:23 (file)
+# LIB_CODEGEN_SRCS at /Users/akki/Documents/GitHub/rize/node_modules/react-native-screens/android/src/main/jni/CMakeLists.txt:24 (file)
 file(GLOB NEW_GLOB LIST_DIRECTORIES true "/Users/akki/Documents/GitHub/rize/node_modules/react-native-screens/android/src/main/jni/../../../build/generated/source/codegen/jni/react/renderer/components/rnscreens/*.cpp")
 set(OLD_GLOB
   "/Users/akki/Documents/GitHub/rize/node_modules/react-native-screens/android/src/main/jni/../../../build/generated/source/codegen/jni/react/renderer/components/rnscreens/ComponentDescriptors.cpp"

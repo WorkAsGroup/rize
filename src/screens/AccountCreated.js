@@ -9,27 +9,29 @@ import {
   useColorScheme,
   Dimensions,
   Image,
+  Alert,
 } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import Svg, { Path } from "react-native-svg";
 import { darkTheme, lightTheme } from "../theme/theme";
 import { getUpdatedEmail } from "../core/CommonService";
-import Toast from 'react-native-toast-message'; // Import Toast
+import Toast from 'react-native-toast-message'; 
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
 export default function AccountCreated({ navigation, route }) {
+  console.log(route?.params, "route")
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   const mobile = route?.params?.mobile;
   const studentId = route?.params?.studentId;
+  const data= route?.params?.from == "signUp" ? route?.params?.data : route?.params
   const scrollRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [email, setEmail] = useState(""); // State for email input
-  const [loading, setLoading] = useState(false); // State for loading indicator
+  const [email, setEmail] = useState(""); 
+  const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
-
   const accessOptions = [
     "Personalized dashboard",
     "Track your progress",
@@ -66,7 +68,7 @@ export default function AccountCreated({ navigation, route }) {
     return () => clearInterval(interval);
   }, [currentIndex, accessOptions.length]);
 
-
+console.log(data, "data")
   const submitEmail = async () => {
       if(validate()){
           setLoading(true);
@@ -78,13 +80,24 @@ export default function AccountCreated({ navigation, route }) {
               };
 
               const response = await getUpdatedEmail(data);
-              console.log("Response:", response);
-
+              console.log("Response:",data, response);
+              if (response.statusCode === 200) {
+                navigation.navigate("OTPScreen", { 
+                    mobile:  response.data?.mobile, 
+                    email: response.data?.email,
+                    studentId: response?.data?.student_user_id,
+                    from: "verification", 
+                });
+              }
               setLoading(false);
 
               if (response.statusCode === 200) {
+                const tkn = data?.token;
+                route.params.onChangeAuth(tkn);
                   showToast("Email updated successfully!", "success");
-                  navigation.navigate("Dashboard"); 
+                  setTimeout(() => {
+                    navigation.navigate("DashboardContent");
+                },1000)
               } else {
                   let errorMessage = "Failed to update email. Please try again.";
                   if (response.data && response.data.message) {
@@ -101,8 +114,15 @@ export default function AccountCreated({ navigation, route }) {
   };
 
   const skipEmail = () => {
-    // Navigate to dashboard
-    navigation.navigate("Dashboard"); 
+    const tkn = data?.token;
+    // Alert.alert(data);
+    if(tkn){
+      console.log(tkn, route.params, "cheking")
+      route.params.onChangeAuth(tkn);
+      console.log(tkn, "eerigneroin")
+      // navigation.navigate("DashboardContent");
+    }
+     
   };
 
     const showToast = (message, type = "default") => {
@@ -147,7 +167,7 @@ export default function AccountCreated({ navigation, route }) {
           ]}
         >
           <View style={{ top: -180, padding: 20 }}>
-            <Text style={[styles.welcomeText, { color: theme.textColor }]}>
+            <Text style={[styles.welcomeText, { color: theme.black }]}>
               Account created!
             </Text>
             <View style={{ justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
@@ -164,7 +184,7 @@ export default function AccountCreated({ navigation, route }) {
                 {
                   borderColor: errors.email ? theme.red : theme.inputBorder,
                   backgroundColor: "#fff",
-                  color:theme.textColor
+                  color:theme.black
                 },
               ]}
               placeholder="Email ID"
@@ -202,13 +222,18 @@ export default function AccountCreated({ navigation, route }) {
 
             {/* Footer Section */}
             <View style={styles.footer}>
-              <TouchableOpacity onPress={skipEmail}>
-                <Text
-                  style={[styles.newHereText, { color: theme.textColor, fontWeight: 'bold' }]}
-                >
-                  Skip and proceed to dashboard
-                </Text>
-              </TouchableOpacity>
+            
+                     <View style={{justifyContent:'center',alignItems:'center',marginBottom:120,marginTop:30}}>
+                     <TouchableOpacity style={{flexDirection:'row'}} onPress={skipEmail}>
+                     <Text style={[styles.skipText, { color: theme.white,textDecorationLine: "underline",fontSize:18,top:-3,left:-3 }]}>
+                            Skip
+                        </Text>
+                     <Text style={[styles.skipText, { color: theme.white }]}>
+                        and proceed to dashboard
+                        </Text>
+                     </TouchableOpacity>
+                  
+                     </View>
               <Text
                 style={[
                   styles.accessText,
@@ -289,6 +314,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     marginBottom: 20,
+    textAlign: "center",
+  },
+  skipText: {
+    fontSize: 15,
+    fontWeight: "300",
     textAlign: "center",
   },
   input: {

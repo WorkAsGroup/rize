@@ -15,7 +15,18 @@ import Svg, { Path } from "react-native-svg";
 import { darkTheme, lightTheme } from "../theme/theme";
 import { getSignUpDetails } from "../core/CommonService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Toast from 'react-native-toast-message'; // Import Toast
+import Toast from 'react-native-toast-message'; 
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+
+GoogleSignin.configure({
+	webClientId: "212625122753-o36nkar4vhepdof16e7ge3gmuaed2kio.apps.googleusercontent.com",
+});
+
+const GoogleLogin = async () => {
+	await GoogleSignin.hasPlayServices();
+	const userInfo = await GoogleSignin.signIn();
+	return userInfo;
+};
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
@@ -31,76 +42,160 @@ export default function Signup({ navigation }) {
     const [mobile, setMobile] = useState("");
     const [password, setPassword] = useState("");
     const [errors, setErrors] = useState({});
-    const [passwordVisible, setPasswordVisible] = useState(false); // New State
-
+    const [passwordVisible, setPasswordVisible] = useState(false); 
+    const [mobileOrEmail,setMobileOrEmail] = useState("mobile");
     const togglePasswordVisibility = () => {
         setPasswordVisible(!passwordVisible);
     };
+    const [email, setEmail] = useState("");
+
+    const handleMobileEmailToggle = () => {
+        setMobileOrEmail(mobileOrEmail === "mobile" ? "email" : "mobile");
+        if (mobileOrEmail === "mobile") {
+            setMobile("");
+        } else {
+            setEmail("");
+        }
+    };
+
+
+    const handleGoogleLogin = async () => {
+		setLoading(true);
+		try {
+			const response = await GoogleLogin();
+			const { idToken, user } = response;
+
+			if (idToken) {
+				const resp = await authAPI.validateToken({
+					token: idToken,
+					email: user.email,
+				});
+				await handlePostLoginData(resp.data);
+			}
+		} catch (apiError) {
+			setError(
+				apiError?.response?.data?.error?.message || 'Something went wrong'
+			);
+		} finally {
+			setLoading(false);
+		}
+	};
 
     const validate = () => {
-        let valid = true;
+        let isValid = true;
         let errors = {};
-
+    
         if (!name.trim()) {
             errors.name = "Name is required";
-            valid = false;
-        } else if (!/^[a-zA-Z ]+$/.test(name)) {
-            errors.name = "Name must contain only letters";
-            valid = false;
+            isValid = false;
         }
-
-        if (!mobile.trim()) {
-            errors.mobile = "Mobile number is required";
-            valid = false;
-        } else if (!/^\d{10}$/.test(mobile)) {
-            errors.mobile = "Mobile number must be 10 digits";
-            valid = false;
+    
+        if (mobileOrEmail === "mobile") {
+            if (!mobile.trim()) {
+                errors.mobile = "Mobile number is required";
+                isValid = false;
+            } else if (!/^[6-9]{1}[0-9]{9}$/.test(mobile)) {
+                errors.mobile = "Invalid mobile number";
+                isValid = false;
+            }
+        } else { 
+            if (!email.trim()) {
+                errors.email = "Email is required";
+                isValid = false;
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { // Basic email validation
+                errors.email = "Invalid email address";
+                isValid = false;
+            }
         }
-
+    
+    
+    
         if (!password.trim()) {
             errors.password = "Password is required";
-        } else if (password.length < 6) {
-            errors.password = "Password must be at least 6 characters";
-            valid = false;
+            isValid = false;
+        } else if (password.length < 8) {
+            errors.password = "Password must be at least 8 characters";
+            isValid = false;
         }
 
-        setErrors(errors);
-        return valid;
+        if (Object.keys(errors).length === 0 && !name.trim() && !mobile.trim() && !email.trim() && !password.trim()) {
+            showToastError("Please enter your signup details.");
+            isValid = false;
+        }
+    
+        return { isValid, errors }; 
     };
 
     const handleSignup = async () => {
-      const data = {
-          "name": name,
-          "mobile": mobile,
-          "email": "",
-          "password": password
-      }
-      if (validate()) {
-          const response = await getSignUpDetails(data);
-          console.log("Signup API Response:", response); 
+        let mobileValue = mobile;
+        let emailValue = email;
 
-          if (response.statusCode === 201) {
-              navigation.navigate("OTPScreen",{"mobile":mobile,"studentId":response?.data?.student_user_id});
-              showToast("OTP Sent Successfully")
-          } else if (response.statusCode === 409) {
-             showToast("User already exists.");
-          } else {
-              let errorMessage = "Signup failed. Please try again.";
-              if (response.data && response.data.message) {
-                  errorMessage = response.data.message; 
-              } else if (typeof response.data === 'string') {
-                  errorMessage = response.data; 
-              }
-              showToast(errorMessage);
-          }
-      }
-  };
+        if (mobileOrEmail === "email") {
+            mobileValue = "";
+        } else {
+            emailValue = "";
+        }
+        const { isValid, errors } = validate();
+
+        if (!isValid) {
+            showToastError(Object.values(errors).join('\n'));
+            return; 
+        }
+        if (!check) {
+            showToast("Please agree to the privacy policy and terms of service.")
+            return;
+        }
+
+        const data = {
+            name: name,
+            mobile: mobileValue,
+            email: emailValue,
+            password: password,
+        };
+    
+    
+        try {
+           
+
+            const response = await getSignUpDetails(data);
+            console.log("Signup API Response:", response.statusCode);
+    
+            if (response.statusCode === 201) {
+                navigation.navigate("OTPScreen", { 
+                    mobile: mobileValue || emailValue, 
+                    studentId: response?.data?.student_user_id,
+                    from: "signUp",
+                });
+                showToast("OTP Sent Successfully");
+            } else if (response.statusCode === 409) {
+                const existingUserIdentifier = mobileValue ? mobileValue: emailValue;
+    
+                // navigation.navigate("OTPScreen", { 
+                //     mobile: existingUserIdentifier, 
+                //     studentId: response?.data?.student_user_id 
+                // });
+                showToast("User already exists.");
+    
+            } else {
+                let errorMessage = "Signup failed. Please try again.";
+                if (response.data && response.data.message) {
+                    errorMessage = response.data.message;
+                } else if (typeof response.data === 'string') {
+                    errorMessage = response.data;
+                }
+                showToastError(errorMessage);
+            }
+        } catch (error) {
+            console.error("Signup API Error:", error); 
+            showToastError("Something went wrong. Please try again later."); 
+        }
+    
+    };
 
     const showToast = (message) => {
       Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: message,
+        type: 'info',
+        text1: message,
         position: 'top',
         visibilityTime: 4000,
         autoHide: true,
@@ -108,6 +203,18 @@ export default function Signup({ navigation }) {
         bottomOffset: 40,
       });
     };
+
+    const showToastError = (message) => {
+        Toast.show({
+          type: 'error',
+          text1: message,
+          position: 'top',
+          visibilityTime: 4000,
+          autoHide: true,
+          topOffset: 30,
+          bottomOffset: 40,
+        });
+      };
 
     const accessOptions = [
         "Personalized dashboard",
@@ -177,8 +284,8 @@ export default function Signup({ navigation }) {
                             placeholderTextColor={theme.gray}
                             value={name}
                             onChangeText={(text) => {
-                                const filteredText = text.replace(/[^A-Za-z\s]/g, "");
-                                setName(filteredText);
+                                // const filteredText = text.replace(/[^A-Za-z\s]/g, "");
+                                setName(text);
                                 if (errors.name) {
                                     setErrors((prevErrors) => ({ ...prevErrors, name: null }));
                                 }
@@ -186,32 +293,69 @@ export default function Signup({ navigation }) {
                         />
                         {errors.name && <Text style={[styles.errorText, { color: theme.red }]}>{errors.name}</Text>}
 
-                        <TextInput
-                            style={[
-                                styles.input,
-                                {
-                                    borderColor: errors.mobile ? theme.red : theme.inputBorder,
-                                    backgroundColor: "#fff",
-                                    borderWidth: errors.password ? 1 : 0,
-                                    color: "#000"
+                        <View style={{ flexDirection: "row", alignItems: "center" }}>
+                            {mobileOrEmail === "mobile" ? (
+                                <TextInput
+                                    style={[
+                                        styles.input,
+                                        {
+                                            borderColor: errors.mobile ? theme.red : theme.inputBorder,
+                                            backgroundColor: "#fff",
+                                            borderWidth: errors.mobile ? 1 : 0,
+                                            color: "#000",
+                                            flex: 1, // Take up remaining space
+                                        },
+                                    ]}
+                                    placeholder="Mobile"
+                                    placeholderTextColor={theme.gray}
+                                    keyboardType="number-pad"
+                                    maxLength={10}
+                                    value={mobile}
+                                    onChangeText={(text) => {
+                                        const filteredText = text.replace(/[^0-9]/g, "");
+                                        setMobile(filteredText);
+                                        if (errors.mobile) {
+                                            setErrors((prevErrors) => ({ ...prevErrors, mobile: null }));
+                                        }
+                                    }}
+                                />
 
-                                },
-                            ]}
-                            placeholder="Mobile"
-                            placeholderTextColor={theme.gray}
-                            keyboardType="number-pad"
-                            maxLength={10}
-                            value={mobile}
-                            onChangeText={(text) => {
-                                const filteredText = text.replace(/[^0-9]/g, "");
-                                setMobile(filteredText);
-                                if (errors.mobile) {
-                                    setErrors((prevErrors) => ({ ...prevErrors, mobile: null }));
-                                }
+                            ) : (
+                                <TextInput
+                                    style={[
+                                        styles.input,
+                                        {
+                                            borderColor: errors.email ? theme.red : theme.inputBorder,
+                                            backgroundColor: "#fff",
+                                            borderWidth: errors.email ? 1 : 0,
+                                            color: "#000",
+                                            flex: 1,
+                                        },
+                                    ]}
+                                    placeholder="Email"
+                                    placeholderTextColor={theme.gray}
+                                    keyboardType="email-address"
+                                    value={email}
+                                    onChangeText={(text) => {
+                                        setEmail(text);
+                                        if (errors.email) {
+                                            setErrors((prevErrors) => ({ ...prevErrors, email: null }));
+                                        }
+                                    }}
+                                />
+                            )}
 
-                            }}
-                        />
+                             <TouchableOpacity 
+                                onPress={handleMobileEmailToggle} 
+                                style={{top:-6,marginLeft:20,left:-20}}
+                                >
+                                    <Image
+                                     style={[styles.logo1, { tintColor: "#fff" }]}
+                                     source={mobileOrEmail === "mobile" ? require("../images/email.png") : require("../images/phone.png")}/>
+                            </TouchableOpacity>
+                        </View>
                         {errors.mobile && <Text style={[styles.errorText, { color: theme.red }]}>{errors.mobile}</Text>}
+                        {errors.email && <Text style={[styles.errorText, { color: theme.red }]}>{errors.email}</Text>}
 
                         <View style={[styles.passwordContainer, { borderColor: errors.password ? theme.red : theme.inputBorder }]}>
                             <TextInput
@@ -223,7 +367,7 @@ export default function Signup({ navigation }) {
                                 ]}
                                 placeholder="New Password"
                                 placeholderTextColor={theme.gray}
-                                secureTextEntry={!passwordVisible} // Toggle secureTextEntry
+                                secureTextEntry={!passwordVisible} 
                                 value={password}
                                 onChangeText={(text) => {
                                     setPassword(text);
@@ -236,7 +380,7 @@ export default function Signup({ navigation }) {
                                 <Image
                                     source={passwordVisible ? require('../images/eye_open.png') : require('../images/eye_close.png')}
                                     style={styles.eyeIcon}
-                                    tintColor={theme.gray}  // Option if you want to tint the image
+                                    tintColor={theme.gray} 
                                 />
                             </TouchableOpacity>
                         </View>
@@ -246,7 +390,7 @@ export default function Signup({ navigation }) {
                             <TouchableOpacity onPress={() => setCheck(!check)}>
                                 <Image
                                     style={{
-                                        tintColor: check ? "#fff" : theme.textColor1,
+                                        tintColor: check ? "#fff" : "#000",
                                         marginRight: 5,
                                         height:25,
                                         width:25,
@@ -268,6 +412,15 @@ export default function Signup({ navigation }) {
                                 Sign Up
                             </Text>
                         </TouchableOpacity>
+
+                        <View style={{justifyContent:'center',alignItems:'center'}}>
+                        <TouchableOpacity onPress={handleGoogleLogin}>
+                                <Image
+                        style={{ height:30,width:30 }}
+                        source={require("../images/google.png")}
+                    />
+                                </TouchableOpacity>
+                        </View>
 
                         {/* Footer Section */}
                         <View style={styles.footer}>
@@ -314,7 +467,7 @@ export default function Signup({ navigation }) {
                     </View>
                 </View>
             </View>
-            <Toast ref={(ref) => Toast.setRef(ref)} /> {/* Toast Component */}
+            <Toast ref={(ref) => Toast.setRef(ref)} />
         </LinearGradient>
     );
 }
@@ -334,6 +487,11 @@ const styles = StyleSheet.create({
     logo: {
         width: 250,
         height: 50,
+        resizeMode: "contain",
+    },
+    logo1: {
+        width: 30,
+        height: 30,
         resizeMode: "contain",
     },
     tagline: {
@@ -447,5 +605,10 @@ const styles = StyleSheet.create({
         marginTop:4,
         resizeMode: 'contain',
         tintColor:'#8e8e8e'
+    },
+ 
+    toggleButtonText: {
+        fontSize: 12,
+        color: "#000"
     },
 });

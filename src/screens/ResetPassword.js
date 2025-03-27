@@ -39,63 +39,86 @@ export default function ResetPassword({ navigation }) {
 
     const isValidInput = (text) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const phoneRegex = /^[0-9]{10}$/;
-
-        const isValidEmail = emailRegex.test(text);
-        const isValidPhone = phoneRegex.test(text);
-        setIsMobile(isValidPhone);
-
-        return isValidEmail || isValidPhone;
+        const phoneRegex = /^[0-9]{10}$/; 
+        return {
+            isEmail: emailRegex.test(text),
+            isPhone: phoneRegex.test(text),
+            isValid: emailRegex.test(text) || phoneRegex.test(text),
+        };
     };
 
-    const showToast = (type, text) => {
+
+    const showToast = (message) => {
         Toast.show({
-            type: type,
-            text: text,
-            visibilityTime: 5000,
-            autoHide: true,
-            topOffset: 30,
-            bottomOffset: 40,
+          type: 'info',
+          text1: message,
+          position: 'top',
+          visibilityTime: 4000,
+          autoHide: true,
+          topOffset: 30,
+          bottomOffset: 40,
         });
-    };
+      };
 
     const Reset = async () => {
-        if (!isValidInput(inputText)) {
-            showToast("error", "Invalid Input", "Please enter a valid email or phone number.");
+
+        const validationResult = isValidInput(inputText);
+
+        if (!validationResult.isValid) {
+            showToast("Invalid Input");
             return;
         }
 
         const data = {
-            mobile: isMobile ? inputText : null, // conditionally setting "mobile" and "email" value
-            email: !isMobile ? inputText : null,
+            mobile: validationResult.isPhone ? inputText : null,
+            email: validationResult.isEmail ? inputText : null,
         };
 
         try {
             const response = await getResetDetails(data);
             console.log("Reset API Response:", response);
 
-            if (response?.statusCode === 200) { 
-
+            if (response?.statusCode === 200) {
                 navigation.navigate("ResetLink", {
-                    mobile: data.mobile,
+                    mobile: data.mobile, 
+                    email: data.email,  
                     studentId: response?.data?.student_user_id,
                 });
-                showToast("success", "OTP sent successfully");
+                showToast("OTP sent successfully");
             } else if (response?.statusCode === 404) {
-                showToast("error", "User not found.");
+                showToast("User not found."); 
             } else {
                 let errorMessage = "Reset failed. Please try again.";
-                if (response?.data && response?.data?.message) {
-                    errorMessage = response?.data?.message;
-                    console.log("Reset API Error:", response);
-                } else if (typeof response?.data === 'string') {
-                    errorMessage = response?.data;
+                if (response?.message) {
+                    errorMessage = response.message;
+                } else if (response?.data && typeof response.data === 'string') {
+                    errorMessage = response.data;
+                } else if (response?.data && response?.data?.message) {
+                    errorMessage = response.data.message;
+                } else {
+                    errorMessage = "An unexpected error occurred.";
                 }
-                showToast("error", errorMessage);
+
+                console.error("Reset API Error:", response);
+                showToast(errorMessage);
             }
+
         } catch (error) {
             console.error("Error during Reset:", error);
-            showToast("error", "User Not Found");
+            let errorMessage = "Could not connect to server. Please check your internet connection."; 
+             if (error.response) { 
+                if (error.response?.data && error.response?.data.message) {
+                    errorMessage = error.response.data.message;
+                } else if (error.response?.data && typeof error.response.data === 'string') {
+                    errorMessage = error.response.data;
+                } else if (error.response.status === 404) {
+                   errorMessage = "User not found."; 
+                }
+             } else if (error.message) {
+                  errorMessage = error.message;  
+             }
+            
+            showToast(errorMessage);
         }
     };
 
@@ -141,7 +164,7 @@ export default function ResetPassword({ navigation }) {
                         { backgroundColor: theme.path },
                     ]}
                 >
-                    <View style={{ top: -180, padding: 20 }}>
+                    <View style={{ top: -200, padding: 20 }}>
                         <Text style={[styles.welcomeText, { color: theme.white }]}>
                             Reset Password
                         </Text>
@@ -149,13 +172,13 @@ export default function ResetPassword({ navigation }) {
                         <TextInput
                             style={[
                                 styles.input,
-                                { backgroundColor: "#fff", color: theme.textColor1 },
+                                { backgroundColor: "#fff", color: theme.black ,marginTop:20},
                             ]}
                             placeholder="Email / Phone Number"
-                            placeholderTextColor={theme.textColor1}
+                            placeholderTextColor={theme.black}
                             value={inputText}
                             onChangeText={text => setInputText(text)}
-                            keyboardType="email-address" // Suggest keyboard
+                            keyboardType="email-address" 
 
                         />
 
@@ -237,8 +260,9 @@ export default function ResetPassword({ navigation }) {
                         </View>
                     </View>
                 </View>
+                <Toast  />
             </View>
-            <Toast />
+           
         </LinearGradient>
     );
 }

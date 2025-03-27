@@ -1,6 +1,6 @@
 //src/screens/Login.js
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
     View,
     Text,
@@ -11,28 +11,89 @@ import {
     useColorScheme,
     Dimensions,
     Image,
-    Alert
+    Alert,
+    BackHandler,
+    ActivityIndicator
 } from "react-native";
+import Toast from 'react-native-toast-message'; 
 import LinearGradient from "react-native-linear-gradient";
 import Svg, { Path } from "react-native-svg";
 import { darkTheme, lightTheme } from "../theme/theme";
 import { getLoginDetails } from "../core/CommonService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import Modal from 'react-native-modal';
+
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
-export default function Login({ route }) { // Receive route prop
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
+GoogleSignin.configure({
+	webClientId: "212625122753-o36nkar4vhepdof16e7ge3gmuaed2kio.apps.googleusercontent.com",
+    offlineAccess: true,
+});
+
+const GoogleLogin = async () => {
+	await GoogleSignin.hasPlayServices();
+	const userInfo = await GoogleSignin.signIn();
+	return userInfo;
+};
+
+export default function Login({ route }) {
+	const [error, setError] = useState('');
+	const [loading, setLoading] = useState(false);
     const colorScheme = useColorScheme();
     const [check, setCheck] = useState(false);
     const theme = colorScheme === "dark" ? darkTheme : lightTheme;
 
     const scrollRef = useRef(null);
     const [currentIndex, setCurrentIndex] = useState(0);
-    const navigation = useNavigation()
+    const navigation = useNavigation();
+    const [isModalVisible, setModalVisible] = useState(false);
 
+    const toggleModal = () => {
+        setModalVisible(!isModalVisible);
+
+    };
+    useFocusEffect(
+        useCallback(() => {
+            const onBackPress = () => {
+                BackHandler.exitApp();
+                return true;
+            };
+
+            BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+            return () =>
+                BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+        }, [])
+    );
+ 
+    const showToastError = (message) => {
+        Toast.show({
+          type: 'error',
+          text1: message,
+          position: 'top',
+          visibilityTime: 4000,
+          autoHide: true,
+          topOffset: 30,
+          bottomOffset: 40,
+        });
+      };
+
+      const showToast = (message) => {
+        Toast.show({
+          type: 'info',
+          text1: message,
+          position: 'top',
+          visibilityTime: 4000,
+          autoHide: true,
+          topOffset: 30,
+          bottomOffset: 40,
+        });
+      };
     const accessOptions = [
         "Personalized dashboard",
         "Track your progress",
@@ -53,53 +114,142 @@ export default function Login({ route }) { // Receive route prop
 
     const validateFields = () => {
         let valid = true;
-        let newErrors = { email: "", password: "" };
 
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const phoneRegex = /^[0-9]{10}$/;
-        if (!emailRegex.test(email) && !phoneRegex.test(email)) {
-            newErrors.email = "Enter a valid email or phone number";
+        if (!email && !password) { 
+            showToastError("Please enter your login details.");
+            valid = false;
+            return valid;
+        }
+
+       
+        if (!email) {
+            showToastError("Enter your email or phone number");
+            valid = false;
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !/^[0-9]{10}$/.test(email)) {
+            showToastError("Enter a valid email or phone number");
             valid = false;
         }
 
-        if (password.length < 6) {
-            newErrors.password = "Password must be at least 6 characters";
+        if (!password) {
+            showToastError("Enter your password");
+            valid = false;
+        } else if (password.length < 6) {
+            showToastError("Password must be at least 6 characters");
             valid = false;
         }
 
-        setErrors(newErrors);
         return valid;
     };
 
     const handleLogin = async () => {
-        if (!check) {
-            Alert.alert("Please agree to the privacy policy and terms of service.");
-            return;
-        }
-
+        
         const data = {
             [validateEmailOrPhone(email) ? "email" : "mobile"]: email,
             password: password
         };
 
+        if(route.params.exam){
+            const examValue = JSON.stringify(route.params.exam);
+            await AsyncStorage.setItem("exam", examValue);
+        }
+
         if (validateFields()) {
+
+            if (!check) {
+                showToast("Please agree to the privacy policy and terms of service.")
+                return;
+            }
             const response = await getLoginDetails(data);
             console.log("Response", response);
 
             if(response.statusCode == 200){
-                 //Trigger the parent components state change
-
-                 if (route.params && route.params.onChangeAuth) {
-                  route.params.onChangeAuth(response.data.token);
-                 } else {
-                  console.log("onChangeAuth not found")
-                 }
-
-
+                if(response.data.email_verified == 1){
+                    const tkn = response.data.token;
+                    route.params.onChangeAuth(tkn);
+                    navigation.navigate("DashboardContent"); 
+                } else {
+                   if(response?.data?.token) {
+                    
+                navigation.navigate("AccountCreated", {
+                    token: response.data.token,
+                    onChangeAuth: route.params.onChangeAuth,
+                    exam: route.params.exam,
+                    from: "login",
+                    studentId: response.data.student_user_id
+                });
+                   }
+            }
+            } else if(response.statusCode == 404){
+                showToastError("User not found.");
+            }else if(response.statusCode == 401){
+                showToastError(response.message);
             } else {
-                 Alert.alert("Login failed. Please check your credentials.");
+                // showToast("Uh Oh! No account found with the email / phone number.")
+                showToastError("Uh Oh! No account found.");
+                toggleModal();
+                // showToastError("Login failed. Please check your credentials.");
+                        }
+
+        }
+    };
+
+    async function validateGoogleToken(token) {
+        try {
+            const ticket = await client.verifyIdToken({
+                idToken: token,
+                audience: CLIENT_ID, 
+            });
+    
+            const payload = ticket.getPayload();
+            console.log("Google Payload:", payload); 
+    
+            if (!payload || !payload.email) {
+                throw new Error('Invalid Google payload');
+            }
+    
+    
+            const userToken = generateUserToken(payload.email);
+    
+            console.log("Generated User Token:", userToken); 
+    
+    
+            return { success: true, data: {token: userToken, email: payload.email } };
+        } catch (error) {
+            console.error('Error validating Google ID token:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    const handleGoogleLogin = async () => {
+        setLoading(true);
+        try {
+            await GoogleSignin.hasPlayServices();
+            const userInfo = await GoogleSignin.signIn();
+            console.log("Google User Info:", userInfo); 
+
+            if(userInfo.user.idToken){
+
+                const response = await validateGoogleToken(userInfo.user.idToken); 
+                console.log("response form backend",response);
+                if(response.success){
+                    route.params.onChangeAuth(response.data.token);
+                    navigation.navigate("DashboardContent"); 
+                }
+
             }
 
+        } catch (error) {
+            if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+                console.log("User cancelled the login flow.");
+            } else if (error.code === statusCodes.IN_PROGRESS) {
+                console.log("Operation (e.g., sign in) is in progress already.");
+            } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+                console.log("Play services not available or outdated.");
+            } else {
+                console.error("Google Sign-In Error:", error);
+            }
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -129,6 +279,27 @@ export default function Login({ route }) { // Receive route prop
             end={{ x: 1, y: 1 }}
         >
             <View contentContainerStyle={styles.scrollContainer}>
+            <Modal isVisible={isModalVisible}
+                   onBackdropPress={toggleModal} 
+                   onSwipeComplete={toggleModal}
+                   swipeDirection={['up', 'down']}
+                   style={styles.modal}>
+                <View style={[styles.modalContent,{backgroundColor:theme.textColor1}]}>
+                    <Text style={[styles.modalTitle,{color:theme.textColor}]}>Account Not Found</Text>
+                    <Text style={[styles.modalMessage,{color:theme.textColor}]}>No account found with this email / phone number</Text>
+                    <View style={styles.modalButtons}>
+                        <TouchableOpacity style={[styles.modalButton,{backgroundColor:theme.buttonBackground,marginLeft:10}]} onPress={toggleModal}>
+                            <Text style={[styles.modalButtonText,{color:theme.textColor1}]}>Try Again</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={[styles.modalButton,{backgroundColor:theme.buttonBackground,marginLeft:10}]} onPress={() => {
+                            toggleModal();
+                            navigation.navigate("Signup");
+                        }}>
+                            <Text style={[styles.modalButtonText,{color:theme.textColor1}]}>Create Account</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
                 <View style={styles.header}>
                     <Image
                         style={[styles.logo, { tintColor: theme.textColor1 }]}
@@ -259,10 +430,25 @@ export default function Login({ route }) { // Receive route prop
                                 Forgot password?
                             </Text>
                         </TouchableOpacity>
+                        <View style={{justifyContent:'center',alignItems:'center'}}>
+                        <TouchableOpacity onPress={handleGoogleLogin} disabled={loading}>
+                                {loading ? (
+                                    <ActivityIndicator size="small" color={theme.textColor1} /> 
+                                ) : (
+                                    <Image
+                                        style={{ height: 30, width: 30 }}
+                                        source={require("../images/google.png")}
+                                    />
+                                )}
+                            </TouchableOpacity>
+                        </View>
+
+                      
 
                         {/* Footer Section */}
                         <View style={styles.footer}>
                             <View style={{ flexDirection: 'row' }}>
+                             
                                 <Text
                                     style={[styles.newHereText, { color: theme.wb }]}
                                 >
@@ -322,6 +508,8 @@ export default function Login({ route }) { // Receive route prop
                     </View>
                 </View>
                 </View>
+                <Toast ref={(ref) => Toast.setRef(ref)} />
+
         </LinearGradient>
     );
 }
@@ -459,5 +647,44 @@ const styles = StyleSheet.create({
         height: 20,
         marginTop:4,
         resizeMode: 'contain',
+    },
+    modal: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        margin: 20,
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        padding: 22,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 20,
+        borderColor: 'rgba(0, 0, 0, 0.1)',
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 12,
+    },
+    modalMessage: {
+        fontSize: 16,
+        marginBottom: 20,
+        textAlign: 'center',
+        paddingHorizontal:20,
+    },
+    modalButtons: {
+      flexDirection: 'row',
+      justifyContent: 'space-around', 
+    },
+    modalButton: {
+        backgroundColor: '#2196F3', 
+        paddingHorizontal: 15,
+        paddingVertical: 8,
+        borderRadius: 15,
+    },
+    modalButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight:"500"
     },
 });

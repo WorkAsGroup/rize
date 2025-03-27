@@ -45,6 +45,8 @@ endif()
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
   include("/Users/akki/Documents/GitHub/rize/android/app/.cxx/RelWithDebInfo/3y2h3b73/x86/rnasyncstorage_autolinked_build/cmake_install.cmake")
+  include("/Users/akki/Documents/GitHub/rize/android/app/.cxx/RelWithDebInfo/3y2h3b73/x86/RNGoogleSignInCGen_autolinked_build/cmake_install.cmake")
+  include("/Users/akki/Documents/GitHub/rize/android/app/.cxx/RelWithDebInfo/3y2h3b73/x86/rnpicker_autolinked_build/cmake_install.cmake")
   include("/Users/akki/Documents/GitHub/rize/android/app/.cxx/RelWithDebInfo/3y2h3b73/x86/rngesturehandler_codegen_autolinked_build/cmake_install.cmake")
   include("/Users/akki/Documents/GitHub/rize/android/app/.cxx/RelWithDebInfo/3y2h3b73/x86/rnreanimated_autolinked_build/cmake_install.cmake")
   include("/Users/akki/Documents/GitHub/rize/android/app/.cxx/RelWithDebInfo/3y2h3b73/x86/safeareacontext_autolinked_build/cmake_install.cmake")

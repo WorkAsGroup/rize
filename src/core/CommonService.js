@@ -4,8 +4,11 @@ let apiurl = "https://mocktestapi.rizee.in"
 
 export const endPoint = {
 	examtype: "/api/v1/general/exams",
+	addExams:"/api/v1/general/addExams",
 	preExam: "/api/v1/mocktests/guest",
 	exmQuestions: "/api/v1/exams/questions",
+	startExam: "/api/v1/exams/startExam",
+	resendOtp: "/api/v1/auth/otp-generation",
 	signup: "/api/v1/auth/register",
 	login: "/api/v1/auth/login",
 	verifyOtp: "/api/v1/auth/verify-otp",
@@ -18,12 +21,80 @@ export const endPoint = {
 	years: "/api/v1/general/years",
 	mocktest: "/api/v1/mocktests",
 	achievements:"/api/v1/general/achievements",
+	achivementBadges: "/api/v1/general/availableBadges",
 	leaderBoard:"/api/v1/general/leaderboards",
+	resultExamData: "/api/v1/exams/examResult",
+	attempts: "/api/v1/exams/attempts",
 	previousPapers:"/api/v1/previousPapers",
-	pattern:"/api/v1/exams/pattern-sections"
+	pattern:"/api/v1/exams/pattern-sections",
+	dashboardGraph: "/api/v1/reports/dashboard",
+	customExams: "/api/v1/customExam",
+	subjects: "/api/v1/general/subjects",
+	chapters: "/api/v1/general/chapters",
+	createCustomExam: "/api/v1/customExam/createExam",
+	submitExam:"/api/v1/exams/finishExam",
+	prevpap:"/api/v1/exams/start-previouspaper-session",
+	updatepassword:"/api/v1/auth/update-password",
+	chapterwisePerformance: "/api/v1/reports/preformance/chapterWise",
+	
   };
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+export const getSubmitExamResults = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.submitExam, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.submitExam, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in submit exam:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
+
+  export const getResetPasswordConfirmation = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.updatepassword, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.updatepassword, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in submit exam:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
+
+  export const getPreviousPapRes = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.prevpap, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.prevpap, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in prev exam:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
+
 
 export const getPreviousPapers = async (fields) => {
 	const headers = {
@@ -31,6 +102,8 @@ export const getPreviousPapers = async (fields) => {
 	  "X-Content-Type-Options": "nosniff",
 	  "X-Frame-Options": "SAMEORIGIN",
 	};
+	console.log("Making request to previousPapers:", apiurl + endPoint.previousPapers, "with data:", fields);
+
 	return await axios
 	  .post(apiurl + endPoint.previousPapers, fields, { headers: headers })
 	  .then((res) => res.data)
@@ -73,6 +146,23 @@ export const getAchievements = async (fields) => {
 		return error;
 	  }); 
   };
+  export const getAchievementBadges = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.achivementBadges, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.achivementBadges, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in achivementBadges:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
 
   export const getLeaderBoards = async (fields) => {
 	const headers = {
@@ -85,6 +175,43 @@ export const getAchievements = async (fields) => {
 	
 	return await axios
 	  .post(apiurl + endPoint.leaderBoard, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in leader board:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
+
+  
+  export const getExamResult = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.resultExamData, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.resultExamData, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in leader board:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
+
+  export const getAttempts = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.attempts, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.attempts, fields, { headers: headers })
 	  .then((res) => res.data)
 	  .catch((error) => {
 		console.error("Error in leader board:", error.response?.data || error.message);
@@ -127,6 +254,95 @@ export const getYearsData = async (fields) => {
 		return error;
 	  }); 
   };
+
+  export const getCustomExams = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.customExams, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.customExams, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in mock exam:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
+
+  export const getSubjects = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.subjects, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.subjects, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in mock exam:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
+
+  export const getChapters = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.chapters, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.chapters, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in mock exam:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
+
+  export const createCustomExams = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.createCustomExam, "with data:", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.createCustomExam, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in mock exam:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
+  export const getDashboardExamResult = async (fields) => {
+	const API_URL = "https://mocktestapi.rizee.in/api/v1/reports/dashboard";
+	console.log(API_URL, fields, "whatsHappening")
+	try {
+	  const response = await axios.post(API_URL, fields, {
+		headers: { "Content-Type": "application/json" },
+		timeout: 10000, // 10s timeout
+	  });
+  
+	  console.log("✅ Success:", response.data);
+	  return response.data;
+	} catch (error) {
+	  console.error("❌ API Error:", error.response?.data || error.message);
+	  return null;
+	}
+  };
+  
 
 export const getAutoLogin = async (fields) => {
 	const headers = {
@@ -188,6 +404,41 @@ export const getPreExam = async (fields) => {
 		});
 };
 
+export const getPreExamdata = async (fields) => {
+	const headers = {
+		"content-type": "application/json",
+		"X-Content-Type-Options": "nosniff",
+		"X-Frame-Options": "SAMEORIGIN",
+	};
+	console.log("Making request to pre exam:", apiurl + endPoint.startExam, "with data:", fields);
+
+	return await axios
+		.post(apiurl +  endPoint.startExam, fields, { headers: headers })
+		.then((res) => {
+			return res.data;
+		})
+		.catch((error) => {
+			return error;
+		});
+};
+export const addExams = async (fields) => {
+	const headers = {
+		"content-type": "application/json",
+		"X-Content-Type-Options": "nosniff",
+		"X-Frame-Options": "SAMEORIGIN",
+	};
+	console.log("Making request to pre exam:", apiurl + endPoint.addExams, "with data:", fields);
+
+	return await axios
+		.post(apiurl +  endPoint.addExams, fields, { headers: headers })
+		.then((res) => {
+			return res.data;
+		})
+		.catch((error) => {
+			return error;
+		});
+};
+
 export const getPreExamOptions = async (fields) => {
 	const headers = {
 		"content-type": "application/json",
@@ -226,7 +477,7 @@ export const getUpdatedEmail = async (fields) => {
 			return res.data;
 		})
 		.catch((error) => {
-			return error;
+			return error.response.data|| error.message;
 		});
 };
 
@@ -244,27 +495,46 @@ export const getSignUpDetails = async (fields) => {
 	  .then((res) => res.data)
 	  .catch((error) => {
 		console.error("Error in sign up det:", error.response?.data || error.message);
-		return error;
+		return error.response?.data;
 	  }); 
   };
 
-  export const getResetDetails = async (fields) => {
+  export const reSendOTP = async (fields) => {
 	const headers = {
 	  "content-type": "application/json",
 	  "X-Content-Type-Options": "nosniff",
 	  "X-Frame-Options": "SAMEORIGIN",
 	};
   
-	console.log("Making request to:", apiurl + endPoint.resetPass, "with data:", fields);
+	console.log("Making request to:", apiurl + endPoint.resendOtp, "with data:", fields);
 	
 	return await axios
-	  .post(apiurl + endPoint.resetPass, fields, { headers: headers })
+	  .post(apiurl + endPoint.resendOtp, fields, { headers: headers })
 	  .then((res) => res.data)
 	  .catch((error) => {
-		console.error("Error in reset det:", error.response?.data || error.message);
+		console.error("Error in sign up det:", error.response?.data || error.message);
 		return error;
 	  }); 
   };
+
+  export const getResetDetails = async (fields) => {
+    const headers = {
+        "content-type": "application/json",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "SAMEORIGIN",
+    };
+
+    console.log("Making request to:", apiurl + endPoint.resetPass, "with data:", fields);
+
+    try {
+        const res = await axios.post(apiurl + endPoint.resetPass, fields, { headers: headers });
+        return res.data; 
+    } catch (error) {
+        console.error("Error in reset det:", error.response?.data || error.message);
+        throw error.response; 
+    }
+};
+
   export const getLoginDetails = async (fields) => {
 	const headers = {
 	  "content-type": "application/json",
@@ -278,8 +548,8 @@ export const getSignUpDetails = async (fields) => {
 	  .post(apiurl + endPoint.login, fields, { headers: headers })
 	  .then((res) => res.data)
 	  .catch((error) => {
-		console.error("Error in login det:", error.response?.data || error.message);
-		return error;
+		console.error("Error in login det:", error.response.data, error.message);
+		return error.response.data|| error.message;
 	  }); 
   };
 
@@ -297,7 +567,7 @@ export const getSignUpDetails = async (fields) => {
 	  .then((res) => res.data)
 	  .catch((error) => {
 		console.error("Error in otp submit:", error.response?.data || error.message);
-		return error;
+		return error.response?.data || error.message;
 	  }); 
   };
 export const getConstituencies = async (fields) => {
@@ -339,3 +609,70 @@ export const myConstituencyData = async (fields) => {
 			return error;
 		});
 };
+
+// Perfomance analasys Tab API's
+
+export const avgScoringTime = async (fields) => {
+	try {
+
+	  const headers = {
+		"content-type": "application/json",
+		"X-Content-Type-Options": "nosniff",
+		"X-Frame-Options": "SAMEORIGIN",
+		token: fields.token,
+	  };
+  
+	 
+	  return await axios.post(
+		apiurl +"/api/v1/reports/preformance/avgScoringTime",
+		fields,
+		{ headers }
+	  );
+	} catch (error) {
+	  console.error("API Error:", error.response?.data || error.message);
+	  return error;
+	}
+  };
+  export const weekAvgScoringTime = async (fields) => {
+	try {
+
+	  const headers = {
+		"content-type": "application/json",
+		"X-Content-Type-Options": "nosniff",
+		"X-Frame-Options": "SAMEORIGIN",
+		token: fields.token,
+	  };
+  
+	 
+	  return await axios.post(
+		apiurl +"/api/v1/reports/preformance/weekTestActivity",
+		fields,
+		{ headers }
+	  );
+	} catch (error) {
+	  console.error("API Error:", error.response?.data || error.message);
+	  return error;
+	}
+  };
+  
+  export const chapterWiseAvgScores = async (fields) => {
+	try {
+
+	  const headers = {
+		"content-type": "application/json",
+		"X-Content-Type-Options": "nosniff",
+		"X-Frame-Options": "SAMEORIGIN",
+		token: fields.token,
+	  };
+  
+	 
+	  return await axios.post(
+		apiurl + endPoint.chapterwisePerformance,
+		fields,
+		{ headers }
+	  );
+	} catch (error) {
+	  console.error("API Error:", error.response?.data || error.message);
+	  return error;
+	}
+  };

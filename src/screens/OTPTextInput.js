@@ -1,10 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useImperativeHandle } from 'react';
 import { View, TextInput, StyleSheet, Keyboard } from 'react-native';
 
-const OTPTextInput = ({ length, onOTPEntered, theme }) => {
+const OTPTextInput = ({ length, onOTPEntered, theme ,ref}) => {
     const [otpValues, setOtpValues] = useState(Array(length).fill(''));
     const inputRefs = useRef([]);
-
+    const textInputRef = useRef(null);
     useEffect(() => {
         if (inputRefs.current[0]) {
             inputRefs.current[0].focus();
@@ -27,6 +27,16 @@ const OTPTextInput = ({ length, onOTPEntered, theme }) => {
         }
     };
 
+    const clear = () => {       
+        setOtpValues(Array(length).fill('')); 
+        if(inputRefs.current[0]){
+            inputRefs.current[0].focus();
+        }
+    }
+    useImperativeHandle(ref, () => ({
+        clear
+    }));
+
     const containerStyle = {
         flexDirection: 'row',
         justifyContent: 'center',
@@ -34,14 +44,14 @@ const OTPTextInput = ({ length, onOTPEntered, theme }) => {
     };
 
     return (
-        <View style={containerStyle}>
+        <View style={containerStyle} ref={textInputRef}>
             {Array.from({ length }, (_, index) => (
                 <TextInput
                     key={index}
                     style={[
                         styles.input,
                         {
-                            color: theme.textColor,
+                            color: "#000",
                             backgroundColor: theme.white,
                             borderColor: theme.wb,
                         },
