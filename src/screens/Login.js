@@ -162,7 +162,7 @@ export default function Login({ route }) {
             const response = await getLoginDetails(data);
             console.log("Response", response);
 
-            if(response.statusCode == 200){
+            if(response.statusCode == 200||response.statusCode == 403){
                 if(response.data.email_verified == 1){
                     const tkn = response.data.token;
                     route.params.onChangeAuth(tkn);
@@ -177,6 +177,12 @@ export default function Login({ route }) {
                     from: "login",
                     studentId: response.data.student_user_id
                 });
+                   } else {
+                    navigation.navigate("OTPScreen", { 
+                        mobile:email, 
+                        studentId: response?.data?.student_user_id,
+                        from: "signUp",
+                    });
                    }
             }
             } else if(response.statusCode == 404){
@@ -279,6 +285,12 @@ export default function Login({ route }) {
             end={{ x: 1, y: 1 }}
         >
             <View contentContainerStyle={styles.scrollContainer}>
+            <TouchableOpacity onPress={() => { navigation.navigate("Intro") }}>
+                                            <Image
+                                                style={{ height: 36, width: 36, margin: 15,marginBottom: -10,justifyContent: 'flex-start' }}
+                                                source={require("../images/back.png")}
+                                            />
+                                        </TouchableOpacity>
             <Modal isVisible={isModalVisible}
                    onBackdropPress={toggleModal} 
                    onSwipeComplete={toggleModal}
@@ -301,6 +313,7 @@ export default function Login({ route }) {
                 </View>
             </Modal>
                 <View style={styles.header}>
+                    
                     <Image
                         style={[styles.logo, { tintColor: theme.textColor1 }]}
                         source={require("../images/title.png")}

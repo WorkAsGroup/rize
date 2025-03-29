@@ -244,6 +244,12 @@ export default function Signup({ navigation }) {
             end={{ x: 1, y: 1 }}
         >
             <View contentContainerStyle={styles.scrollContainer}>
+                            <TouchableOpacity onPress={() => { navigation.navigate("Intro") }}>
+                                                            <Image
+                                                                style={{ height: 36, width: 36, margin: 15,marginBottom: -10,justifyContent: 'flex-start' }}
+                                                                source={require("../images/back.png")}
+                                                            />
+                                                        </TouchableOpacity>
                 <View style={styles.header}>
                     <Image
                         style={[styles.logo, { tintColor: theme.textColor1 }]}
@@ -345,14 +351,7 @@ export default function Signup({ navigation }) {
                                 />
                             )}
 
-                             <TouchableOpacity 
-                                onPress={handleMobileEmailToggle} 
-                                style={{top:-6,marginLeft:20,left:-20}}
-                                >
-                                    <Image
-                                     style={[styles.logo1, { tintColor: "#fff" }]}
-                                     source={mobileOrEmail === "mobile" ? require("../images/email.png") : require("../images/phone.png")}/>
-                            </TouchableOpacity>
+                         
                         </View>
                         {errors.mobile && <Text style={[styles.errorText, { color: theme.red }]}>{errors.mobile}</Text>}
                         {errors.email && <Text style={[styles.errorText, { color: theme.red }]}>{errors.email}</Text>}
@@ -413,20 +412,29 @@ export default function Signup({ navigation }) {
                             </Text>
                         </TouchableOpacity>
 
-                        <View style={{justifyContent:'center',alignItems:'center'}}>
+                        <View style={{display:"flex", flexDirection: "row",justifyContent:'center',alignItems:'center'}}>
+                        
                         <TouchableOpacity onPress={handleGoogleLogin}>
                                 <Image
                         style={{ height:30,width:30 }}
                         source={require("../images/google.png")}
                     />
                                 </TouchableOpacity>
+                                <TouchableOpacity 
+                                onPress={handleMobileEmailToggle} 
+                                style={{marginLeft:20,left:10}}
+                                >
+                                    <Image
+                                     style={[styles.logo1, { tintColor: "#fff" }]}
+                                     source={mobileOrEmail === "mobile" ? require("../images/email.png") : require("../images/phone.png")}/>
+                            </TouchableOpacity>
                         </View>
 
                         {/* Footer Section */}
                         <View style={styles.footer}>
                             <View style={{ flexDirection: "row" }}>
                                 <Text style={[styles.newHereText, { color: theme.wb }]}>
-                                    Already have an account?
+                                    Already have an account?{" "}
                                 </Text>
                                 <TouchableOpacity onPress={() => navigation.navigate("Login")}>
                                     <Text style={[styles.signUpText, { color: theme.accentText }]}>

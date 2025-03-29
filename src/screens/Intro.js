@@ -9,6 +9,7 @@ import {
   Dimensions,
   Image,
   Platform,
+  ActivityIndicator ,
   StatusBar,
   TouchableWithoutFeedback,
 } from "react-native";
@@ -28,19 +29,7 @@ export default function Intro({ navigation }) {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   const [completedExams, setCompletedExams] = useState([]);
-  const [open, setOpen] = useState(false);
-  const [examType, setExamType] = useState("NEET");
-  const [items, setItems] = useState([
-    { label: "NEET", value: "NEET" },
-    { label: "JEE", value: "JEE" },
-    { label: "AP-EAMCET-MPC", value: "AP-EAMCET-MPC" },
-    { label: "AP-EAMCET-BiPC", value: "AP-EAMCET-BiPC" },
-    { label: "TS-EAMCET-MPC", value: "TS-EAMCET-MPC" },
-    { label: "TS-EAMCET-BiPC", value: "TS-EAMCET-BiPC" },
-    { label: "KCET - PCMB", value: "KCET - PCMB" },
-    { label: "KCET - PCM", value: "KCET - PCM" },
-    { label: "KCET - PCB", value: "KCET - PCB" },
-  ]);
+  const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
   const [options, setOptions] = useState([]);
@@ -107,8 +96,10 @@ export default function Intro({ navigation }) {
   };
 
   const handleOptionSelect = (option) => {
+    setIsLoading(true);
     setSelectedOption(option);
     setIsOpen(false);
+    setIsLoading(false);
   };
 
   const closeDropdown = () => {
@@ -117,18 +108,22 @@ export default function Intro({ navigation }) {
 
   const getExam = async () => {
     try {
+      setIsLoading(true)
       const exams = await getExamType();
       console.log(exams, "exams")
       setOpt(exams.data);
       const type = exams.data.map((exam) => exam.exam_type);
       setOptions(type);
+      setIsLoading(false)
     } catch (error) {
+      setIsLoading(false)
       console.error("Error fetching exams:", error);
     }
   };
 
   const getPreExam = async () => {
     try {
+      setIsLoading(true)
       const exams = await getPreExamOptions();
       console.log(exams, 'inital exams')
       const filteredExams = exams.data.filter(
@@ -156,7 +151,9 @@ export default function Intro({ navigation }) {
 
       setMockTests(mockData);
       console.log("Mock Data:", mockData);
+      setIsLoading(false);
     } catch (error) {
+      setIsLoading(false);
       console.error("Error fetching pre-exam options:", error);
     }
   };
@@ -250,6 +247,14 @@ export default function Intro({ navigation }) {
     )
   };
 
+   // 🔹 Render Loading Indicator
+   const renderLoading = () => (
+    <View style={{ alignItems: "center", justifyContent: "center", marginTop: 20 }}>
+      <ActivityIndicator size="large" color={theme.tx1} />
+      <Text style={{ color: theme.textColor, marginTop: 10 }}>Loading...</Text>
+    </View>
+  );
+
   const renderItem = useCallback(() => {
     return (
       <View style={styles.itemContainer}>
@@ -300,11 +305,12 @@ export default function Intro({ navigation }) {
           </Text>
         </View>
 
-        <FlatList
-          data={mockTests}
-          renderItem={renderMockTest}
-          keyExtractor={(item) => item.id.toString()}
-        />
+        {isLoading ? (
+        renderLoading()
+      ) : (
+        <FlatList data={mockTests} renderItem={renderMockTest} keyExtractor={(item) => item.id.toString()} />
+      )}
+
       </View>
     );
   }, [theme, selectedOption, isOpen, options, mockTests]);

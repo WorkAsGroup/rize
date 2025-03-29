@@ -114,18 +114,19 @@ const removeHtmlTags = (html) => {
     return contentArray;
   };
 
-const sanitizeHtml = (text) => {
+  const sanitizeHtml = (text) => {
+    // console.log(text, "sanitizeHtml");
     if (!text) return { html: "<p>No Question provided.</p>" };
   
     text = text.replace(/&nbsp;/g, " "); 
     text = text.replace(/\n/g, " "); 
-    text = text.replace(/<p>/g, "").replace(/<\/p>/g, ""); 
-    text = text.replace(/<img /g, "<img style='display:inline-block; vertical-align:middle; margin: 0 5px;' "); // Inline images with spacing
+    text = text.replace(/<img /g, "<img style='display:inline-block; vertical-align:middle; margin: 0 5px;' "); 
   
     return {
-      html: `<div style='display: flex; flex-direction: row; flex-wrap: wrap; width: ${windowWidth*0.84}px; align-items: center;'>${text}</div>`,
+      html: `<div style='display: flex; flex-direction: row; flex-wrap: wrap; width: ${windowWidth * 0.84}px; align-items: center;'>${text}</div>`,
     };
   };
+  
   const renderersProps = {
     img: {
       initialDimensions: { width: 20, height: 20 },
@@ -138,10 +139,14 @@ const sanitizeHtml = (text) => {
     },
   };
 
+  const baseFontStyle = {
+    fontSize: 16,
+    color: "#000", // Ensure text is visible
+  };  
   
   
 const MockTest = ({ navigation, route }) => {
-  console.log(route.params, "wrihfwoiehoi")
+  // console.log(route.params, "wrihfwoiehoi")
     const colorScheme = useColorScheme();
     const [completedMockTests, setCompletedMockTests] = useState([]);
     const [data, setData] = useState([]);
@@ -238,7 +243,7 @@ const MockTest = ({ navigation, route }) => {
 }, []);
 
 
-  
+  // console.log(exams, "exams")
   const loadInitialData = useCallback(async () => {
     setQuestionsLoading(true);
     try {
@@ -300,23 +305,33 @@ const MockTest = ({ navigation, route }) => {
     checkInterruption();
   }, [loadInitialData]);
 
+
   useEffect(() => {
-    const loadRemainingTime = async () => {
-      try {
-        const timeToSet = route?.params?.obj?.duration;
+    if (!route?.params?.obj?.duration) {
+      console.warn("⏳ No duration found in route params");
+      return;
+    }
   
-        if (timeToSet) {
-          const totalSeconds = parseInt(timeToSet, 10) * 60; 
-          // console.log(timeToSet, totalSeconds*60, "")
-          setRemainingTime(totalSeconds*60); 
-        }
-      } catch (error) {
-        console.error("Error loading remaining time:", error);
-      }
-    };
+    const durationString = route.params.obj.duration; // Example: "0 hours 05 minutes"
   
-    loadRemainingTime();
-  }, [route?.params?.obj?.duration]); 
+    // Extract hours and minutes using regex
+    const match = durationString.match(/(\d+)\s*hours?\s*(\d+)\s*minutes?/);
+  
+    if (!match) {
+      console.error("❌ Invalid duration format:", durationString);
+      return;
+    }
+  
+    const hours = parseInt(match[1], 10) || 0;
+    const minutes = parseInt(match[2], 10) || 0;
+    const totalSeconds = (hours * 3600) + (minutes * 60);
+  
+    console.log("⏳ Timer initialized with:", totalSeconds, "seconds");
+    setRemainingTime(totalSeconds);
+  }, [route?.params?.obj?.duration]);
+  
+  
+  
   
   useEffect(() => {
     if (remainingTime > 0 && !timerRef.current) {
@@ -325,6 +340,7 @@ const MockTest = ({ navigation, route }) => {
           if (prevTime <= 1) {
             clearInterval(timerRef.current);
             timerRef.current = null;
+            submitTestResult();
             return 0; // Stop at 0
           }
           return prevTime - 1;
@@ -414,11 +430,28 @@ useEffect(() => {
         
         const timeToSet = route?.params?.obj?.duration; 
   
-        if (timeToSet) {
-          const totalSeconds = parseInt(timeToSet, 10) * 60; 
-          // console.log(timeToSet, totalSeconds*60, "")
-          setRemainingTime(totalSeconds*60); 
+        if (!timeToSet) {
+          console.warn("⏳ No duration found in route params");
+          return;
         }
+      
+        const durationString = timeToSet; // Example: "0 hours 05 minutes"
+      
+        // Extract hours and minutes using regex
+        const match = durationString.match(/(\d+)\s*hours?\s*(\d+)\s*minutes?/);
+      
+        if (!match) {
+          console.error("❌ Invalid duration format:", durationString);
+          return;
+        }
+      
+        const hours = parseInt(match[1], 10) || 0;
+        const minutes = parseInt(match[2], 10) || 0;
+        const totalSeconds = (hours * 3600) + (minutes * 60);
+      
+        console.log("⏳ Timer initialized with:", totalSeconds, "seconds");
+        setRemainingTime(totalSeconds);
+      
       } catch (error) {
         console.error("Error loading stored data:", error);
       }
@@ -496,7 +529,7 @@ const handleTextInputChange = (text, questionId) => {
     } else {
       scrollToQuestion(selectedNumber);
     }
-    console.log("setSelectedSubject", sub);
+    // console.log("setSelectedSubject", sub);
   };
 
   useEffect(() => {
@@ -552,7 +585,7 @@ const handleTextInputChange = (text, questionId) => {
     };
     try {
       const examPattern = await getPatternSelection(data);
-      console.log("examPatternexamPattern", examPattern);
+      // console.log("examPatternexamPattern", examPattern);
       setPattern(examPattern.data);
 
       if (examPattern.data && examPattern.data.length > 0) {
@@ -622,7 +655,7 @@ const handleTextInputChange = (text, questionId) => {
   
 
   const getExam = async () => {
-    console.log("objobjobj", obj);
+    // console.log("objobjobj", obj);
     setQuestionsLoading(true);
 
     const datas = {
@@ -634,7 +667,7 @@ const handleTextInputChange = (text, questionId) => {
     try {
       const examsResponse = await getPreExam(datas);
       setExams(examsResponse.data);
-
+      console.log("----------",examsResponse.data)
       const subjectCounts = {};
 
       examsResponse?.data?.forEach((exam) => {
@@ -652,8 +685,8 @@ const handleTextInputChange = (text, questionId) => {
         }
       }
 
-      console.log("Subject Counts:", subjectCounts);
-      console.log("Exams Response:", examsResponse);
+      // console.log("Subject Counts:", subjectCounts);
+      // console.log("Exams Response:", examsResponse);
       setQuestionsLoading(false);
     } catch (error) {
       console.error("Error fetching exams:", error);
@@ -709,8 +742,8 @@ const handleTextInputChange = (text, questionId) => {
   };
 
   const moveToNextQuestion = useCallback(() => {
-    console.log("Current Subject:", currentSubject);
-    console.log("Current Index in Subject:", currentIndexInSubject);
+    // console.log("Current Subject:", currentSubject);
+    // console.log("Current Index in Subject:", currentIndexInSubject);
     const currentSubject = pattern.find(
       (subject) =>
         selectedNumber >= subject.starting_no &&
@@ -750,7 +783,7 @@ const handleTextInputChange = (text, questionId) => {
   }, [selectedNumber, allNum, pattern]);
 
   const handleSelectAndNext = useCallback(async (questionId) => {
-    console.log("handleSelectAndNext called for question:", questionId);
+    // console.log("handleSelectAndNext called for question:", questionId);
     // const answer = textInputValues[questionId];
     const currentQuestionType = exams[questionId - 1]?.qtype;
 
@@ -789,7 +822,7 @@ setSelectedOption(null);
 
   const handleAnswerSelect = useCallback(
     async (questionId, option) => {
-      console.log("handleAnswerSelect called with:", questionId, option);
+      // console.log("handleAnswerSelect called with:", questionId, option);
   
       const currentSubject = pattern.find(
         (subject) =>
@@ -876,7 +909,7 @@ setSelectedOption(null);
         const updatedReviewed = { ...reviewedQuestions };
         delete updatedReviewed[questionId];
         setReviewedQuestions(updatedReviewed);
-        console.log("Setting selectedOption to:", option);
+        // console.log("Setting selectedOption to:", option);
         setSelectedOption(option);
   
         await AsyncStorage.setItem(
@@ -935,6 +968,42 @@ setSelectedOption(null);
     setSubmitModalVisible(true);
   };
 
+
+  const extractAndSanitizeHtml = (htmlString) => {
+    if (!htmlString) {
+      return { html: "", images: [] };
+    }
+  
+    // Sanitize HTML to prevent XSS vulnerabilities and unwanted tags
+    const cleanHtml = sanitizeHtml(htmlString, {
+      allowedTags: ['img', 'p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'a', 'table', 'tr', 'td', 'th', 'thead', 'tbody', 'span', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'], // Allow more tags as needed
+      allowedAttributes: {
+        'a': ['href'],
+        'img': ['src', 'alt', 'style'], // Allow inline styles for images
+        '*': ['style']  // Allow inline styles on other elements if needed (use with caution)
+      },
+      allowedSchemes: ['http', 'https', 'data'],
+      transformTags: {
+        'img': (tagName, attribs) => ({
+          tagName: 'img',
+          attribs: { ...attribs, style: 'max-width: 100%; height: auto; display: inline-block; vertical-align: middle; margin: 0 5px;' } // Inline styles for images
+        })
+      }
+    });
+  
+  
+    // Extract image URLs after sanitization
+    const imageUrls = [];
+    const imgRegex = /<img[^>]+src="([^">]+)"/g;
+    let match;
+    while ((match = imgRegex.exec(cleanHtml))) {
+      imageUrls.push(match[1]);
+    }
+  
+    return { html: cleanHtml, images: imageUrls }; // Return both HTML and image URLs
+  };
+
+  
   const submitTestResult = async () => {
     try {
         const data = {
@@ -986,7 +1055,7 @@ setSelectedOption(null);
             });
         }
 
-        console.log("Submit Data:", JSON.stringify(data));
+        // console.log("Submit Data:", JSON.stringify(data));
         setExam(data);
 
 
@@ -1021,7 +1090,7 @@ setSelectedOption(null);
           exam_paper_id: obj.exam_paper_id,
           exam_type: examIdData?.[0]?.exam_type, // Corrected syntax here
         };
-        console.log(examData, "erridata")
+        // console.log(examData, "erridata")
         completedExams.push(examData);
         await AsyncStorage.setItem(COMPLETED_EXAMS_KEY, JSON.stringify(completedExams));
 
@@ -1131,7 +1200,7 @@ const handleReviewTag = async (questionId) => {
         finishTest={finishTest}
         isTimeUp={false}
       />
-      {questionsLoading && (
+      {questionsLoading&&exams.length==0 && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color={theme.textColor} />
         </View>
@@ -1155,10 +1224,10 @@ const handleReviewTag = async (questionId) => {
         </View>
         <ScrollView>
           <View style={{ paddingHorizontal: 20 }}>
-            <LinearGradient
-              colors={theme.mcb1}
-              start={{ x: 0, y: 1 }}
-              end={{ x: 1, y: 1 }}
+            <View
+              // colors={theme.mcb1}
+              // start={{ x: 0, y: 1 }}
+              // end={{ x: 1, y: 1 }}
               style={styles.header}
             >
               <View style={styles.headerline}>
@@ -1180,7 +1249,7 @@ const handleReviewTag = async (questionId) => {
                           colors={
                             selectedSubjectId == sub.id
                               ? [theme.bg1, theme.bg2]
-                              : theme.bmc
+                              :  ["#ffffff", "#ffffff"]
                           }
                           style={[
                             styles.headerline1,
@@ -1478,14 +1547,12 @@ const handleReviewTag = async (questionId) => {
                   />
                 )}
               </TouchableOpacity>
-            </LinearGradient>
+            </View>
           </View>
 
           <View style={{ paddingHorizontal: 20, marginTop: 10 }}>
-            <LinearGradient
-              colors={theme.mcb1}
-              start={{ x: 0, y: 1 }}
-              end={{ x: 1, y: 1 }}
+            <View
+              
               style={styles.header}
             >
               <View style={{ flexDirection: "row", marginTop: 8 }}>
@@ -1532,6 +1599,17 @@ const handleReviewTag = async (questionId) => {
                                         />
                                     </View>
                                 ))} */}
+                                {exams[selectedNumber - 1]?.compquestion !==""&&   
+                                <RenderHTML
+                   source={sanitizeHtml((exams[selectedNumber - 1]?.compquestion !=="" ? exams[selectedNumber - 1]?.compquestion: exams[selectedNumber - 1]?.question) || "<p>No Question provided.</p>",)}
+                   contentWidth={windowWidth}
+                //    tagsStyles={{
+                //      p: { marginBottom: 0, display: "inline", flexWrap: "wrap" }, // Ensure paragraph stays inline
+                //      img: { display: "inline-block", verticalAlign: "middle", maxWidth: "100%" }, // Force inline images
+                //      span: { display: "inline", flexWrap: "wrap" }, // Ensure span elements wrap properly
+                //    }}
+                  
+                 />}
                 <RenderHTML
                    source={sanitizeHtml((exams[selectedNumber - 1]?.question) || "<p>No Question provided.</p>",)}
                    contentWidth={windowWidth}
@@ -1545,130 +1623,118 @@ const handleReviewTag = async (questionId) => {
            
               </View>
            
-              {exams[selectedNumber - 1]?.qtype !== 8 ? (
-                <View>
-                  {["A", "B", "C", "D"].map((option, index) => {
-                    const optionText =
-                      index === 0
-                        ? exams[selectedNumber - 1]?.option1
-                        : index === 1
-                        ? exams[selectedNumber - 1]?.option2
-                        : index === 2
-                        ? exams[selectedNumber - 1]?.option3
-                        : exams[selectedNumber - 1]?.option4;
-
-                    // const cleanedOptionText = removeHtmlTags(optionText);
-                    const imagesInOption = extractImages(optionText);
-                    const isImageUrl = imagesInOption.length > 0;
-
-                    const isSelected =
-                      selectedAnswers[selectedNumber] === option;
-
-                    return (
-                      <TouchableOpacity
-                        key={option}
-                        style={[
-                          styles.opt,
-                          {
-                            borderColor: theme.textColor,
-                            borderRadius: 25,
-                            backgroundColor: "transparent",
-                          },
-                        ]}
-                        onPress={() => {
-                          setSelectedOption(option);
-                          handleAnswerSelect(selectedNumber, option);
-                        }}
-                      >
-                        <View
-                          style={[
-                            styles.optbg,
-                            { backgroundColor: theme.gray },
-                          ]}
-                        >
-                          <Text style={[styles.option, { color: "#FFF" }]}>
-                            {option}
-                          </Text>
-                          
-                        </View>
-
-                        <View>
-                          {isImageUrl ? (
-                            <View style={{ backgroundColor: "#FFF" }}>
-                              <Image
-                                source={{ uri: imagesInOption[0] }}
-                                style={{
-                                  width: 80,
-                                  height: 40,
-                                  borderRadius: 25,
-                                  resizeMode: "contain",
-                                }}
-                              />
-                            </View>
-                          ) : (
-                            <View style={{alignContent:'center'}}>
-                            <Text
-                              style={[
-                                styles.option,
-                                {
-                                  color: theme.textColor,
-                                  width:226,
-                                  overflow: "scroll",
-                                },
-                              ]}
-                            >
-                              {/* {cleanedOptionText || "Option not available"} */}
-                              <RenderHTML
-                                source={sanitizeHtml(
-                                  optionText || "<p>No question provided.</p>"
-                                )}
-                                renderersProps={renderersProps}
-                                // baseFontStyle={baseFontStyle}
-                                // {...DEFAULT_PROPS}
-                                contentWidth={windowWidth}
-                              />
-                            </Text>
-                            </View>
-                          )}
-                        </View>
-
-                        <View
-                          style={[
-                            styles.select,
-                            {
-                              borderColor: theme.textColor,
-                              backgroundColor: isSelected
-                                ? theme.textColor
-                                : "transparent",
-                            },
-                          ]}
-                        />
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
+             {exams[selectedNumber - 1]?.qtype !== 8 ? (
+  <View style={{ display: "flex", flexDirection: "row", flexWrap: "wrap" }}>
+    {["A", "B", "C", "D"].map((option, index) => {
+      const optionText =
+        index === 0
+          ? exams[selectedNumber - 1]?.option1
+          : index === 1
+          ? exams[selectedNumber - 1]?.option2
+          : index === 2
+          ? exams[selectedNumber - 1]?.option3
+          : exams[selectedNumber - 1]?.option4;
+          const optionHtml = optionText;  
+          const optionImages = [];     
+  
+          console.log("Exam Data:", exams[selectedNumber - 1]); 
+          // const { html: optionHtml, images: optionImages } = extractAndSanitizeHtml(optionText);      const isImageUrl = optionImages.length > 0;
+      const isSelected = selectedAnswers[selectedNumber] === option;
+      return (
+        <TouchableOpacity
+          key={option}
+          style={[
+            styles.opt,
+            {
+              borderColor: theme.textColor,
+              borderRadius: 25,
+              backgroundColor: "transparent",
+            },
+          ]}
+          onPress={() => {
+            setSelectedOption(option);
+            handleAnswerSelect(selectedNumber, option);
+          }}
+        >
+          <View style={[styles.optbg, { backgroundColor: theme.gray }]}>
+            <Text style={[styles.option, { color: "#FFF" }]}>{option}</Text>
+          </View>
+      
+          <View style={{flexDirection: "row",flexWrap: "wrap",justifyContent: "flex-start",}}>
+            {optionImages.map((imageUrl, imageIndex) => (
+              <Image
+                key={imageIndex}
+                source={{ uri: imageUrl }}
+                onError={(error) => console.error("Image load error:", error)}
+                style={{
+                  width: 80,
+                  height: 40,
+                  borderRadius: 10,
+                  resizeMode: "contain",
+                  backgroundColor: "#FFF",
+                  marginRight: 10,
+                }}
+              />
+            ))}
+      
+            <View style={{ flex: 1,flexDirection: "row" }}>  
+              {optionHtml ? (
+                <RenderHTML
+                  source={{ html: optionHtml }}
+                  contentWidth={windowWidth - (optionImages.length * 100) - 20} 
+                  renderersProps={{
+                    img: {
+                      initialDimensions: { width: 20, height: 20 },
+                      enableExperimentalPercentWidth: true,
+                      style: {
+                        maxWidth: "100%",
+                        height: "auto",
+                      },
+                    },
+                  }}
+                  baseStyle={{ flexDirection: 'row', display: 'flex', flexWrap: 'wrap' }} 
+                  tagsStyles={{ p: { display: 'inline' }}}                 />
               ) : (
+                <Text style={baseFontStyle}>No option provided.</Text> 
+              )}
+            </View>
+          </View>
+      
+          <View
+            style={[
+              styles.select,
+              {
+                borderColor: theme.textColor,
+                backgroundColor: isSelected ? theme.textColor : "transparent",
+              },
+            ]}
+          />
+        </TouchableOpacity>
+      );
+    })}
+  </View>
+) : (
                 <View>
                     <TextInput
       style={[
         styles.textInputStyle,
         {
-          backgroundColor: theme.textColor1,
-          borderColor: theme.textColor1,
+          // backgroundColor: theme.textColor1,
+          // borderColor: theme.textColor1,
           color: theme.textColor,
         },
       ]}
       value={textInputValues[selectedNumber] || ""}
       onChangeText={(text) => {
         handleTextInputChange(text, selectedNumber);
-        console.log("TextInput changed for question:", selectedNumber, "to:", text);
+        // console.log("TextInput changed for question:", selectedNumber, "to:", text);
     }}
       placeholder={`Enter Text`}
       keyboardType="numeric"
       placeholderTextColor={theme.textColor}
       multiline={true}
       onSubmitEditing={() => {
-        console.log("onSubmitEditing called for question:", selectedNumber);
+        // console.log("onSubmitEditing called for question:", selectedNumber);
         handleSelectAndNext(selectedNumber);
     }}
       onBlur={() => handleAnswerSelect(selectedNumber, textInputValues[selectedNumber])} 
@@ -1722,7 +1788,7 @@ const handleReviewTag = async (questionId) => {
                   </TouchableOpacity>
                 </View>
               </View>
-            </LinearGradient>
+            </View>
           </View>
         </ScrollView>
 
@@ -1893,6 +1959,16 @@ export default MockTest
 
 
 const styles = StyleSheet.create({
+  gridContainer: {
+    flexDirection: "row", // flex-flow: row;
+    alignItems: "center", // align-items: center;
+    display: "flex",
+    flexWrap: "wrap", // Ensures content wraps if needed
+    gap: 16, // gap: 16px (React Native doesn't support 'gap' directly)
+    width: "100%",
+    minWidth: 0, // min-width: 0px;
+    boxSizing: "border-box", // box-sizing: border-box (React Native handles this automatically)
+  },
     container: {
       flex: 1,
     },
@@ -1901,6 +1977,14 @@ const styles = StyleSheet.create({
       marginTop: 10,
       padding: 10,
       borderRadius: 30,
+      backgroundColor: "#ffffff", // White background
+      borderWidth: 0.5, // Thin border
+      borderColor: "#ccc", // Light gray border
+      shadowColor: "#000", // Shadow color
+      shadowOffset: { width: 0, height: 2 }, // Slightly raised
+      shadowOpacity: 0.2, // Subtle shadow
+      shadowRadius: 4, // Smooth edges
+      elevation: 3, // Android shadow
     },
     headerline: {
       flexDirection: "row",
@@ -1990,15 +2074,18 @@ const styles = StyleSheet.create({
       right: 15,
     },
     opt: {
+      display: "flex",
       flexDirection: "row",
-      width: windowWidth * 0.8,
+      width: "auto", // Auto width based on content
+      maxWidth: windowWidth * 0.85, // Prevent overflow
       marginTop: 8,
-      height: 54,
+      minHeight: 54, // Ensure a minimum height but allow expansion
       alignItems: "center",
-      paddingStart: 10,
-      paddingEnd: 10,
+      paddingHorizontal: 10,
+      paddingVertical: 8, // Add padding to give space for content
       borderWidth: 0.6,
       position: "relative",
+      flexWrap: "auto", // Ensure text wraps properly
     },
     ins: {
       height: 32,
@@ -2072,6 +2159,7 @@ const styles = StyleSheet.create({
       borderRadius: 15,
       width: 300,
       marginTop: 20,
+      borderColor: "rgba(0, 0, 0, 0.5)",
     },
     numberScrollView: {
       paddingHorizontal: 10,

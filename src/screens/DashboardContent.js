@@ -115,6 +115,13 @@ const DashboardContent = ({ route, navigation, onChangeAuth }) => {
   };
 
   useEffect(() => {
+if(items.length == 0) {
+  setItems([{ label: "➕ Add", value: "add"}])
+  // setAddExam(true);
+}
+  },[items])
+
+  useEffect(() => {
     if (!route?.params?.exam) {
       retrieveExam();
     }
@@ -414,7 +421,7 @@ console.log(validMockTests, "ValidMocks")
 
       if (!examsData || examsData.length === 0) {
         const comData = AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
-        if (JSON.parse(comData).lenth < 1) {
+        if (JSON.parse(comData).length < 1) {
           setAddExam(true);
         }
         return; // Early exit if no examsData
@@ -476,8 +483,10 @@ console.log(validMockTests, "ValidMocks")
             },
           ]);
           setSelectedOption(items[0]);
+        } else {
+          setItems([{ label: "➕ Add", value: "add"}]);
         }
-      }
+      } 
     } catch (error) {
       console.error("Error fetching user data:", error);
       checkUserIdExamExist([]);
@@ -541,8 +550,8 @@ console.log(validMockTests, "ValidMocks")
   
   
 
-  const submitAllStoredResults = useCallback(async (exId) => {
-    console.log("🚀 Starting submission for exam ID:", exId);
+  const submitAllStoredResults = useCallback(async (exId, exam) => {
+    console.log("🚀 Starting submission for exam ID:", exId, exam, );
   
     setLoading(true); // Start loading animation
   
@@ -567,13 +576,15 @@ console.log(validMockTests, "ValidMocks")
       let storedMockTests = await AsyncStorage.getItem(
         COMPLETED_MOCK_TESTS_KEY
       );
+
+      console.log(storedMockTests, "storedMockTests")
       if (storedMockTests) {
         const parsedMockTests = JSON.parse(storedMockTests);
 
         const validMockTests = parsedMockTests.filter((test) => test.results);
       
         let submissionPromises = validMockTests
-        .filter(test => test.results && completedExams.some(item => item?.exam_paper_id === test?.results?.exam_paper_id))
+        .filter(test => test.results && exam?.exam_paper_id === test?.results?.exam_paper_id)
         .map(async (mocTest) => { 
           const exPaperId = mocTest?.results?.exam_paper_id;
       
@@ -594,7 +605,9 @@ console.log(validMockTests, "ValidMocks")
               exId
             );
       
-            console.log("✅ Submission Result:", { exPaperId, status: submissionSuccessful });
+            console.log("✅ Submission Result:", {mock: mocTest.results,
+              exPaperId,
+              exId, status: submissionSuccessful });
       
             if (submissionSuccessful) {
               successfulSubmissions.add(exPaperId); // Mark as successful
@@ -615,14 +628,18 @@ console.log(validMockTests, "ValidMocks")
   
       // 7️⃣ Remove successfully submitted exams
       let remainingExams = completedExams.filter(
-        exam => !successfulSubmissions.has(exam.exPaperId)
+        exam => !successfulSubmissions.has(exam.exam_paper_id)
       );
+      
   
       console.log("🗂 Remaining exams after filter:", remainingExams);
   
       // 8️⃣ Update AsyncStorage properly
       if (successfulSubmissions.size > 0) {
-        await AsyncStorage.removeItem(COMPLETED_EXAMS_KEY); // Clear storage
+        const remaining = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
+       const filtered =  JSON.parse(remaining).filter(checkEx => checkEx.exam_paper_id !== exam.exam_paper_id);
+       await AsyncStorage.setItem(COMPLETED_EXAMS_KEY, JSON.stringify(filtered));
+       // Clear storage
   
         // ✅ Double-check: Reload storage to confirm it's cleared
         let checkStorage = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
@@ -634,8 +651,11 @@ console.log(validMockTests, "ValidMocks")
           console.warn("⚠️ Storage was NOT cleared properly!");
         }
       }
-      getUser();
+ 
+       if(successfulSubmissions.size > 0)  {
+        // getUser();
         Alert.alert("Success", `${successfulSubmissions.size} result(s) submitted successfully.`);
+       }
       } else {
         // Some exams failed; update AsyncStorage with remaining ones
         await AsyncStorage.setItem(COMPLETED_EXAMS_KEY, JSON.stringify(remainingExams));
@@ -687,7 +707,7 @@ console.log(validMockTests, "ValidMocks")
           console.log("✅ Exam added successfully. student_user_exam_id:", studentExamId);
   
           // 2️⃣ Submit the stored results for the added exam
-          const submitResponse = await submitAllStoredResults(studentExamId);
+          const submitResponse = await submitAllStoredResults(studentExamId, exam);
   
           if (!submitResponse) {
             console.error("❌ Submission failed:", submitResponse);
@@ -716,7 +736,7 @@ console.log(validMockTests, "ValidMocks")
     try {
       for (const exam of exist) {
         console.log("Processing existing exam:", exam);
-        const submit = await submitAllStoredResults(exam.student_user_exam_id);
+        const submit = await submitAllStoredResults(exam.student_user_exam_id, exam);
         console.log("Submission response:", submit);
       }
 
@@ -862,6 +882,7 @@ console.log(validMockTests, "ValidMocks")
             animationType="slide"
             transparent={false} // Ensures full screen
             visible={showCustom}
+           
             onRequestClose={() => setShowCustom(false)}
           >
             <View style={styles.modalContainer}>
@@ -881,7 +902,7 @@ console.log(validMockTests, "ValidMocks")
 
               {/* Modal Content */}
 
-              <CustomExamCreation id={studentExamId} onClose={setShowCustom} />
+              <CustomExamCreation id={studentExamId} fetchData={fetchData} onClose={setShowCustom} />
             </View>
           </Modal>
           {achivementShow && (

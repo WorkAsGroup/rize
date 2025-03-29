@@ -201,7 +201,7 @@ export default function Instruction({ navigation,route }) {
                               { fontWeight: "600", fontSize: 14 },
                             ]}
                           >
-                            {obj?.duration ? obj?.duration : "-"}{" "}
+                            {obj?.duration ? obj?.duration.replace("minutes", "Mins") : "-"}{" "}
                           </Text>
                           <Text style={[styles.frameDesc, { fontSize: 12 }]}>
                             Total duration
@@ -451,6 +451,7 @@ const styles = StyleSheet.create({
       textContainer: {
         flexDirection: "column",
         alignItems: "flex-start",
+        width: 85,
       },
       frameDesc: {
         color: "#000",

@@ -234,6 +234,8 @@ const StartExam = ({ navigation, route }) => {
         setRemainingTime((prevTime) => {
           if (prevTime <= 1) {
             clearInterval(timerRef.current);
+            timerRef.current = null;
+            submitTestResult();
             return 0; // Stop at 0
           }
           return prevTime - 1;
@@ -326,9 +328,9 @@ useEffect(() => {
     loadStoredData();
   }, []);
 
-  const handleTextInputChange = (text) => {
-    setTextInputAnswer(text);
-  };
+const handleTextInputChange = (text, questionId) => {
+  setTextInputValues((prevValues) => ({ ...prevValues, [questionId]: text }));
+};
  
   const scrollToQuestion = useCallback((questionNumber) => {
     if (!flatListRef.current) {
@@ -517,43 +519,45 @@ useEffect(() => {
   };
 
 
+
   const loadQuestionElapsedTime = async () => {
     try {
-      if (!selectedNumber || exams.length === 0) return;
-
-      // Save previous question's elapsed time before loading new one
+      if (!selectedNumber) return;
+  
+      // Stop any existing timer
       if (questionTimerRef.current) {
         clearInterval(questionTimerRef.current);
       }
-
-      // Reset timer for new question
-      setTimeElapsed(0);  // ✅ Reset to 0 immediately when question changes
-
-      // Start new timer
+  
+      // Load previously saved elapsed time
+      const savedTime = await AsyncStorage.getItem(`timeElapsed_${selectedNumber}`);
+      const initialTime = savedTime ? parseInt(savedTime, 10) : 0;
+      setTimeElapsed(initialTime);
+  
+      // Start a new timer
       questionTimerRef.current = setInterval(() => {
-        setTimeElapsed((prevTime) => prevTime + 1);
+        setTimeElapsed(prevTime => prevTime + 1);
       }, 1000);
     } catch (error) {
       console.error("Error loading elapsed time:", error);
     }
   };
+  // useEffect(() => {
 
-  useEffect(() => {
-
   
-    loadQuestionElapsedTime();
+  //   loadQuestionElapsedTime();
   
-    return () => {
-      if (selectedNumber) {
-        // ✅ Save elapsed time for previous question before unmount
-        AsyncStorage.setItem(`timeElapsed_${selectedNumber}`, timeElapsed.toString());
-      }
+  //   return () => {
+  //     if (selectedNumber) {
+  //       // ✅ Save elapsed time for previous question before unmount
+  //       AsyncStorage.setItem(`timeElapsed_${selectedNumber}`, timeElapsed.toString());
+  //     }
   
-      if (questionTimerRef.current) {
-        clearInterval(questionTimerRef.current);
-      }
-    };
-  }, []);  
+  //     if (questionTimerRef.current) {
+  //       clearInterval(questionTimerRef.current);
+  //     }
+  //   };
+  // }, []);  
   useEffect(() => {
 
   
@@ -1027,8 +1031,7 @@ const handleReviewTag = async (questionId) => {
 };
 
 
-
-
+console.log(obj, "obj" )
 
 return (
   <LinearGradient
@@ -1045,7 +1048,7 @@ return (
       finishTest={finishTest}
       isTimeUp={false}
     />
-    {questionsLoading && (
+    {questionsLoading&&exams.length==0 && (
       <View style={styles.loadingOverlay}>
         <ActivityIndicator size="large" color={theme.textColor} />
       </View>
@@ -1053,7 +1056,7 @@ return (
     <View style={{ flex: 1 }}>
       <View style={{ flexDirection: "row", marginTop: 10 }}>
         <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>
-          {obj.examName}
+          {obj.exam_name}
         </Text>
         <Text
           style={[
@@ -1069,10 +1072,10 @@ return (
       </View>
       <ScrollView>
         <View style={{ paddingHorizontal: 20 }}>
-          <LinearGradient
-            colors={theme.mcb1}
-            start={{ x: 0, y: 1 }}
-            end={{ x: 1, y: 1 }}
+          <View
+            // colors={theme.mcb1}
+            // start={{ x: 0, y: 1 }}
+            // end={{ x: 1, y: 1 }}
             style={styles.header}
           >
             <View style={styles.headerline}>
@@ -1094,7 +1097,7 @@ return (
                         colors={
                           selectedSubjectId == sub.id
                             ? [theme.bg1, theme.bg2]
-                            : theme.bmc
+                            : ["#ffffff", "#ffffff"]
                         }
                         style={[
                           styles.headerline1,
@@ -1104,7 +1107,7 @@ return (
                               selectedSubjectId === sub.id
                                 ? theme.textColor1
                                 : theme.textColor,
-                          },
+                          },  
                         ]}
                         start={{ x: 0, y: 1 }}
                         end={{ x: 1, y: 1 }}
@@ -1392,14 +1395,11 @@ return (
                 />
               )}
             </TouchableOpacity>
-          </LinearGradient>
+          </View>
         </View>
 
         <View style={{ paddingHorizontal: 20, marginTop: 10 }}>
-          <LinearGradient
-            colors={theme.mcb1}
-            start={{ x: 0, y: 1 }}
-            end={{ x: 1, y: 1 }}
+          <View
             style={styles.header}
           >
             <View style={{ flexDirection: "row", marginTop: 8 }}>
@@ -1438,7 +1438,8 @@ return (
             <View>
    
               <RenderHTML
-                 source={sanitizeHtml((exams[selectedNumber - 1]?.question) || "<p>No Question provided.</p>",)}
+              source={{ html: exams[selectedNumber - 1]?.question }}
+                //  source={sanitizeHtml((exams[selectedNumber - 1]?.question) || "<p>No Question provided.</p>",)}
                  contentWidth={windowWidth}
               //    tagsStyles={{
               //      p: { marginBottom: 0, display: "inline", flexWrap: "wrap" }, // Ensure paragraph stays inline
@@ -1527,6 +1528,7 @@ return (
                               source={sanitizeHtml(
                                 optionText || "<p>No question provided.</p>"
                               )}
+                              // source={{ html: optionText }} 
                               renderersProps={renderersProps}
                               // baseFontStyle={baseFontStyle}
                               // {...DEFAULT_PROPS}
@@ -1553,32 +1555,32 @@ return (
                 })}
               </View>
             ) : (
-              <View>
-                  <TextInput
-    style={[
-      styles.textInputStyle,
-      {
-        backgroundColor: theme.textColor1,
-        borderColor: theme.textColor1,
-        color: theme.textColor,
-      },
-    ]}
-    value={textInputValues[selectedNumber] || ""}
-    onChangeText={(text) => {
-      handleTextInputChange(text, selectedNumber);
-      console.log("TextInput changed for question:", selectedNumber, "to:", text);
-  }}
-    placeholder={`Enter Text`}
-    keyboardType="numeric"
-    placeholderTextColor={theme.textColor}
-    multiline={true}
-    onSubmitEditing={() => {
-      console.log("onSubmitEditing called for question:", selectedNumber);
-      handleSelectAndNext(selectedNumber);
-  }}
-    onBlur={() => handleAnswerSelect(selectedNumber, textInputValues[selectedNumber])} 
-        />
-              </View>
+               <View>
+                                  <TextInput
+                    style={[
+                      styles.textInputStyle,
+                      {
+                        // backgroundColor: theme.textColor1,
+                        // borderColor: theme.textColor1,
+                        color: theme.textColor,
+                      },
+                    ]}
+                    value={textInputValues[selectedNumber] || ""}
+                    onChangeText={(text) => {
+                      handleTextInputChange(text, selectedNumber);
+                      // console.log("TextInput changed for question:", selectedNumber, "to:", text);
+                  }}
+                    placeholder={`Enter Text`}
+                    keyboardType="numeric"
+                    placeholderTextColor={theme.textColor}
+                    multiline={true}
+                    onSubmitEditing={() => {
+                      // console.log("onSubmitEditing called for question:", selectedNumber);
+                      handleSelectAndNext(selectedNumber);
+                  }}
+                    onBlur={() => handleAnswerSelect(selectedNumber, textInputValues[selectedNumber])} 
+                        />
+                              </View>
             )}
 
             <View
@@ -1627,7 +1629,7 @@ return (
                 </TouchableOpacity>
               </View>
             </View>
-          </LinearGradient>
+          </View>
         </View>
       </ScrollView>
 
@@ -1806,7 +1808,16 @@ const styles = StyleSheet.create({
       marginTop: 10,
       padding: 10,
       borderRadius: 30,
+      backgroundColor: "#ffffff", // White background
+      borderWidth: 0.5, // Thin border
+      borderColor: "#ccc", // Light gray border
+      shadowColor: "#000", // Shadow color
+      shadowOffset: { width: 0, height: 2 }, // Slightly raised
+      shadowOpacity: 0.2, // Subtle shadow
+      shadowRadius: 4, // Smooth edges
+      elevation: 3, // Android shadow
     },
+    
     headerline: {
       flexDirection: "row",
       marginTop: 10,
@@ -1977,6 +1988,8 @@ const styles = StyleSheet.create({
       borderRadius: 15,
       width: 300,
       marginTop: 20,
+      borderColor: "rgba(0, 0, 0, 0.5)",
+      
     },
     numberScrollView: {
       paddingHorizontal: 10,

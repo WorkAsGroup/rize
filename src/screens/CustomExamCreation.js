@@ -11,8 +11,15 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { getSubjects, getChapters, createCustomExams } from "../core/CommonService";
+import Svg, { Path } from "react-native-svg";
 
-const CustomExamCreation = ({ id, onClose }) => {
+const CheckCircleIcon = () => (
+  <Svg width={24} height={24} viewBox="0 0 24 24" fill="currentColor">
+    <Path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8z" />
+  </Svg>
+);
+
+const CustomExamCreation = ({ id,fetchData, onClose }) => {
   const [subjects, setSubjects] = useState([]);
   const [chapters, setChapters] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
@@ -78,7 +85,7 @@ const CustomExamCreation = ({ id, onClose }) => {
 
       setLoading(false);
       if (response?.data?.exam_session_id) {
-        Alert.alert("Success", "Exam created successfully!", [{ text: "OK", onPress: () => onClose(false) }]);
+        Alert.alert("Success", "Exam created successfully!", [{ text: "OK", onPress: () => {fetchData() ;onClose(false)} }]);
       } else {
         Alert.alert("Error", "Something went wrong, please try again.");
       }
@@ -112,8 +119,10 @@ const CustomExamCreation = ({ id, onClose }) => {
               { borderColor: item.id === selectedId ? "#D37DB5" : "#E8E6E6" },
             ]}
           >
-            <Text style={styles.subjectText}>{item.subject}</Text>
-            {item.id === selectedId && <Icon name="check-circle" size={24} color="#D37DB5" />}
+            <Text style={styles.subjectText}>{item.subject}{" "}</Text>
+            <View>
+    {(item.id === selectedId) && <CheckCircleIcon />}
+  </View>
           </TouchableOpacity>
         ))}
       </View>
@@ -145,8 +154,9 @@ const CustomExamCreation = ({ id, onClose }) => {
                   ]}
                   onPress={() => handleChapterClick(item.id)}
                 >
-                  <Text style={[styles.chapterText, { color: isChecked ? "#fff" : "#333" }]}>{item.chapter}</Text>
-                  {isChecked && <Icon name="cancel" size={16} color="#fff" />}
+                  <Text style={[styles.chapterText, { color: isChecked ? "#fff" : "#333" }]}>{item.chapter}{" "}</Text>
+                  {isChecked && <View  >
+                    <CheckCircleIcon /></View>}
                 </TouchableOpacity>
               );
             })}
@@ -222,6 +232,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginBottom: 6,
     borderRadius: 10,
+    marginRight: 5,
     borderWidth: 1,
     flexDirection: "row",
     alignItems: "center",

@@ -21,7 +21,7 @@ const MockTests = ({selectedType, mocklist, handleStartTest,pre,handleCheckResul
 
 
       const renderItemMock = ({ item }) => {
-        // console.log(item, "exam status")
+        console.log(item, "exam status")
         return (
           <View style={[styles.itemContainer, { backgroundColor: theme.textColor1 }]} key={item?.exam_paper_id}>
             {/* Exam Details */}
@@ -30,7 +30,7 @@ const MockTests = ({selectedType, mocklist, handleStartTest,pre,handleCheckResul
                 <Text style={[styles.examName, { color: theme.textColor }]}>{item.exam_name}</Text>
                 <View style={styles.timeContainer}>
                   <Image source={require("../../images/clock.png")} style={[styles.clockIcon, { tintColor: theme.textColor }]} />
-                  <Text style={[styles.timeText, { color: theme.textColor }]}>3 Hours 0 minutes</Text>
+                  <Text style={[styles.timeText, { color: theme.textColor }]}>{item.exam_duration} Mins </Text>
                 </View>
               </View>
               {/* Start Button */}
