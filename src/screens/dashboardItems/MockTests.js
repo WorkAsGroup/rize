@@ -21,7 +21,7 @@ const MockTests = ({selectedType, mocklist, handleStartTest,pre,handleCheckResul
 
 
       const renderItemMock = ({ item }) => {
-        console.log(item, "exam status")
+        // console.log(item, "exam status")
         return (
           <View style={[styles.itemContainer, { backgroundColor: theme.textColor1 }]} key={item?.exam_paper_id}>
             {/* Exam Details */}

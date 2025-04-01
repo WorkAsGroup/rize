@@ -48,7 +48,7 @@ export const getSubmitExamResults = async (fields) => {
 	  "X-Frame-Options": "SAMEORIGIN",
 	};
   
-	console.log("Making request to:", apiurl + endPoint.submitExam, "with data:", fields);
+	console.log("Making request to:", apiurl + endPoint.submitExam, "with data:", fields?.exam_paper_id, fields?.student_user_exam_id);
 	
 	return await axios
 	  .post(apiurl + endPoint.submitExam, fields, { headers: headers })

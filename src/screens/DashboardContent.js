@@ -498,8 +498,9 @@ console.log(validMockTests, "ValidMocks")
     }
   };
   const submitTestResult = useCallback(
-    async (examData, exam_paper_id, stExId) => {
-      console.log("📤 Submitting test result for:", exam_paper_id, stExId);
+    async (sendingProps) => {
+      const { examData, exam_paper_id, exId} = sendingProps
+      console.log("📤 Submitting test result for:", exam_paper_id, exId);
       setLoading(true); // Start loading
   
       try {
@@ -521,8 +522,9 @@ console.log(validMockTests, "ValidMocks")
         const data = {
           exam_paper_id,
           exam_session_id: 0,
-          student_user_exam_id: stExId,
+          student_user_exam_id: exId,
           questions,
+          type: "guestMockTest",
         };
   
         console.log("📨 Submit Data:", data);
@@ -550,8 +552,8 @@ console.log(validMockTests, "ValidMocks")
   
   
 
-  const submitAllStoredResults = useCallback(async (exId, exam) => {
-    console.log("🚀 Starting submission for exam ID:", exId, exam, );
+  const submitAllStoredResults = useCallback(async (exId) => {
+    console.log("🚀 Starting submission for exam ID:", exId );
   
     setLoading(true); // Start loading animation
   
@@ -572,20 +574,35 @@ console.log(validMockTests, "ValidMocks")
       const submissionsInProgress = new Set();
   
       // 3️⃣ Filter mock tests that match completed exams
-      console.log(completedMockTests[0]?.results?.exam_paper_id, completedExams[0]?.exam_paper_id, "nevaoihef")
+      // console.log(completedExams, completedExams[0]?.exam_paper_id, "nevaoihef")
       let storedMockTests = await AsyncStorage.getItem(
         COMPLETED_MOCK_TESTS_KEY
       );
 
-      console.log(storedMockTests, "storedMockTests")
+      console.log(
+        completedExams,
+        JSON.parse(storedMockTests).map((i) => ({
+          exam_paper_id: i.results.exam_paper_id,
+          i,
+        })),
+        "storedMockTests"
+      );
+      
       if (storedMockTests) {
         const parsedMockTests = JSON.parse(storedMockTests);
 
         const validMockTests = parsedMockTests.filter((test) => test.results);
       
         let submissionPromises = validMockTests
-        .filter(test => test.results && exam?.exam_paper_id === test?.results?.exam_paper_id)
+        .filter(test => 
+          test.results &&
+          completedExams.some((cm) => 
+            cm.exam_paper_id === test.results.exam_paper_id && 
+            cm.exam_id === test.exam_id // Ensuring exam_id also matches
+          )
+        ) 
         .map(async (mocTest) => { 
+          console.log(mocTest, "finalStep")
           const exPaperId = mocTest?.results?.exam_paper_id;
       
           // 4️⃣ Avoid duplicate submissions
@@ -599,10 +616,16 @@ console.log(validMockTests, "ValidMocks")
       
           try {
             // 5️⃣ Submit the test result and check response
+            var sendingProps = {
+              examData : mocTest.results,
+              exam_paper_id: exPaperId,
+               exId: exId ||  mocTest?.exam_id,
+              
+            }
+
+            console.log(sendingProps, "asleeprops")
             const submissionSuccessful = await submitTestResult(
-              mocTest.results,
-              exPaperId,
-              exId
+              sendingProps
             );
       
             console.log("✅ Submission Result:", {mock: mocTest.results,
@@ -635,9 +658,14 @@ console.log(validMockTests, "ValidMocks")
       console.log("🗂 Remaining exams after filter:", remainingExams);
   
       // 8️⃣ Update AsyncStorage properly
-      if (successfulSubmissions.size > 0) {
+      if ([...successfulSubmissions].length > 0) {
         const remaining = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
-       const filtered =  JSON.parse(remaining).filter(checkEx => checkEx.exam_paper_id !== exam.exam_paper_id);
+        console.log([...successfulSubmissions], JSON.parse(remaining), "ExamsDataClear")
+        const filtered = JSON.parse(remaining).filter(checkEx => 
+          ![...successfulSubmissions].some(it => parseInt(checkEx.exam_paper_id) === parseInt(it))
+        );
+        
+      
        await AsyncStorage.setItem(COMPLETED_EXAMS_KEY, JSON.stringify(filtered));
        // Clear storage
   
@@ -672,10 +700,9 @@ console.log(validMockTests, "ValidMocks")
 
   const saveWithOutExistedExamID = async (compExams) => {
     setLoading(true); // Start loading
-    
+  
     try {
       const response = await getAutoLogin();
-      console.log("auto-login-", response);
       console.log("🚀 Auto-login response:", response);
   
       if (!response?.data) {
@@ -683,41 +710,59 @@ console.log(validMockTests, "ValidMocks")
         return; // Early exit if no data
       }
   
-      const { name: nm, student_user_id: id, examsData } = response.data; // Extract user ID properly
+      const { name: nm, student_user_id: id } = response.data;
   
-      for (const exam of compExams) {
-        const payload = {
-          student_user_id: id, // Use `id` from response.data
-          exam_id: parseInt(exam.exam_id),
-          target_year: 2025,
-        };
+      // Track already processed exam IDs to send the first occurrence to `addExam`
+      const processedExamIds = new Set();
+      const newExams = [];
+      const existingExams = [];
   
-        console.log("📤 Sending Payload:", payload);
-  
-        try {
-          // 1️⃣ Add exam
-          const addExamResponse = await addExams(payload);
-  
-          if (!addExamResponse?.data || addExamResponse.data.length === 0) {
-            console.error("❌ addExams failed or returned no data:", addExamResponse);
-            continue; // Skip this exam and move to the next
-          }
-  
-          const studentExamId = addExamResponse.data[0].student_user_exam_id;
-          console.log("✅ Exam added successfully. student_user_exam_id:", studentExamId);
-  
-          // 2️⃣ Submit the stored results for the added exam
-          const submitResponse = await submitAllStoredResults(studentExamId, exam);
-  
-          if (!submitResponse) {
-            console.error("❌ Submission failed:", submitResponse);
-            continue; // Skip to the next exam if submission fails
-          }
-  
-          console.log("📨 Submission Response:", submitResponse);
-        } catch (examError) {
-          console.error(`❌ Error processing exam ID ${exam.exam_id}:`, examError);
+      // Iterate over exams and separate into new and existing
+      compExams.forEach((exam) => {
+        if (!processedExamIds.has(exam.exam_id)) {
+          // First occurrence, send to addExam
+          processedExamIds.add(exam.exam_id);  // Mark as processed
+          newExams.push(exam);  // This exam will be processed with `addExam`
+        } else {
+          // Subsequent occurrences, send to existingExams
+          existingExams.push(exam);  // This exam will be processed with `saveWithExistedExamID`
         }
+      });
+  
+      // Process newExams (those sent for `addExam`)
+      await Promise.all(
+        newExams.map(async (exam) => {
+          try {
+            const payload = {
+              student_user_id: id,
+              exam_id: parseInt(exam.exam_id),
+              target_year: 2025,
+            };
+  
+            console.log("📤 Sending Payload:", payload);
+  
+            const addExamResponse = await addExams(payload);
+  
+            if (!addExamResponse?.data || addExamResponse.data.length === 0) {
+              console.error("❌ addExams failed:", addExamResponse);
+              return;
+            }
+  
+            const studentExamId = addExamResponse.data[0].student_user_exam_id;
+            console.log("✅ New student_user_exam_id:", studentExamId);
+  
+            // Submit only for new exams
+            await submitAllStoredResults(studentExamId);
+          } catch (error) {
+            console.error(`❌ Error in exam ID ${exam.exam_id}:`, error);
+          }
+        })
+      );
+  
+      // 🚀 Ensure all newExams are processed before calling existing exams
+      if (existingExams.length > 0) {
+        console.log("📌 Sending existing exams to saveWithExistedExamID:", existingExams);
+        await saveWithExistedExamID(existingExams); // Ensure this runs only after all new exams finish
       }
   
       console.log("🎉 All exams processed successfully:", compExams);
@@ -734,13 +779,12 @@ console.log(validMockTests, "ValidMocks")
     setLoading(true); // Start loading
 
     try {
-      for (const exam of exist) {
-        console.log("Processing existing exam:", exam);
-        const submit = await submitAllStoredResults(exam.student_user_exam_id, exam);
-        console.log("Submission response:", submit);
-      }
-
-      console.log("All exams processed:", exist);
+      await Promise.all(
+        exist.map(async (exam) => {
+          console.log(`🚀 Processing existing exam_id: ${exam?.student_user_exam_id}`);
+          await submitAllStoredResults(exam?.student_user_exam_id);
+        })
+      );
     } catch (error) {
       console.error("Error processing exams:", error);
     } finally {

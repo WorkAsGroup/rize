@@ -35,7 +35,7 @@ import {
 } from "../core/CommonService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
-var striptags = require("striptags");
+import HtmlComponent from "../common/HtmlComponent";
 
 const windowWidth = Dimensions.get("window").width;
 
@@ -45,95 +45,6 @@ const TAGGED_QUESTIONS_KEY = "taggedQuestions";
 const REVIEWED_QUESTIONS_KEY = "reviewedQuestions";
 const REMAINING_TIME_KEY = "remainingTime";
 
-const removeHtmlTags = (html) => {
-    if (!html) return "";
-  
-    let cleanedHtml = html
-      .replace(/<p[^>]*>/g, "")
-      .replace(/<\/p>/g, "\n")
-      .replace(/<img[^>]*src="[^"]*"[^>]*>/g, "")
-      .replace(/ /g, " ")
-      .replace(/<br\s*[\/]?>/gi, "\n")
-      .replace(/<table[^>]*>/g, "")
-      .replace(/<\/table>/g, "")
-      .replace(/&nbsp;/g, " ")
-      .replace(/<span[^>]*style="[^"]*font-size:\s*11\.*[^;]*;[^"]*"[^>]*>/gi, "")
-      .replace(/<\/span>/gi, "")
-      .replace(/<tr[^>]*>/g, "")
-      .replace(/<\/tr>/g, "")
-      .replace(/<td[^>]*>/g, "")
-      .replace(/<\/td>/g, "")
-      .replace(/style="[^"]*"/g, "")
-  
-      .replace(/valign="[^"]*"/g, "")
-      .replace(/width="[^"]*"/g, "")
-      .trim()
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/g, "");
-  
-    return cleanedHtml;
-  };
-  
-  const extractImages = (html) => {
-    const imageRegex = /<img[^>]+src="([^">]+)"/g;
-    let images = [];
-    let match;
-    while ((match = imageRegex.exec(html)) !== null) {
-      images.push(match[1]);
-    }
-    return images;
-  };
-  const extractContent = (html) => {
-    const imageRegex = /<img[^>]+src="([^">]+)"/g;
-    let contentArray = [];
-    let lastIndex = 0;
-    let match;
-  
-    html = html
-      .replace(/<\/?p[^>]*>/g, "")
-      .replace(/\/>?>/g, ">")
-      .replace(/ /g, " ")
-      .trim();
-    while ((match = imageRegex.exec(html)) !== null) {
-      const textBeforeImage = html.slice(lastIndex, match.index).trim();
-      if (textBeforeImage) {
-        contentArray.push({ type: "text", content: textBeforeImage });
-      }
-      contentArray.push({ type: "image", content: match[1] });
-  
-      lastIndex = match.index + match[0].length;
-    }
-  
-    const remainingText = html.slice(lastIndex).trim();
-    if (remainingText) {
-      contentArray.push({ type: "text", content: remainingText });
-    }
-  
-    return contentArray;
-  };
-
-const sanitizeHtml = (text) => {
-    if (!text) return { html: "<p>No Question provided.</p>" };
-  
-    text = text.replace(/&nbsp;/g, " "); 
-    text = text.replace(/\n/g, " "); 
-    text = text.replace(/<p>/g, "").replace(/<\/p>/g, ""); 
-    text = text.replace(/<img /g, "<img style='display:inline-block; vertical-align:middle; margin: 0 5px;' "); // Inline images with spacing
-  
-    return {
-      html: `<div style='display: flex; flex-direction: row; flex-wrap: wrap; width: ${windowWidth*0.84}px; align-items: center;'>${text}</div>`,
-    };
-  };
-  const renderersProps = {
-    img: {
-      initialDimensions: { width: 20, height: 20 },
-      enableExperimentalPercentWidth: true,
-      style: {
-        display: "inline", // ✅ Forces images to be inline
-        verticalAlign: "middle", // ✅ Aligns with text properly
-        maxWidth: "100%", // ✅ Prevents overflow
-      },
-    },
-  };
   
 const StartExam = ({ navigation, route }) => {
     const colorScheme = useColorScheme();
@@ -997,7 +908,7 @@ const handleTextInputChange = (text, questionId) => {
       </View>
     );
   }
-console.log(remainingTime, "remainingTime")
+console.log(exams, "remainingTime")
 
 
 const handleReviewTag = async (questionId) => {
@@ -1031,7 +942,7 @@ const handleReviewTag = async (questionId) => {
 };
 
 
-console.log(obj, "obj" )
+
 
 return (
   <LinearGradient
@@ -1436,8 +1347,32 @@ return (
               </View>
             </View>
             <View>
+              {exams[selectedNumber - 1]?.compquestion !==""&&   
+              
+              
+              <HtmlComponent 
+                           style={{
+                             // ...AppStyles.oddMRegular,color:COLORS.BLACK,
+                             fontSize:15,lineHeight:23}} 
+                           containerStyle={{ marginBottom:20}} 
+                           baseFontStyle={18}
+                           text={`${exams[selectedNumber - 1]?.compquestion}`}
+                           // tintColor={COLORS.BLACK}
+                           />
+              
+              }
+
+            <HtmlComponent 
+                            style={{
+                              // ...AppStyles.oddMRegular,color:COLORS.BLACK,
+                              fontSize:15,lineHeight:23}} 
+                            containerStyle={{ marginBottom:20,marginTop:3}} 
+                            baseFontStyle={18}
+                            text={`${exams[selectedNumber - 1]?.question}`}
+                            // tintColor={COLORS.BLACK}
+                            />
    
-              <RenderHTML
+              {/* <RenderHTML
               source={{ html: exams[selectedNumber - 1]?.question }}
                 //  source={sanitizeHtml((exams[selectedNumber - 1]?.question) || "<p>No Question provided.</p>",)}
                  contentWidth={windowWidth}
@@ -1446,8 +1381,8 @@ return (
               //      img: { display: "inline-block", verticalAlign: "middle", maxWidth: "100%" }, // Force inline images
               //      span: { display: "inline", flexWrap: "wrap" }, // Ensure span elements wrap properly
               //    }}
-                
-               />
+                 */}
+               {/* /> */}
          
             </View>
          
@@ -1464,8 +1399,8 @@ return (
                       : exams[selectedNumber - 1]?.option4;
 
                   // const cleanedOptionText = removeHtmlTags(optionText);
-                  const imagesInOption = extractImages(optionText);
-                  const isImageUrl = imagesInOption.length > 0;
+                  // const imagesInOption = extractImages(optionText);
+                  // const isImageUrl = imagesInOption.length > 0;
 
                   const isSelected =
                     selectedAnswers[selectedNumber] === option;
@@ -1499,7 +1434,7 @@ return (
                       </View>
 
                       <View>
-                        {isImageUrl ? (
+                        {/* {isImageUrl ? (
                           <View style={{ backgroundColor: "#FFF" }}>
                             <Image
                               source={{ uri: imagesInOption[0] }}
@@ -1511,7 +1446,7 @@ return (
                               }}
                             />
                           </View>
-                        ) : (
+                        ) : ( */}
                           <View style={{alignContent:'center'}}>
                           <Text
                             style={[
@@ -1523,20 +1458,19 @@ return (
                               },
                             ]}
                           >
-                            {/* {cleanedOptionText || "Option not available"} */}
-                            <RenderHTML
-                              source={sanitizeHtml(
-                                optionText || "<p>No question provided.</p>"
-                              )}
-                              // source={{ html: optionText }} 
-                              renderersProps={renderersProps}
-                              // baseFontStyle={baseFontStyle}
-                              // {...DEFAULT_PROPS}
-                              contentWidth={windowWidth}
+
+<HtmlComponent 
+                            style={{
+                              // ...AppStyles.oddMRegular,color:COLORS.BLACK,
+                              fontSize:15,lineHeight:23,textWrap: "wrap",width: windowWidth * 0.6,}} 
+                            containerStyle={{ marginBottom:20,marginTop:3}} 
+                            baseFontStyle={18}
+                            text={`${optionText}`}
+                            // tintColor={COLORS.BLACK}
                             />
                           </Text>
                           </View>
-                        )}
+                        {/* )} */}
                       </View>
 
                       <View
@@ -1591,24 +1525,14 @@ return (
               }}
             >
               <View style={{ flexDirection: "row" }}>
-                {/* <TouchableOpacity style={[styles.ins, { backgroundColor: theme.textColor1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]}>
-                                      <Image
-                                          style={{ height: 20, width: 20, resizeMode: 'contain', tintColor: theme.textColor }}
-                                          source={require("../images/caution.png")}
-                                      />
-                                  </TouchableOpacity> */}
+
                                   <TouchableOpacity onPress={handleReviewTag} style={[styles.ins, { backgroundColor: theme.textColor1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]}>
                                       <Image
                                           style={{ height: 20, width: 20, resizeMode: 'contain', tintColor: theme.textColor }}
                                           source={require("../images/tag.png")}
                                       />
                                   </TouchableOpacity>
-                                  {/* <TouchableOpacity style={[styles.ins, { backgroundColor: theme.textColor1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]} onPress={() => navigation.navigate("Instruct")}>
-                                      <Image
-                                          style={{ height: 20, width: 20, resizeMode: 'contain', tintColor: theme.textColor }}
-                                          source={require("../images/info.png")}
-                                      />
-                                  </TouchableOpacity>  */}
+
 
                 <TouchableOpacity
                   style={{ marginLeft: 15, marginTop: 5 }}
@@ -1909,12 +1833,13 @@ const styles = StyleSheet.create({
       flexDirection: "row",
       width: windowWidth * 0.8,
       marginTop: 8,
-      height: 54,
+      minHeight: 54,
       alignItems: "center",
       paddingStart: 10,
       paddingEnd: 10,
       borderWidth: 0.6,
       position: "relative",
+      maxHeight: "100%",
     },
     ins: {
       height: 32,
