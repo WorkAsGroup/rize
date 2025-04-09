@@ -4,7 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { View, StyleSheet, Image, useColorScheme, BackHandler } from 'react-native';
 import { darkTheme, lightTheme } from './src/theme/theme';
-
+import { ExamProvider } from './src/ExamContext';
 import Login from './src/screens/Login';
 import Signup from './src/screens/Signup';
 import AccountCreated from './src/screens/AccountCreated';
@@ -61,6 +61,7 @@ const AuthNavigator = ({ onChangeAuth }) => {
 };
 
 const AppNavigator = ({ onChangeAuth }) => (
+  <ExamProvider>
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="DashboardContent" >
        {(props) => <DashboardDrawer {...props} route={{ params: { onChangeAuth: onChangeAuth } }} />}
@@ -79,6 +80,7 @@ const AppNavigator = ({ onChangeAuth }) => (
 
 
   </Stack.Navigator>
+  </ExamProvider>
 );
 
 const SplashScreen = () => {

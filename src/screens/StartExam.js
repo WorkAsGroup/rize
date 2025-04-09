@@ -35,8 +35,8 @@ import {
 } from "../core/CommonService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
-import HtmlComponent from "../common/HtmlComponent";
-
+// import HtmlComponent from "../common/HtmlComponent";
+import LoadQuestion from "../common/LoadQuestion";
 const windowWidth = Dimensions.get("window").width;
 
 const ANSWERED_QUESTIONS_KEY = "answeredQuestions";
@@ -409,8 +409,13 @@ const handleTextInputChange = (text, questionId) => {
     };
     try {
       const examPattern = await getPatternSelection(data);
-      console.log("examPatternexamPattern", examPattern);
-      setPattern(examPattern.data);
+      // console.log("examPatternexamPattern", examPattern);
+      let filterPattern = examPattern.data.filter((item) => 
+        (exams || []).some((exam) => Number(exam?.subject) === Number(item?.subject_id))
+      );
+
+      console.log("examPatternexamPattern", filterPattern, exams, examPattern.data);
+      setPattern(filterPattern);
 
       if (examPattern.data && examPattern.data.length > 0) {
         setSelectedSubjectId(examPattern.data[0].id);
@@ -428,6 +433,10 @@ const handleTextInputChange = (text, questionId) => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    getExamPattern();
+  },[exams])
 
 
 
@@ -942,7 +951,7 @@ const handleReviewTag = async (questionId) => {
 };
 
 
-
+console.log(pattern, "patternsss")
 
 return (
   <LinearGradient
@@ -1346,177 +1355,173 @@ return (
                 </Text>
               </View>
             </View>
-            <View>
-              {exams[selectedNumber - 1]?.compquestion !==""&&   
-              
-              
-              <HtmlComponent 
-                           style={{
-                             // ...AppStyles.oddMRegular,color:COLORS.BLACK,
-                             fontSize:15,lineHeight:23}} 
-                           containerStyle={{ marginBottom:20}} 
-                           baseFontStyle={18}
-                           text={`${exams[selectedNumber - 1]?.compquestion}`}
-                           // tintColor={COLORS.BLACK}
-                           />
-              
-              }
-
-            <HtmlComponent 
-                            style={{
-                              // ...AppStyles.oddMRegular,color:COLORS.BLACK,
-                              fontSize:15,lineHeight:23}} 
-                            containerStyle={{ marginBottom:20,marginTop:3}} 
-                            baseFontStyle={18}
-                            text={`${exams[selectedNumber - 1]?.question}`}
-                            // tintColor={COLORS.BLACK}
-                            />
-   
-              {/* <RenderHTML
-              source={{ html: exams[selectedNumber - 1]?.question }}
-                //  source={sanitizeHtml((exams[selectedNumber - 1]?.question) || "<p>No Question provided.</p>",)}
-                 contentWidth={windowWidth}
-              //    tagsStyles={{
-              //      p: { marginBottom: 0, display: "inline", flexWrap: "wrap" }, // Ensure paragraph stays inline
-              //      img: { display: "inline-block", verticalAlign: "middle", maxWidth: "100%" }, // Force inline images
-              //      span: { display: "inline", flexWrap: "wrap" }, // Ensure span elements wrap properly
-              //    }}
-                 */}
-               {/* /> */}
          
-            </View>
-         
-            {exams[selectedNumber - 1]?.qtype !== 8 ? (
-              <View>
-                {["A", "B", "C", "D"].map((option, index) => {
-                  const optionText =
-                    index === 0
-                      ? exams[selectedNumber - 1]?.option1
-                      : index === 1
-                      ? exams[selectedNumber - 1]?.option2
-                      : index === 2
-                      ? exams[selectedNumber - 1]?.option3
-                      : exams[selectedNumber - 1]?.option4;
-
-                  // const cleanedOptionText = removeHtmlTags(optionText);
-                  // const imagesInOption = extractImages(optionText);
-                  // const isImageUrl = imagesInOption.length > 0;
-
-                  const isSelected =
-                    selectedAnswers[selectedNumber] === option;
-
-                  return (
-                    <TouchableOpacity
-                      key={option}
-                      style={[
-                        styles.opt,
-                        {
-                          borderColor: theme.textColor,
-                          borderRadius: 25,
-                          backgroundColor: "transparent",
-                        },
-                      ]}
-                      onPress={() => {
-                        setSelectedOption(option);
-                        handleAnswerSelect(selectedNumber, option);
-                      }}
-                    >
-                      <View
-                        style={[
-                          styles.optbg,
-                          { backgroundColor: theme.gray },
-                        ]}
-                      >
-                        <Text style={[styles.option, { color: "#FFF" }]}>
-                          {option}
-                        </Text>
-                        
-                      </View>
-
+          {exams[selectedNumber - 1]?.compquestion.length > 0 ||
+                    exams[selectedNumber - 1]?.question.length > 0 ? (
                       <View>
-                        {/* {isImageUrl ? (
-                          <View style={{ backgroundColor: "#FFF" }}>
-                            <Image
-                              source={{ uri: imagesInOption[0] }}
-                              style={{
-                                width: 80,
-                                height: 40,
-                                borderRadius: 25,
-                                resizeMode: "contain",
-                              }}
-                            />
-                          </View>
-                        ) : ( */}
-                          <View style={{alignContent:'center'}}>
-                          <Text
-                            style={[
-                              styles.option,
-                              {
-                                color: theme.textColor,
-                                width:226,
-                                overflow: "scroll",
-                              },
-                            ]}
-                          >
-
-<HtmlComponent 
+                   
+                  <LoadQuestion
+              
+                        type="exam"
+                        item={exams[selectedNumber- 1]} 
+                        selectedAnswers={selectedAnswers}
+                        selectedNumber={selectedNumber}
+                        currentQuestionIndex={exams[selectedNumber- 1]}
+                        questionLength={exams.length}
+                        onChangeValue={(value)=>handleAnswerSelect(selectedNumber,value)}
+                        onSkip={()=>{ handleSkipQuestion();
+                          setSelectedOption(null);}}
+                        // onPrevious={()=>this.previous(currentQuestionIndex)}
+                        onNext={()=>{
+                          if (answeredQuestions[selectedNumber]) {
+                            moveToNextQuestion();
+                            return;
+                          }
+          
+                          handleSelectAndNext(selectedNumber);
+                          if (exams[selectedNumber - 1]?.qtype !== 8) {
+                            handleAnswerSelect(selectedNumber, selectedOption);
+                            setSelectedOption(null);
+                          }
+                          setTextInputAnswer("");
+                        }}
+                        onReviewLater={()=>handleReviewTag()}
+                        onSubmit={()=> handleSubmitTest()}
+                        // onReload={()=>this.onReload(questions[currentQuestionIndex].id,questions[currentQuestionIndex].selection_type)}
+                        handleTextInputChange={handleTextInputChange}
+                        handleSelectAndNext={handleSelectAndNext}
+                        handleAnswerSelect={handleAnswerSelect}
+                        textInputValues={textInputValues}
+                         />
+      
+      
+                        {/* {exams[selectedNumber - 1]?.qtype !== 8 ? (
+                          <View
                             style={{
-                              // ...AppStyles.oddMRegular,color:COLORS.BLACK,
-                              fontSize:15,lineHeight:23,textWrap: "wrap",width: windowWidth * 0.6,}} 
-                            containerStyle={{ marginBottom:20,marginTop:3}} 
-                            baseFontStyle={18}
-                            text={`${optionText}`}
-                            // tintColor={COLORS.BLACK}
-                            />
-                          </Text>
+                              display: "flex",
+                              flexDirection: "row",
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            {["A", "B", "C", "D"].map((option, index) => {
+                              const optionText =
+                                index === 0
+                                  ? exams[selectedNumber - 1]?.option1
+                                  : index === 1
+                                  ? exams[selectedNumber - 1]?.option2
+                                  : index === 2
+                                  ? exams[selectedNumber - 1]?.option3
+                                  : exams[selectedNumber - 1]?.option4;
+                              const optionHtml = optionText;
+                              const optionImages = [];
+      
+                              // console.log("Exam Data:", exams[selectedNumber - 1]);
+                              // const { html: optionHtml, images: optionImages } = extractAndSanitizeHtml(optionText);      const isImageUrl = optionImages.length > 0;
+                              const isSelected =
+                                selectedAnswers[selectedNumber] === option;
+                              return (
+                                <TouchableOpacity
+                                  key={option}
+                                  style={[
+                                    styles.opt,
+                                    {
+                                      borderColor: theme.textColor,
+                                      borderRadius: 25,
+                                      backgroundColor: "transparent",
+                                    },
+                                  ]}
+                                  onPress={() => {
+                                    setSelectedOption(option);
+                                    handleAnswerSelect(selectedNumber, option);
+                                  }}
+                                >
+                                  <View
+                                    style={[
+                                      styles.optbg,
+                                      { backgroundColor: theme.gray },
+                                    ]}
+                                  >
+                                    <Text style={[styles.option, { color: "#FFF" }]}>
+                                      {option}
+                                    </Text>
+                                  </View>
+      
+                                  <View
+                                    style={{
+                                      flexDirection: "row",
+                                      flexWrap: "wrap",
+                                      justifyContent: "flex-start",
+                                    }}
+                                  >
+                                    <HtmlComponent
+                                      style={{
+                                        // ...AppStyles.oddMRegular,color:COLORS.BLACK,
+                                        fontSize: 15,
+                                        lineHeight: 23,
+                                        width: windowWidth * 0.6,
+                                      }}
+                                      containerStyle={{
+                                        marginBottom: 20,
+                                        marginTop: 3,
+                                      }}
+                                      baseFontStyle={18}
+                                      text={`${optionHtml} `}
+                                      // tintColor={COLORS.BLACK}
+                                    />
+                                  </View>
+      
+                                  <View
+                                    style={[
+                                      styles.select,
+                                      {
+                                        borderColor: theme.textColor,
+                                        backgroundColor: isSelected
+                                          ? theme.textColor
+                                          : "transparent",
+                                      },
+                                    ]}
+                                  />
+                                </TouchableOpacity>
+                              );
+                            })}
                           </View>
-                        {/* )} */}
+                        ) : (
+                          <View>
+                            <TextInput
+                              style={[
+                                styles.textInputStyle,
+                                {
+                                  // backgroundColor: theme.textColor1,
+                                  // borderColor: theme.textColor1,
+                                  color: theme.textColor,
+                                },
+                              ]}
+                              value={textInputValues[selectedNumber] || ""}
+                              onChangeText={(text) => {
+                                handleTextInputChange(text, selectedNumber);
+                                // console.log("TextInput changed for question:", selectedNumber, "to:", text);
+                              }}
+                              placeholder={`Enter Text`}
+                              keyboardType="numeric"
+                              placeholderTextColor={theme.textColor}
+                              multiline={true}
+                              onSubmitEditing={() => {
+                                // console.log("onSubmitEditing called for question:", selectedNumber);
+                                handleSelectAndNext(selectedNumber);
+                              }}
+                              onBlur={() =>
+                                handleAnswerSelect(
+                                  selectedNumber,
+                                  textInputValues[selectedNumber]
+                                )
+                              }
+                            />
+                          </View>
+                        )} */}
                       </View>
-
-                      <View
-                        style={[
-                          styles.select,
-                          {
-                            borderColor: theme.textColor,
-                            backgroundColor: isSelected
-                              ? theme.textColor
-                              : "transparent",
-                          },
-                        ]}
-                      />
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            ) : (
-               <View>
-                                  <TextInput
-                    style={[
-                      styles.textInputStyle,
-                      {
-                        // backgroundColor: theme.textColor1,
-                        // borderColor: theme.textColor1,
-                        color: theme.textColor,
-                      },
-                    ]}
-                    value={textInputValues[selectedNumber] || ""}
-                    onChangeText={(text) => {
-                      handleTextInputChange(text, selectedNumber);
-                      // console.log("TextInput changed for question:", selectedNumber, "to:", text);
-                  }}
-                    placeholder={`Enter Text`}
-                    keyboardType="numeric"
-                    placeholderTextColor={theme.textColor}
-                    multiline={true}
-                    onSubmitEditing={() => {
-                      // console.log("onSubmitEditing called for question:", selectedNumber);
-                      handleSelectAndNext(selectedNumber);
-                  }}
-                    onBlur={() => handleAnswerSelect(selectedNumber, textInputValues[selectedNumber])} 
-                        />
-                              </View>
-            )}
-
+                    ) : (
+                      <ActivityIndicator size="large" color={theme.textColor} />
+                    )}
             <View
               style={{
                 marginTop: 10,

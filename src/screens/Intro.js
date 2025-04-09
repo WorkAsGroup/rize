@@ -27,7 +27,8 @@ const COMPLETED_EXAMS_KEY = "completedExams";
 
 export default function Intro({ navigation }) {
   const colorScheme = useColorScheme();
-  const theme = colorScheme === "dark" ? darkTheme : lightTheme;
+  // const theme = colorScheme === "dark" ? darkTheme : lightTheme;
+  const theme = darkTheme;
   const [completedExams, setCompletedExams] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -299,11 +300,11 @@ export default function Intro({ navigation }) {
           />
 
         </View>
-        <View style={{ width: windowWidth / 1.2, marginTop: 20, marginBottom: 10 }}>
+        {/* <View style={{ width: windowWidth / 1.2, marginTop: 20, marginBottom: 10 }}>
           <Text style={[styles.feature, { color: theme.textColor, alignSelf: "center", fontSize: 18 }]}>
             Mock Test
           </Text>
-        </View>
+        </View> */}
 
         {isLoading ? (
         renderLoading()
@@ -335,6 +336,8 @@ export default function Intro({ navigation }) {
           paddingRight: 15,
           marginTop: 10,
           justifyContent: "space-between",
+          // alignContent: "center",
+          alignItems: "center",
         },
         title: {
           fontSize: 40,
@@ -551,14 +554,14 @@ export default function Intro({ navigation }) {
           <View style={styles.headerContainer}>
             <Image
               style={{
-                height: 45,
-                width: 180,
+                height: 100,
+                width: 100,
                 justifyContent: "flex-start",
-                tintColor: theme.textColor,
+                // tintColor: theme.textColor,
                 resizeMode: "contain",
                 marginRight: 20,
               }}
-              source={require("../images/title.png")}
+              source={require("../images/logo.png")}
             />
             <View
               style={{

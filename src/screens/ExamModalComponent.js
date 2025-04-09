@@ -4,131 +4,161 @@ import { Button, IconButton } from "react-native-paper";
 import DropDownPicker from "react-native-dropdown-picker";
 import { getExamType, addExams } from "../core/CommonService";
 
-const ExamModalComponent = ({ show, setShow, studentUserId }) => {
-  const [state, setState] = useState({
-    examId: "",
-    examIdError: "",
-    yearId: "",
-    yearIdError: "",
-  });
-
+const ExamModalComponent = ({ show, setShow, studentUserId, onRefresh, existingExams }) => {
   const [loading, setLoading] = useState(false);
   const [examsData, setExamsData] = useState([]);
 
-// console.log(examsData, "errfir")
-  // Dropdown states
   const [openExam, setOpenExam] = useState(false);
   const [openYear, setOpenYear] = useState(false);
   const [selectedExam, setSelectedExam] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
-  const [years, setYears] = useState([{ label: "2025", value: "2025" }]);
+  const [years] = useState([{ label: "2025", value: "2025" }]);
 
-  const getExamData = async() => {
-        const exams = await getExamType();
-        console.log(exams.data)
-        setExamsData(exams.data)
-  }
+  const [errors, setErrors] = useState({ examId: "", yearId: "" });
 
   useEffect(() => {
-    getExamData()
-  },[])
-  const handleFormChange = (key, value) => {
-    setState((prevState) => ({
-      ...prevState,
-      [key]: value,
-      [`${key}Error`]: "",
-    }));
+    if (show) {
+      setSelectedExam(null);
+      setSelectedYear(null);
+      setErrors({ examId: "", yearId: "" });
+    }
+  }, [show]);
+
+  const getExamData = async () => {
+    try {
+      const exams = await getExamType();
+
+      let filteredExamsData = [];
+console.log(existingExams, exams, "existingExams, examsData")
+      // If existingExams is null or empty, show all exams
+      if (!existingExams || existingExams.length === 0) {
+        filteredExamsData = exams.data;
+      } else {
+
+
+        const existingExamIds = new Set(existingExams.map((exam) => exam.exam_id));
+        filteredExamsData = exams.data.filter((exam) => !existingExamIds.has(exam.exam_id));
+
+        // If no exams were filtered, show all exams
+        if (filteredExamsData.length === 0) {
+          filteredExamsData = exams.data;
+        }
+      }
+
+      console.log("Filtered Exams Data:", filteredExamsData);
+      setExamsData(filteredExamsData || []);
+    } catch (error) {
+      console.error("Error fetching exam types:", error);
+      setExamsData([]);
+    }
   };
 
+
+  useEffect(() => {
+    getExamData();
+  }, [show]);
+
   const handleSubmit = async () => {
-    console.log("calleds", selectedExam, selectedYear)
- 
-    let hasError = false;
+    if (loading) return;
 
-    if (!selectedExam) {
-        setState((prevState) => ({
-            ...prevState,
-            examIdError: "Please Select Exam",
-        }));
-        hasError = true;
-    };
-    if (!selectedYear) {
-        setState((prevState) => ({
-            ...prevState,
-            yearIdError: "Please Select Year",
-        }));
-        hasError = true;
-    };
-    if (!hasError) {
-        
-        const payload = {
-            student_user_id: studentUserId,
-            exam_id: parseInt(selectedExam),
-            target_year: parseInt(selectedYear)
-        }
+    let newErrors = { examId: "", yearId: "" };
 
-        const response  = addExams(payload)
-        console.log(response)
-        if(response) {
-            setShow(false)
-        }
-        
-    };
-};
+    if (!selectedExam) newErrors.examId = "Please select an exam";
+    if (!selectedYear) newErrors.yearId = "Please select a year";
+
+    if (newErrors.examId || newErrors.yearId) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const payload = {
+        student_user_id: studentUserId,
+        exam_id: parseInt(selectedExam),
+        target_year: parseInt(selectedYear),
+      };
+
+      const response = await addExams(payload);
+console.log(response, "response")
+      if (response) {
+        // setTimeout(async () => {
+          // await onRefresh();
+          setShow(false);
+          setLoading(false);
+        // }, 2000);
+      } else {
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error("Submission failed:", error);
+      setLoading(false);
+    }
+    setLoading(false);
+  };
 
   return (
     <Modal visible={show} transparent animationType="slide">
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <View style={styles.header}>
-            <Text style={styles.title}>Add New</Text>
-            <IconButton icon="close" onPress={() => setShow(false)} />
+            <Text style={styles.title}>Add New Exam</Text>
+            {(existingExams?.length > 0) && <IconButton icon="close" onPress={() => setShow(false)} />}
           </View>
-          {loading ? (
-            <ActivityIndicator size="large" color="#2575FC" />
-          ) : (
-            <>
-             
 
-              <Text style={styles.label}>Year</Text>
-              <DropDownPicker
-                open={openYear}
-                setOpen={setOpenYear}
-                value={selectedYear}
-                setValue={(value) => {handleFormChange("yearId", value); setSelectedYear(value)}}
-                items={years}
-                placeholder="Select Year"
-                containerStyle={{ marginBottom: 10 }}
-                style={styles.dropdown}
-                dropDownContainerStyle={styles.dropdownContainer}
-              />
-              {state.yearIdError && <Text style={styles.errorText}>{state.yearIdError}</Text>}
-              <Text style={styles.label}>Exam</Text>
-             {examsData&&<DropDownPicker
-                open={openExam}
-                setOpen={setOpenExam}
-                value={selectedExam}
-                setValue={(value) => {handleFormChange("examId", value); setSelectedExam(value)}}
-                items={examsData.map((item) => ({
-                  label: item.exam_type,
-                  value: item.exam_id,
-                }))}
-                placeholder="Select Exam"
-                containerStyle={{ marginBottom: 10 }}
-                style={styles.dropdown}
-                dropDownContainerStyle={styles.dropdownContainer}
-              />} 
-              {state.examIdError && <Text style={styles.errorText}>{state.examIdError}</Text>}
-              <Button
-                mode="contained"
-                loading={loading}
-                style={styles.button}
-                onPress={handleSubmit}
-              >
-                {loading ? "Updating..." : "Add Details"}
-              </Button>
-            </>
-          )}
+
+
+        
+
+          <Text style={styles.label}>Exam</Text>
+          <DropDownPicker
+            open={openExam}
+            value={selectedExam}
+            items={examsData.map((item) => ({
+              label: item.exam_type,
+              value: item.exam_id,
+            }))}
+            setOpen={(isOpen) => {
+              setOpenExam(isOpen);
+              setOpenYear(false); // Close the other dropdown
+            }}
+            setValue={(callback) => {
+              const value = callback(selectedExam);
+              setSelectedExam(value);
+              setErrors((prevErrors) => ({ ...prevErrors, examId: "" })); // Clear error
+            }}
+            placeholder="Select Exam"
+            style={styles.dropdown}
+            dropDownContainerStyle={styles.dropdownContainer}
+            disabled={loading}
+          />
+
+          {errors.examId && <Text style={styles.errorText}>{errors.examId}</Text>}
+          <Text style={styles.label}>Year</Text>
+          <DropDownPicker
+            open={openYear}
+            value={selectedYear}
+            items={years}
+            setOpen={(isOpen) => {
+              setOpenYear(isOpen);
+              setOpenExam(false); // Close the other dropdown
+            }}
+            setValue={(callback) => {
+              const value = callback(selectedYear);
+              setSelectedYear(value);
+              setErrors((prevErrors) => ({ ...prevErrors, yearId: "" })); // Clear error
+            }}
+            placeholder="Select Year"
+            style={styles.dropdown}
+            dropDownContainerStyle={styles.dropdownContainer}
+            disabled={loading}
+          />
+
+          {errors.yearId && <Text style={styles.errorText}>{errors.yearId}</Text>}
+          <Button mode="contained" disabled={loading} style={styles.button} onPress={handleSubmit}>
+            {loading ? <ActivityIndicator color="#fff" size="small" /> : "Add Details"}
+          </Button>
         </View>
       </View>
     </Modal>

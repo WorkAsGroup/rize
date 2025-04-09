@@ -8,11 +8,11 @@ import LinearGradient from "react-native-linear-gradient";
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 const MockTests = ({selectedType, mocklist, handleStartTest,pre,handleCheckResults,  customExams,setMock,setShowCustom, setSelectedType}) => {
-
+console.log( mocklist, pre, customExams, "weioufgwoeyuyewfuywe")
       const colorScheme = useColorScheme();
 
-    const theme = colorScheme === "dark" ? darkTheme : lightTheme;
-
+    // const theme = colorScheme === "dark" ? darkTheme : lightTheme;
+  const theme = darkTheme;
 
     const handleSetMockType = (type) => {
         setSelectedType(type);
@@ -107,14 +107,14 @@ const MockTests = ({selectedType, mocklist, handleStartTest,pre,handleCheckResul
       key={0} 
       style={[styles.markButton, styles[`bgColor${0}`], styles[`borderColor${0}`]]}
     >
-      <Text style={[styles.markText, { color: theme.textColor }]}>
+      <Text style={[styles.markText, { color: "#000" }]}>
         Total: {item.marks.reduce((total, mark) => total + Number(mark.subject_score || 0), 0)}
       </Text>
     </TouchableOpacity>
     
               {item.marks.map((mark, index) => (
                 <TouchableOpacity key={index} style={[styles.markButton, styles[`bgColor${index+1}`], styles[`borderColor${index}`]]}>
-                  <Text style={[styles.markText, { color: theme.textColor }]}>{mark.subject}: {mark.subject_score}</Text>
+                  <Text style={[styles.markText, { color: "#000" }]}>{mark.subject}: {mark.subject_score}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -125,7 +125,7 @@ const MockTests = ({selectedType, mocklist, handleStartTest,pre,handleCheckResul
     
 
     return (
-      <View style={[styles.performanceCard, { backgroundColor: theme.conbk, marginTop: 20, height: windowHeight * .6 }]}>
+      <View style={[styles.performanceCard, { backgroundColor: theme.conbk, marginTop: 20, height: windowHeight * .85 }]}>
         
         <Text style={[styles.performanceTitle, { color: theme.textColor }]}>Mock Tests</Text>
         <Text style={styles.subText}>Select your preferred exam and start practicing</Text>
@@ -143,7 +143,7 @@ const MockTests = ({selectedType, mocklist, handleStartTest,pre,handleCheckResul
           >
             <TouchableOpacity
               style={{
-                backgroundColor: theme.textColor1,
+                backgroundColor: "transparent",
                 padding: 8,
                 borderBottomWidth: selectedType === 'mock' ? 1 : 0,
                 borderBottomColor: selectedType === 'mock' ? theme.tx1 : "transparent"
@@ -153,28 +153,32 @@ const MockTests = ({selectedType, mocklist, handleStartTest,pre,handleCheckResul
                 handleSetMockType('mock');
               }}
             >
-              <Text style={{ color: selectedType === 'mock' ? theme.tx1 : theme.textColor, fontSize: 13 }}>Curated Tests</Text>
+              <Text style={{ color: selectedType === 'mock' ? theme.tx1 : theme.textColor, fontSize: 13 }}>Curated Tests </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={{
-                backgroundColor: theme.textColor1,
-                padding: 8,
-                marginLeft: 10,
-                borderBottomWidth: selectedType === 'previous' ? 1 : 0,
+
+  <TouchableOpacity
+    style={{
+      backgroundColor: "transparent",
+      padding: 8,
+           borderBottomWidth: selectedType === 'previous' ? 1 : 0,
                 borderBottomColor: selectedType === 'previous' ? theme.tx1 : "transparent"
-              }}
-              onPress={() => {
-                handleSetMockType('previous');
-                setMock(pre);
-              }}
-            >
-              <Text style={{ color: selectedType === 'previous' ? theme.tx1 : theme.textColor, fontSize: 13 }}>Previous Year Tests</Text>
-            </TouchableOpacity>
+    }}
+    onPress={() => {
+      handleSetMockType('previous');
+      setMock(pre);
+    }}
+  >
+    <Text style={{ color: selectedType === 'previous' ? theme.tx1 : theme.textColor, fontSize: 13 }}>
+      PYQs 
+    </Text>
+  </TouchableOpacity>
+{/* </LinearGradient> */}
+
 
             <TouchableOpacity
               style={{
-                backgroundColor: theme.textColor1,
+                backgroundColor: "transparent",
                 padding: 8,
                 marginLeft: 10,
                 borderBottomWidth: selectedType === 'custom' ? 1 : 0,
@@ -185,12 +189,12 @@ const MockTests = ({selectedType, mocklist, handleStartTest,pre,handleCheckResul
                 setMock(customExams);
               }}
             >
-              <Text style={{ color: selectedType === 'custom' ? theme.tx1 : theme.textColor, fontSize: 13 }}>Custom Tests</Text>
+              <Text style={{ color: selectedType === 'custom' ? theme.tx1 : theme.textColor, fontSize: 13 }}>Custom Test</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
-        {selectedType === "custom" && <TouchableOpacity
-          style={{ display: "flex", justifyContent: `${customExams.legth> 0 ? "flex-end":"center"}`, alignItems:  `${customExams.legth> 0 ? "flex-end":"center"}`, width: "100%" }}
+        {selectedType == "custom" && <TouchableOpacity
+          style={{ display: "flex", justifyContent: `${customExams&&customExams.length> 0 ? "flex-end":"center"}`, alignItems:  `${customExams&&customExams.length> 0 ? "flex-end":"center"}`, width: "100%" }}
           activeOpacity={0.8}
           onPress={() => setShowCustom(true)}
         >
@@ -213,6 +217,7 @@ const MockTests = ({selectedType, mocklist, handleStartTest,pre,handleCheckResul
         <FlatList
           data={selectedType==="mock" ? mocklist : selectedType==="previous" ? pre : customExams}
           renderItem={renderItemMock}
+          
           keyExtractor={(item) => item.id ? item.id.toString() : Math.random().toString()}
           nestedScrollEnabled={true}
           ListEmptyComponent={<Text style={{ color: theme.textColor, textAlign: 'center' }}>No mock tests available.</Text>}
@@ -366,6 +371,7 @@ const styles = StyleSheet.create({
   bgColor1: { backgroundColor: "#FFDAC1" },
   bgColor2: { backgroundColor: "#C5E6C3" },
   bgColor3: { backgroundColor: "#BFD7EA" },
+  bgColor4: { backgroundColor: "#B888D7" },
   startExamBtn: {
     alignItems: 'center',
     justifyContent: 'center',

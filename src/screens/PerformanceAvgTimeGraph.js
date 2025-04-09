@@ -3,97 +3,26 @@ import { View, Text, ScrollView, Dimensions, ActivityIndicator, useColorScheme, 
 import { LineChart } from "react-native-chart-kit";
 import { darkTheme, lightTheme } from "../theme/theme";
 import { Dropdown } from "react-native-element-dropdown";
-
+import CustomLineChart from "../common/CustomGraphs";
 
 const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData, chaperWiseData,  type }) => {
   const [chartData, setChartData] = useState({ labels: [], datasets: [] });
   const [weekChartData, setWeekChartData] = useState({ labels: [], datasets: [] });
   const [loading, setLoading] = useState(false);
-  const[chapData, setChapData] = useState(chaperWiseData)
-
+  const[chapData, setChapData] = useState(chaperWiseData);
+  const [yourTime, setYourTime] = useState({ labels: [], datasets: [] })
   console.log(chapData, 'errrr')
   const [overallScorePercent, setOverallScorePercent] = useState("")
   const defaultValue = chapData.length > 0 ? { label: chapData[0].subject_name, value: chapData[0].subject_id } : null;
   const [chapValue, setChapValue] = useState(defaultValue)
-  const subjects = [
-    { label: "overall", value: 1 },
-    { label: "botany", value: 2 },
-    { label: "physics", value: 3 },
-    { label: "chemistry", value: 4 },
-    { label: "zoology", value: 5 },
-  ];
+
   const colorScheme = useColorScheme();
-  const theme = colorScheme === "dark" ? darkTheme : lightTheme;
+  const theme =  darkTheme ;
   console.log(performanceSubOptions, "oiefowieh")
 
   useEffect(() => {
    setChapData(chaperWiseData);
   },[chaperWiseData])
-
-  useEffect(() => {
-    setLoading(true);
-
-    if (!data || !data.periods) {
-      console.warn("No valid data received for chart.");
-      setLoading(false);
-      return;
-    }
-    const updatedData = performanceSubOptions.map(item => ({
-      ...item,
-      label: item.label.toLowerCase()
-  }));
-
-    const performanceCategories = data.periods.map((entry) => entry.day || "N/A");
-    const selectedSubjectLabel = updatedData.find((sub) => sub.value === type)?.label;
-
-    const studentData = data.periods.map((entry) => {
-      const subjectData = entry.subjects?.find(
-        (sub) => sub.subject_name?.toLowerCase() === selectedSubjectLabel
-      );
-      return subjectData
-        ? type === 1
-          ? Number(subjectData.student_obtained_marks_avg || 0)
-          : Number(subjectData.student_average_time_spent || 0)
-        : 0;
-    });
-
-    const communityData = data.periods.map((entry) => {
-      const subjectData = entry.subjects?.find(
-        (sub) => sub.subject_name?.toLowerCase() === selectedSubjectLabel
-      );
-      return subjectData
-        ? type === selectedSubjectLabel
-          ? Number(subjectData.community_obtained_marks_avg || 0)
-          : Number(subjectData.community_average_time_spent || 0)
-        : 0;
-    });
-    const filteredData = data?.overall?.filter((item) =>
-        item.subject_name?.toLowerCase() === selectedSubjectLabel
-    ) || [];
-
-    setOverallScorePercent(filteredData)
-
-    setChartData({
-        labels: performanceCategories,
-        datasets: [
-          {
-            label: "Overall Score",
-            data: studentData.length ? studentData : [0], // Ensure it always has data
-            color: (opacity = 1) => `rgba(255, 99, 132, ${opacity})`, // Red
-            strokeWidth: 2,
-          },
-          {
-            label: "Community Score",
-            data: communityData.length ? communityData : [0], // Ensure it always has data
-            color: (opacity = 1) => `rgba(54, 162, 235, ${opacity})`, // Blue
-            strokeWidth: 2,
-          },
-        ],
-      });
-      
-
-    setTimeout(() => setLoading(false), 1000); // Simulate loading time
-  }, [data, type]);
 
   useEffect(() => {
 
@@ -132,12 +61,7 @@ const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData, chaperWi
           color: (opacity = 1) => `rgba(54, 162, 235, ${opacity})`, // Blue
           strokeWidth: 2,
         },
-        {
-          label: "Top 10 Score",
-          data: top10Scores,
-          color: (opacity = 1) => `rgba(75, 192, 192, ${opacity})`, // Green
-          strokeWidth: 2,
-        },
+  
       ],
     });
 
@@ -149,6 +73,137 @@ const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData, chaperWi
     setChapValue(item)
   }
 
+
+  const findAvgTime = (data, type) => {
+  // setLoading(true);
+  console.log(data, "datasefwe")
+  const labels = data?.periods.map((item) => item.day);
+  const updatedData = performanceSubOptions.map(item => ({
+    ...item,
+    label: item.label.toLowerCase()
+}));
+const selectedSubjectLabel = updatedData.find((sub) => sub.value === type)?.label;
+// console.log(selectedSubjectLabel, performanceCategories, "apidjpeiipewfwepi")
+    const studentData = data.periods.map((entry) => {
+      const subjectData = entry.subjects?.find(
+        (sub) => sub.subject_name?.toLowerCase() === selectedSubjectLabel
+      );
+      console.log(subjectData, "subjectData")
+      return  Number(subjectData?.student_obtained_marks_avg || 0)
+      // subjectData
+      //   ? type == 1
+      //     ? Number(subjectData?.community_obtained_marks_avg || 0)
+      //     : Number(subjectData?.student_obtained_marks_avg || 0)
+      //   : 0;
+    });
+  
+
+    const communityData = data.periods.map((entry) => {
+      const subjectData = entry.subjects?.find(
+        (sub) => sub.subject_name?.toLowerCase() === selectedSubjectLabel
+      );
+      return  Number(subjectData?.community_obtained_marks_avg || 0)
+      // subjectData
+      // ? type === 1
+      //   ? Number(subjectData.community_obtained_marks_avg || 0)
+      //   : Number(subjectData?.community_obtained_marks_avg || 0)
+      // : 0;
+    });
+
+    console.log(studentData, communityData, "studentDatasfw")
+    setChartData({
+    labels: labels,
+    datasets: [
+      {
+        label: 'Me',
+        data: studentData,
+        color: () => '#F5E1C8',
+        strokeWidth: 2,
+      },
+      {
+        label: 'Community',
+        data: communityData,
+        color: () => '#8A6BBE',
+        strokeWidth: 2,
+      }
+    ]
+  });
+  }
+
+
+  const findYourAvgtime = (data, type) => {
+    // setLoading(true);
+    console.log(data, "datasefwe")
+    const labels = data?.periods.map((item) => item.day);
+    const updatedData = performanceSubOptions.map(item => ({
+      ...item,
+      label: item.label.toLowerCase()
+  }));
+
+    const performanceCategories = data.periods.map((entry) => entry.day || "N/A");
+    const selectedSubjectLabel = updatedData.find((sub) => sub.value === type)?.label;
+// console.log(selectedSubjectLabel, performanceCategories, "apidjpeiipewfwepi")
+    const studentData = data.periods.map((entry) => {
+      const subjectData = entry.subjects?.find(
+        (sub) => sub.subject_name?.toLowerCase() === selectedSubjectLabel
+      );
+      console.log(data.periods, "subjectData")
+      return Number(subjectData.student_average_time_spent || 0)
+      //  subjectData
+      //   ? type === 1
+      //     ? Number(subjectData.community_average_time_spent || 0)
+      //     : Number(subjectData.student_average_time_spent || 0)
+      //   : 0;
+    });
+    
+
+    const communityData = data.periods.map((entry) => {
+      const subjectData = entry.subjects?.find(
+        (sub) => sub.subject_name?.toLowerCase() === selectedSubjectLabel
+      );
+      return Number(subjectData.community_average_time_spent || 0)
+      // subjectData
+      // ? type === 1
+      // ? Number(subjectData.community_average_time_spent || 0)
+      // : Number(subjectData.student_average_time_spent || 0)
+      // : 0;
+    });
+
+    setYourTime({
+      labels: performanceCategories,
+      datasets: [
+        {
+          label: 'Me',
+          data: studentData,
+          color: () => '#F5E1C8',
+          strokeWidth: 2,
+        },
+        {
+          label: 'Community',
+          data: communityData,
+          color: () => '#8A6BBE',
+          strokeWidth: 2,
+        }
+      ]
+    });
+    
+    const filteredData = data?.overall?.filter((item) =>
+      item.subject_name?.toLowerCase() === selectedSubjectLabel
+    ) || [];
+    
+    setOverallScorePercent(filteredData);
+console.log(studentData, communityData, "studentData")
+  }
+
+
+
+  useEffect(() => {
+if(data&&type) {
+  findAvgTime(data, type);
+  findYourAvgtime(data, type);
+}
+
+  },[data, type])
 
   return (
 
@@ -177,28 +232,48 @@ const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData, chaperWi
         ) : !chartData.datasets.length || chartData.datasets[0].data.length === 0 ? (
           <Text style={{ textAlign: "center", marginTop: 20, color: "red" }}>No data available</Text>
         ) : (
-          <LineChart
-            data={chartData}
-            width={Dimensions.get("window").width*0.8}
-            height={250}
-            yAxisSuffix={type === "score" ? " marks" : " sec"}
-            chartConfig={{
-              backgroundGradientFrom: "#fff",
-              backgroundGradientTo: "#fff",
-              decimalPlaces: 1,
-              color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-              labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-              style: { borderRadius: 10 },
-              propsForDots: {
-                r: "5",
-                strokeWidth: "2",
-                stroke: "#ffa726",
-              },
-            }}
-            bezier
-            style={{ marginVertical: 10, borderRadius: 10 }}
-          />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ backgroundColor: "#000" }}>
+  <CustomLineChart
+  chartData={chartData.datasets.map(ds => ds.data)}
+  labels={chartData.labels}
+  // colors={chartData.datasets.map(ds => ds.color())}
+  yAxisFormatter={(val) => `${val}%`}
+  labelFormatter={(val) => `${val}`}
+  width={chartData.labels.length * 60}
+/>
+        </ScrollView>
+        
+        
         )}
+
+<View style={{ flexDirection: "row", alignItems: "center", gap: 12 ,padding: 15}}>
+  <View style={{ flexDirection: "row", alignItems: "center" }}>
+    <View
+      style={{
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        backgroundColor: "#8B51FE", // Purple dot
+        marginRight: 6,
+      }}
+    />
+    <Text style={{ color: "#fff" }}>Your's </Text>
+  </View>
+
+  <View style={{ flexDirection: "row", alignItems: "center" }}>
+    <View
+      style={{
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        backgroundColor: "#FFB6C1", // Light pink dot
+        marginRight: 6,
+      }}
+    />
+    <Text style={{ color: "#fff" }}>Community's </Text>
+  </View>
+</View>
+
         <Text style={{ fontSize: 18, fontWeight: "bold", textAlign: "left",color: theme.textColor }}> Your Time</Text>
         <View>
   {overallScorePercent?.length > 0 &&
@@ -218,33 +293,55 @@ const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData, chaperWi
         ) : !chartData.datasets.length || chartData.datasets[0].data.length === 0 ? (
           <Text style={{ textAlign: "center", marginTop: 20, color: "red" }}>No data available</Text>
         ) : (
-          <LineChart
-            data={chartData}
-            width={Dimensions.get("window").width *0.8}
-            height={250}
-            yAxisSuffix={type === "score" ? " marks" : " sec"}
-            chartConfig={{
-              backgroundGradientFrom: "#fff",
-              backgroundGradientTo: "#fff",
-              decimalPlaces: 1,
-              color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-              labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-              style: { borderRadius: 10 },
-              propsForDots: {
-                r: "5",
-                strokeWidth: "2",
-                stroke: "#ffa726",
-              },
-            }}
-            bezier
-            style={{ marginVertical: 10, borderRadius: 10 }}
-          />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ backgroundColor: "#000" }}>
+         <CustomLineChart
+   chartData={yourTime.datasets.map(ds => ds.data)}
+   labels={yourTime.labels}
+   // colors={yourTime.datasets.map(ds => ds.color())}
+   yAxisFormatter={(val) => {
+    if (val >= 60) return `${(val / 1000).toFixed(1)}k`;
+    return `${val}k`;
+  }}
+   labelFormatter={(val) => `${val}`}
+   width={yourTime.labels.length * 60}
+/>
+
+          </ScrollView> 
+          
         )}
       </View>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 ,padding: 15}}>
+  <View style={{ flexDirection: "row", alignItems: "center" }}>
+    <View
+      style={{
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        backgroundColor: "#8B51FE", // Purple dot
+        marginRight: 6,
+      }}
+    />
+    <Text style={{ color: "#fff" }}>Your's </Text>
+  </View>
+
+  <View style={{ flexDirection: "row", alignItems: "center" }}>
+    <View
+      style={{
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        backgroundColor: "#FFB6C1", // Light pink dot
+        marginRight: 6,
+      }}
+    />
+    <Text style={{ color: "#fff" }}>Community's </Text>
+  </View>
+</View>
+
    <View style={{marginTop: 50}}>
    <View>
        
-        <Text style={{ fontSize: 18, fontWeight: "bold", textAlign: "left",color: theme.textColor }}>Weekly Test Activity vs. Community
+        <Text style={{ fontSize: 18, fontWeight: "bold", textAlign: "left",color: theme.textColor, marginTop: 2 , marginBottom: 10}}>Weekly Test Activity vs. Community
 
 </Text>
 
@@ -254,30 +351,48 @@ const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData, chaperWi
       ) : !weekChartData.datasets.length || weekChartData.datasets[0].data.length === 0 ? (
         <Text style={{ textAlign: "center", marginTop: 10, color: "red" }}>No data available</Text>
       ) : (
-        <LineChart
-          data={weekChartData}
-          width={Dimensions.get("window").width*0.8}
-          height={250}
-        //   yAxisSuffix=" marks"
-          chartConfig={{
-            backgroundGradientFrom: "#fff",
-            backgroundGradientTo: "#fff",
-            decimalPlaces: 1,
-            color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-            labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-            style: { borderRadius: 10 },
-            propsForDots: {
-              r: "5",
-              strokeWidth: "2",
-              stroke: "#ffa726",
-            },
-          }}
-          bezier
-          style={{ marginVertical: 10, borderRadius: 10 }}
-        />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ backgroundColor: "#000" }}>
+         <CustomLineChart
+  chartData={weekChartData.datasets.map(ds => ds.data)}
+  labels={weekChartData.labels}
+  // colors={weekChartData.datasets.map(ds => ds.color())}
+  yAxisFormatter={(val) => `${val}`}
+  labelFormatter={(val) => `${val}`}
+  width={weekChartData.labels.length * 60}
+/>
+
+        </ScrollView>
       )}
     
       </View>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 15 }}>
+  <View style={{ flexDirection: "row", alignItems: "center" }}>
+    <View
+      style={{
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        backgroundColor: "#8B51FE", // Purple dot
+        marginRight: 6,
+      }}
+    />
+    <Text style={{ color: "#fff" }}>Your's </Text>
+  </View>
+
+  <View style={{ flexDirection: "row", alignItems: "center" }}>
+    <View
+      style={{
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        backgroundColor: "#FFB6C1", // Light pink dot
+        marginRight: 6,
+      }}
+    />
+    <Text style={{ color: "#fff" }}>Community's </Text>
+  </View>
+</View>
+
    </View>
    <Text style={{ fontSize: 18, fontWeight: "bold", textAlign: "left",color: theme.textColor }}>Chapter-Wise Performance: Weak vs. Strong</Text>
    <Dropdown 
@@ -309,7 +424,7 @@ const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData, chaperWi
       fontSize: 11,
       color: theme.textColor,
     }}
-    data={chapData.map((item) => ({ label: item.subject_name, value: item.subject_id }))}  
+    data={chapData&&chapData.map((item) => ({ label: item.subject_name, value: item.subject_id }))}  
     labelField="label"
     valueField="value"
     value={chapValue || defaultValue}  // ✅ Sets the first item as default

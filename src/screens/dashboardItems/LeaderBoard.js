@@ -4,18 +4,57 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, useColorSc
 import { darkTheme, lightTheme } from "../../theme/theme";
 import LinearGradient from "react-native-linear-gradient";
 import { Dropdown } from 'react-native-element-dropdown';
+import { getLeaderBoards } from "../../core/CommonService";
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
-const LeaderBoard = ({champ}) => {
+const LeaderBoard = ({studentExamId}) => {
+  
     const [leaderBoardValue, setLeaderBoardValue] = useState(1);
     const [leadData, setLeadData] = useState([]);
    const colorScheme = useColorScheme();
-      
-          const theme = colorScheme === "dark" ? darkTheme : lightTheme;
-      
-  
+   const [champ, setChamp] = useState([]);
+          // const theme = colorScheme === "dark" ? darkTheme : lightTheme;
+        const theme =  darkTheme;
+    const getLeaders = async () => {
+      const data = {
+        student_user_exam_id: studentExamId,
+      };
+      try {
+        // console.log("getLeader Boards fields", data);
+        const response = await getLeaderBoards(data);
+        console.log("getLeaderBoards", JSON.stringify(response));
+        if (response.data && Array.isArray(response.data)) {
+          setChamp(response.data);
+        } else {
+          setChamp();
+          console.warn("No leaderboard data received or data is not an array.");
+        }
+      } catch (error) {
+        console.error("Error fetching leaderboard data:", error);
+        setChamp();
+        Alert.alert(
+          "Error",
+          "Failed to get leaderboard data. Please check your connection and try again."
+        );
+      }
+    };
+
+    useEffect(() => {
+      getLeaders();
+    }, [studentExamId]);
+    
+    // ✅ Run filtering whenever `champ` updates
+    useEffect(() => {
+      if (champ&&champ.length > 0) {
+        const filteredData = champ.filter((item) => item.report_level === leaderBoardValue);
+        setLeadData(filteredData);
+      } else {
+        setLeadData([]); // Reset when there is no data
+      }
+    }, [champ, leaderBoardValue]); // ✅ Now runs whenever `champ` updates
+    
     const options = [
       { value: 1, label: "Weekly" },
       { value: 0, label: "Daily" }
@@ -32,7 +71,7 @@ const LeaderBoard = ({champ}) => {
         const filteredData = champ.filter((item) => item.report_level === leaderBoardValue);
         setLeadData(filteredData);
        }
-    }, [leaderBoardValue]);
+    }, [leaderBoardValue, studentExamId]);
   
    const renderItem = ({ item, index  }) => {
      return (

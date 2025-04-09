@@ -1,6 +1,7 @@
 import React from 'react';
 import { View,Text,Image,StyleSheet,Dimensions} from 'react-native';
 import RenderHtml from 'react-native-render-html';
+import { theme } from '../core/theme';
 var striptags = require('striptags');
 
 
@@ -51,7 +52,10 @@ const HtmlComponent = (props) => {
         imagesMaxWidth: IMAGES_MAX_WIDTH,
         bool:false
     };
-
+    const baseStyle = {
+      color: theme.textColor, 
+      fontSize: 14, // Adjust as needed
+    };
 
     return(
         // <HTML {...DEFAULT_PROPS} baseFontStyle={baseFontStyle} containerStyle={containerStyle} html= {text}  />
@@ -61,6 +65,7 @@ const HtmlComponent = (props) => {
             baseFontStyle={baseFontStyle}
             {...DEFAULT_PROPS}
             contentWidth={width-100}
+            baseStyle={baseStyle}
             />
     )
 

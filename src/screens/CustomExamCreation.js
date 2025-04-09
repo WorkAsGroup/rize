@@ -10,6 +10,7 @@ import {
   Alert,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import { useExam } from "../ExamContext";
 import { getSubjects, getChapters, createCustomExams } from "../core/CommonService";
 import Svg, { Path } from "react-native-svg";
 
@@ -19,16 +20,18 @@ const CheckCircleIcon = () => (
   </Svg>
 );
 
-const CustomExamCreation = ({ id,fetchData, onClose }) => {
+const CustomExamCreation = ({ id,fetchData,selectedOption, onClose }) => {
   const [subjects, setSubjects] = useState([]);
   const [chapters, setChapters] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [searchValue, setSearchValue] = useState("");
   const [filteredChapters, setFilteredChapters] = useState([]);
   const [selectedSubjectId, setSelectedSubjectId] = useState("");
+  const [selectedSubjects, setSelectedSubjects] = useState([]);
   const [selectedChapters, setSelectedChapters] = useState({});
+        const { selectedExam, setSelectedExam } = useExam();
   const [loading, setLoading] = useState(false); // Loader state
-
+console.log(selectedChapters, "wijdoiqedjoiqw")
   useEffect(() => {
     getSubjectNames();
   }, [id]);
@@ -45,14 +48,45 @@ const CustomExamCreation = ({ id,fetchData, onClose }) => {
   };
 
   const handleSubjectClick = (id) => {
-    setSelectedSubjectId(id);
-    setSelectedId(id);
-    getChaptersNames(id);
+
+    console.log(id, selectedSubjects, "epofwpef", selectedSubjectId)
+    const isCheckedSubject = selectedSubjects?.filter((item) => parseInt(item) == id);
+    console.log()
+
+//    if(id== selectedSubjectId) {
+// setSelectedSubjects(selectedSubjects.filter((item) => parseInt(item.id) !== id));
+// // setSelectedChapters((prev) => {
+// //   const newChapters = { ...prev }; // Create a shallow copy
+// //   delete newChapters[id]; // Remove the key corresponding to `id`
+// //   return newChapters; // Update state with modified object
+// // });
+//    } else {
+    setSelectedSubjects((prev) => {
+      // Check if the ID already exists
+      if (!prev.some((subject) => subject.id === id)) {
+        return [...prev, { id }]; // Create a new array with the new subject
+      }
+      return prev; // Return the previous state unchanged if ID already exists
+    });
+  //  }
+    if(selectedSubjectId !== id) {
+      setSelectedSubjectId(id);
+      setSelectedId(id);
+      getChaptersNames(id);
+    } else {
+      setSelectedSubjectId(selectedSubjectId == id ? '': id);
+      setSelectedId(selectedSubjectId == id ? '': id);
+      getChaptersNames(selectedSubjectId == id ? '': id);
+    }
+    if(['9', '10', '11'].includes(selectedOption?.value?.toString())) {
+      setSelectedChapters({})
+    }
+
   };
 
   const handleSearch = (text) => {
     setSearchValue(text);
-    setFilteredChapters(
+    chapters.length>0&& setFilteredChapters(
       chapters.filter((chapter) =>
         chapter.chapter.toLowerCase().includes(text.toLowerCase())
       )
@@ -105,15 +139,21 @@ const CustomExamCreation = ({ id,fetchData, onClose }) => {
   };
 
   const isCreateEnabled = Object.keys(selectedChapters).length > 0; // Check if chapters are selected
-
+console.log(selectedOption, "selectedOption")
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Choose your subjects</Text>
       <View style={styles.subjectsContainer}>
-        {subjects.map((item) => (
+        {subjects.map((item) => {
+                          const isRestrictedExam = ['9', '10', '11'].includes(selectedOption?.value?.toString());
+                          const isDisabled =
+                              isRestrictedExam  && selectedSubjectId &&selectedSubjectId!== item.id;
+                              console.log(isRestrictedExam, selectedSubjectId, item.id, isDisabled , "panipani")
+                              return (
           <TouchableOpacity
             key={item.id}
-            onPress={() => handleSubjectClick(item.id)}
+            // disabled={isDisabled}
+            onPress={() => !isDisabled&&handleSubjectClick(item.id)}
             style={[
               styles.subjectCard,
               { borderColor: item.id === selectedId ? "#D37DB5" : "#E8E6E6" },
@@ -121,26 +161,28 @@ const CustomExamCreation = ({ id,fetchData, onClose }) => {
           >
             <Text style={styles.subjectText}>{item.subject}{" "}</Text>
             <View>
-    {(item.id === selectedId) && <CheckCircleIcon />}
+            {(item.id === selectedId || selectedSubjects.some(i => i.id === item.id)) && <CheckCircleIcon />}
   </View>
-          </TouchableOpacity>
-        ))}
+          </TouchableOpacity>)
+})}
       </View>
 
       {selectedSubjectId && (
         <View style={styles.chaptersContainer}>
           <Text style={styles.title}>Chapters</Text>
-          {chapters.length > 0 && (
+          {chapters&&chapters.length > 0 && (
             <TextInput
               style={styles.searchInput}
               placeholder="Search..."
               value={searchValue}
-              onChangeText={handleSearch}
+              onChangeText={chapters.length>0&&handleSearch}
             />
           )}
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.chaptersList}>
-            {filteredChapters.map((item) => {
+            {filteredChapters&&filteredChapters.length>0&&filteredChapters.map((item) => {
+
+
               const isChecked = selectedChapters[selectedSubjectId]?.includes(item.id);
               return (
                 <TouchableOpacity

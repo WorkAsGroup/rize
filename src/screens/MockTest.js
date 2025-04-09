@@ -37,6 +37,7 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 var striptags = require("striptags");
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import LoadQuestion from "../common/LoadQuestion";
 
 const TEST_INTERRUPTED_KEY = "testInterrupted";
 const windowWidth = Dimensions.get("window").width;
@@ -50,118 +51,124 @@ const COMPLETED_EXAMS_KEY = "completedExams";
 const COMPLETED_MOCK_TESTS_KEY = "completedMockTests";
 
 const removeHtmlTags = (html) => {
-    if (!html) return "";
-  
-    let cleanedHtml = html
-      .replace(/<p[^>]*>/g, "")
-      .replace(/<\/p>/g, "\n")
-      .replace(/<img[^>]*src="[^"]*"[^>]*>/g, "")
-      .replace(/ /g, " ")
-      .replace(/<br\s*[\/]?>/gi, "\n")
-      .replace(/<table[^>]*>/g, "")
-      .replace(/<\/table>/g, "")
-      .replace(/&nbsp;/g, " ")
-      .replace(/<span[^>]*style="[^"]*font-size:\s*11\.*[^;]*;[^"]*"[^>]*>/gi, "")
-      .replace(/<\/span>/gi, "")
-      .replace(/<tr[^>]*>/g, "")
-      .replace(/<\/tr>/g, "")
-      .replace(/<td[^>]*>/g, "")
-      .replace(/<\/td>/g, "")
-      .replace(/style="[^"]*"/g, "")
-  
-      .replace(/valign="[^"]*"/g, "")
-      .replace(/width="[^"]*"/g, "")
-      .trim()
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/g, "");
-  
-    return cleanedHtml;
-  };
-  
-  const extractImages = (html) => {
-    const imageRegex = /<img[^>]+src="([^">]+)"/g;
-    let images = [];
-    let match;
-    while ((match = imageRegex.exec(html)) !== null) {
-      images.push(match[1]);
-    }
-    return images;
-  };
-  const extractContent = (html) => {
-    const imageRegex = /<img[^>]+src="([^">]+)"/g;
-    let contentArray = [];
-    let lastIndex = 0;
-    let match;
-  
-    html = html
-      .replace(/<\/?p[^>]*>/g, "")
-      .replace(/\/>?>/g, ">")
-      .replace(/ /g, " ")
-      .trim();
-    while ((match = imageRegex.exec(html)) !== null) {
-      const textBeforeImage = html.slice(lastIndex, match.index).trim();
-      if (textBeforeImage) {
-        contentArray.push({ type: "text", content: textBeforeImage });
-      }
-      contentArray.push({ type: "image", content: match[1] });
-  
-      lastIndex = match.index + match[0].length;
-    }
-  
-    const remainingText = html.slice(lastIndex).trim();
-    if (remainingText) {
-      contentArray.push({ type: "text", content: remainingText });
-    }
-  
-    return contentArray;
-  };
+  if (!html) return "";
 
-  const sanitizeHtml = (text) => {
-    // console.log(text, "sanitizeHtml");
-    if (!text) return { html: "<p>No Question provided.</p>" };
-  
-    text = text.replace(/&nbsp;/g, " "); 
-    text = text.replace(/\n/g, " "); 
-    text = text.replace(/<img /g, "<img style='display:inline-block; vertical-align:middle; margin: 0 5px;' "); 
-  
-    return {
-      html: `<div style='display: flex; flex-direction: row; flex-wrap: wrap; width: ${windowWidth * 0.84}px; align-items: center;'>${text}</div>`,
-    };
+  let cleanedHtml = html
+    .replace(/<p[^>]*>/g, "")
+    .replace(/<\/p>/g, "\n")
+    .replace(/<img[^>]*src="[^"]*"[^>]*>/g, "")
+    .replace(/ /g, " ")
+    .replace(/<br\s*[\/]?>/gi, "\n")
+    .replace(/<table[^>]*>/g, "")
+    .replace(/<\/table>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/<span[^>]*style="[^"]*font-size:\s*11\.*[^;]*;[^"]*"[^>]*>/gi, "")
+    .replace(/<\/span>/gi, "")
+    .replace(/<tr[^>]*>/g, "")
+    .replace(/<\/tr>/g, "")
+    .replace(/<td[^>]*>/g, "")
+    .replace(/<\/td>/g, "")
+    .replace(/style="[^"]*"/g, "")
+
+    .replace(/valign="[^"]*"/g, "")
+    .replace(/width="[^"]*"/g, "")
+    .trim()
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/g, "");
+
+  return cleanedHtml;
+};
+
+const extractImages = (html) => {
+  const imageRegex = /<img[^>]+src="([^">]+)"/g;
+  let images = [];
+  let match;
+  while ((match = imageRegex.exec(html)) !== null) {
+    images.push(match[1]);
+  }
+  return images;
+};
+const extractContent = (html) => {
+  const imageRegex = /<img[^>]+src="([^">]+)"/g;
+  let contentArray = [];
+  let lastIndex = 0;
+  let match;
+
+  html = html
+    .replace(/<\/?p[^>]*>/g, "")
+    .replace(/\/>?>/g, ">")
+    .replace(/ /g, " ")
+    .trim();
+  while ((match = imageRegex.exec(html)) !== null) {
+    const textBeforeImage = html.slice(lastIndex, match.index).trim();
+    if (textBeforeImage) {
+      contentArray.push({ type: "text", content: textBeforeImage });
+    }
+    contentArray.push({ type: "image", content: match[1] });
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  const remainingText = html.slice(lastIndex).trim();
+  if (remainingText) {
+    contentArray.push({ type: "text", content: remainingText });
+  }
+
+  return contentArray;
+};
+
+const sanitizeHtml = (text) => {
+  // console.log(text, "sanitizeHtml");
+  if (!text) return { html: "<p>No Question provided.</p>" };
+
+  text = text.replace(/&nbsp;/g, " ");
+  text = text.replace(/\n/g, " ");
+  text = text.replace(
+    /<img /g,
+    "<img style='display:inline-block; vertical-align:middle; margin: 0 5px;' "
+  );
+
+  return {
+    html: `<div style='display: flex; flex-direction: row; flex-wrap: wrap; width: ${
+      windowWidth * 0.84
+    }px; align-items: center;'>${text}</div>`,
   };
-  
-  const renderersProps = {
-    img: {
-      initialDimensions: { width: 20, height: 20 },
-      enableExperimentalPercentWidth: true,
-      style: {
-        display: "inline", // ✅ Forces images to be inline
-        verticalAlign: "middle", // ✅ Aligns with text properly
-        maxWidth: "100%", // ✅ Prevents overflow
-      },
+};
+
+const renderersProps = {
+  img: {
+    initialDimensions: { width: 20, height: 20 },
+    enableExperimentalPercentWidth: true,
+    style: {
+      display: "inline", // ✅ Forces images to be inline
+      verticalAlign: "middle", // ✅ Aligns with text properly
+      maxWidth: "100%", // ✅ Prevents overflow
     },
-  };
+  },
+};
 
-  const baseFontStyle = {
-    fontSize: 16,
-    color: "#000", // Ensure text is visible
-  };  
-  
-  
+const baseFontStyle = {
+  fontSize: 16,
+  color: "#000", // Ensure text is visible
+};
+
 const MockTest = ({ navigation, route }) => {
   // console.log(route.params, "wrihfwoiehoi")
-    const colorScheme = useColorScheme();
-    const [completedMockTests, setCompletedMockTests] = useState([]);
-    const [data, setData] = useState([]);
-  const theme = colorScheme === "dark" ? darkTheme : lightTheme;
+  const colorScheme = useColorScheme();
+  const [completedMockTests, setCompletedMockTests] = useState([]);
+  const [data, setData] = useState([]);
+  // const theme = colorScheme === "dark" ? darkTheme : lightTheme;
+  const theme = lightTheme;
   const studentExamId = route?.params?.studentExamId;
   const [selectedSubject, setSelectedSubject] = useState();
   const [selectedNumber, setSelectedNumber] = useState(1);
   const scrollRef = useRef(null);
-  const [scrollViewLayoutComplete, setScrollViewLayoutComplete] = useState(false);
+  const [scrollViewLayoutComplete, setScrollViewLayoutComplete] =
+    useState(false);
   const [scrollViewWidth, setScrollViewWidth] = useState(0);
   const numberCircleRef = useRef(null);
   const scrollViewRef = useRef(null);
-  const flatListRef = useRef(null); 
-  const ITEM_WIDTH = 50; 
+  const flatListRef = useRef(null);
+  const ITEM_WIDTH = 50;
   const [finishTest, setFinishTest] = useState(false);
   const [numberCircleWidth, setNumberCircleWidth] = useState(0);
   const [exams, setExams] = useState([]);
@@ -180,7 +187,7 @@ const MockTest = ({ navigation, route }) => {
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const timerInterval = useRef(null);
   const obj = route?.params?.obj;
-  const examIdData = route?.params?.examIdData
+  const examIdData = route?.params?.examIdData;
   const [textInputAnswer, setTextInputAnswer] = useState("");
   const [uid, setUid] = useState("");
   const [session_id, setSessionid] = useState(route?.params?.session_id);
@@ -200,49 +207,54 @@ const MockTest = ({ navigation, route }) => {
 
   const [questionStartTime, setQuestionStartTime] = useState(null);
   const [timeElapsed, setTimeElapsed] = useState(0);
-  const [isFirstRender, setIsFirstRender] = useState(true); 
+  const [isFirstRender, setIsFirstRender] = useState(true);
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
   const [wasTestInterrupted, setWasTestInterrupted] = useState(false);
-// console.log(obj, "objobjobj")
+  // console.log(obj, "objobjobj")
 
   useEffect(() => {
-   getExam();
-   getExamPattern()
+    getExam();
+    getExamPattern();
+  }, []);
 
-  },[]);
-  
   useEffect(() => {
     const loadCompletedMockTests = async () => {
-        try {
-            let storedMockTests = await AsyncStorage.getItem(COMPLETED_MOCK_TESTS_KEY);
-            if (storedMockTests) {
-                setCompletedMockTests(JSON.parse(storedMockTests));
-            } else {
-                await AsyncStorage.setItem(COMPLETED_MOCK_TESTS_KEY, JSON.stringify([]));
-            }
-        } catch (error) {
-            console.error("Error loading completed mock tests:", error);
+      try {
+        let storedMockTests = await AsyncStorage.getItem(
+          COMPLETED_MOCK_TESTS_KEY
+        );
+        if (storedMockTests) {
+          setCompletedMockTests(JSON.parse(storedMockTests));
+        } else {
+          await AsyncStorage.setItem(
+            COMPLETED_MOCK_TESTS_KEY,
+            JSON.stringify([])
+          );
         }
+      } catch (error) {
+        console.error("Error loading completed mock tests:", error);
+      }
     };
 
     loadCompletedMockTests();
-}, []);
+  }, []);
 
   useEffect(() => {
     const loadCompletedExams = async () => {
-        try {
-            const completedExamsString = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
-            if (completedExamsString) {
-                setCompletedExams(JSON.parse(completedExamsString));
-            }
-        } catch (error) {
-            console.error("Error loading completed exams:", error);
+      try {
+        const completedExamsString = await AsyncStorage.getItem(
+          COMPLETED_EXAMS_KEY
+        );
+        if (completedExamsString) {
+          setCompletedExams(JSON.parse(completedExamsString));
         }
+      } catch (error) {
+        console.error("Error loading completed exams:", error);
+      }
     };
 
     loadCompletedExams();
-}, []);
-
+  }, []);
 
   // console.log(exams, "exams")
   const loadInitialData = useCallback(async () => {
@@ -273,16 +285,15 @@ const MockTest = ({ navigation, route }) => {
 
   const resetQuestionTimers = async () => {
     try {
-        if (exams?.length > 0) {
-          for (let i = 1; i <= exams.length; i++) {
-            await AsyncStorage.setItem(`timeElapsed_${i}`, "0");
-          }
+      if (exams?.length > 0) {
+        for (let i = 1; i <= exams.length; i++) {
+          await AsyncStorage.setItem(`timeElapsed_${i}`, "0");
         }
-      } catch (error) {
-        console.error("Error resetting question timers:", error);
       }
-    };
-
+    } catch (error) {
+      console.error("Error resetting question timers:", error);
+    }
+  };
 
   const getItemLayout = useCallback(
     (data, index) => ({
@@ -297,45 +308,41 @@ const MockTest = ({ navigation, route }) => {
     const checkInterruption = async () => {
       const wasInterrupted = await AsyncStorage.getItem(TEST_INTERRUPTED_KEY);
       if (wasInterrupted === "true") {
-        setWasTestInterrupted(true); 
+        setWasTestInterrupted(true);
       } else {
-        loadInitialData(); 
+        loadInitialData();
       }
     };
 
     checkInterruption();
   }, [loadInitialData]);
 
-
   useEffect(() => {
     if (!route?.params?.obj?.duration) {
       console.warn("⏳ No duration found in route params");
       return;
     }
-  
+
     const durationString = route.params.obj.duration; // Example: "0 hours 05 minutes"
-  
+
     // Extract hours and minutes using regex
     const match = durationString.match(/(\d+)\s*hours?\s*(\d+)\s*minutes?/);
-  
+
     if (!match) {
       console.error("❌ Invalid duration format:", durationString);
       return;
     }
-  
+
     const hours = parseInt(match[1], 10) || 0;
     const minutes = parseInt(match[2], 10) || 0;
-    const totalSeconds = (hours * 3600) + (minutes * 60);
-  
+    const totalSeconds = hours * 3600 + minutes * 60;
+
     console.log("⏳ Timer initialized with:", totalSeconds, "seconds");
     setRemainingTime(totalSeconds);
   }, [route?.params?.obj?.duration]);
-  
-  
-  
-  
+
   useEffect(() => {
-    if (remainingTime > 0 && !timerRef.current&&exams.length > 0) {
+    if (remainingTime > 0 && !timerRef.current && exams.length > 0) {
       timerRef.current = setInterval(() => {
         setRemainingTime((prevTime) => {
           if (prevTime <= 1) {
@@ -348,23 +355,25 @@ const MockTest = ({ navigation, route }) => {
         });
       }, 1000);
     }
-  
+
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
     };
-  }, [remainingTime, exams]); 
-  
-  
+  }, [remainingTime, exams]);
+
   const formatTime = (seconds) => {
     // console.log(seconds, "sec")
     const hours = Math.floor(seconds / 3600);
     const remainingMins = Math.floor((seconds % 3600) / 60);
     const remainingSecs = seconds % 60;
-  
-    return `${String(hours).padStart(2, "0")}:${String(remainingMins).padStart(2, "0")}:${String(remainingSecs).padStart(2, "0")}`;
+
+    return `${String(hours).padStart(2, "0")}:${String(remainingMins).padStart(
+      2,
+      "0"
+    )}:${String(remainingSecs).padStart(2, "0")}`;
   };
   useEffect(() => {
     const filterNumbers = () => {
@@ -401,7 +410,7 @@ const MockTest = ({ navigation, route }) => {
     filterNumbers();
   }, [selectedSubjectId, exams, pattern]);
 
-useEffect(() => {
+  useEffect(() => {
     const loadStoredData = async () => {
       try {
         if (isFirstLoad) {
@@ -409,7 +418,7 @@ useEffect(() => {
           await AsyncStorage.removeItem(SKIPPED_QUESTIONS_KEY);
           await AsyncStorage.removeItem(REVIEWED_QUESTIONS_KEY);
           await AsyncStorage.removeItem(TAGGED_QUESTIONS_KEY);
-          await AsyncStorage.removeItem(REMAINING_TIME_KEY);       
+          await AsyncStorage.removeItem(REMAINING_TIME_KEY);
 
           for (let i = 1; i <= exams?.length; i++) {
             await AsyncStorage.removeItem(`questionStartTime_${i}`);
@@ -427,32 +436,30 @@ useEffect(() => {
         setReviewedQuestions(reviewed ? JSON.parse(reviewed) : {});
         setTaggedQuestions(tagged ? JSON.parse(tagged) : {});
         const savedTime = await AsyncStorage.getItem(REMAINING_TIME_KEY);
-  
-        
-        const timeToSet = route?.params?.obj?.duration; 
-  
+
+        const timeToSet = route?.params?.obj?.duration;
+
         if (!timeToSet) {
           console.warn("⏳ No duration found in route params");
           return;
         }
-      
+
         const durationString = timeToSet; // Example: "0 hours 05 minutes"
-      
+
         // Extract hours and minutes using regex
         const match = durationString.match(/(\d+)\s*hours?\s*(\d+)\s*minutes?/);
-      
+
         if (!match) {
           console.error("❌ Invalid duration format:", durationString);
           return;
         }
-      
+
         const hours = parseInt(match[1], 10) || 0;
         const minutes = parseInt(match[2], 10) || 0;
-        const totalSeconds = (hours * 3600) + (minutes * 60);
-      
+        const totalSeconds = hours * 3600 + minutes * 60;
+
         console.log("⏳ Timer initialized with:", totalSeconds, "seconds");
         setRemainingTime(totalSeconds);
-      
       } catch (error) {
         console.error("Error loading stored data:", error);
       }
@@ -461,13 +468,11 @@ useEffect(() => {
     loadStoredData();
   }, []);
 
-  
-const handleTextInputChange = (text, questionId) => {
-  setTextInputValues((prevValues) => ({ ...prevValues, [questionId]: text }));
-};
- 
-  
-    useFocusEffect(
+  const handleTextInputChange = (text, questionId) => {
+    setTextInputValues((prevValues) => ({ ...prevValues, [questionId]: text }));
+  };
+
+  useFocusEffect(
     useCallback(() => {
       return () => {
         AsyncStorage.setItem(TEST_INTERRUPTED_KEY, "true");
@@ -477,10 +482,10 @@ const handleTextInputChange = (text, questionId) => {
         }
         setTimeElapsed(0);
       };
-    }, []) 
+    }, [])
   );
-  
-  const clearStoredAnswers = async () => { 
+
+  const clearStoredAnswers = async () => {
     try {
       await AsyncStorage.removeItem(ANSWERED_QUESTIONS_KEY);
       await AsyncStorage.removeItem(SKIPPED_QUESTIONS_KEY);
@@ -495,30 +500,28 @@ const handleTextInputChange = (text, questionId) => {
       console.error("Error clearing stored answers:", error);
     }
   };
-  
 
+  const scrollToQuestion = useCallback(
+    (questionNumber) => {
+      if (!flatListRef.current) {
+        console.warn("scrollToQuestion: FlatList ref not ready");
+        return;
+      }
 
-  const scrollToQuestion = useCallback((questionNumber) => {
-    if (!flatListRef.current) {
-      console.warn("scrollToQuestion: FlatList ref not ready");
-      return;
-    }
+      const index = allNum.indexOf(questionNumber);
 
-    const index = allNum.indexOf(questionNumber);
-
-    if (index !== -1) {
-      flatListRef.current.scrollToIndex({
-        index,
-        animated: true,
-        viewPosition: 0.5,
-      });
-    } else {
-      console.warn("scrollToQuestion: Question number not found in allNum");
-    }
-  }, [allNum]);
-
-
-  
+      if (index !== -1) {
+        flatListRef.current.scrollToIndex({
+          index,
+          animated: true,
+          viewPosition: 0.5,
+        });
+      } else {
+        console.warn("scrollToQuestion: Question number not found in allNum");
+      }
+    },
+    [allNum]
+  );
 
   const handleSubjectSelect = (sub) => {
     setExpand(false);
@@ -538,7 +541,6 @@ const handleTextInputChange = (text, questionId) => {
       scrollToQuestion(selectedNumber);
     }
   }, [selectedNumber, scrollToQuestion]);
-
 
   const handleBackPress = React.useCallback(() => {
     if (!isFirstLoad) {
@@ -567,7 +569,7 @@ const handleTextInputChange = (text, questionId) => {
     }
     return true;
   }, [navigation, isFirstLoad]);
-  
+
   useEffect(() => {
     if (!isFirstLoad) {
       BackHandler.addEventListener("hardwareBackPress", handleBackPress);
@@ -606,48 +608,51 @@ const handleTextInputChange = (text, questionId) => {
     }
   };
 
-
   const loadQuestionElapsedTime = async () => {
     try {
       if (!selectedNumber) return;
-  
+
       // Stop any existing timer
       if (questionTimerRef.current) {
         clearInterval(questionTimerRef.current);
       }
-  
+
       // Load previously saved elapsed time
-      const savedTime = await AsyncStorage.getItem(`timeElapsed_${selectedNumber}`);
+      const savedTime = await AsyncStorage.getItem(
+        `timeElapsed_${selectedNumber}`
+      );
       const initialTime = savedTime ? parseInt(savedTime, 10) : 0;
       setTimeElapsed(initialTime);
       // Start a new timer
       questionTimerRef.current = setInterval(() => {
-        setTimeElapsed(prevTime => prevTime + 1);
+        setTimeElapsed((prevTime) => prevTime + 1);
       }, 1000);
     } catch (error) {
       console.error("Error loading elapsed time:", error);
     }
   };
-  
+
   useEffect(() => {
-  if(exams.length > 0 && exams[0]?.question) {
-    loadQuestionElapsedTime();
-  }  
-  
-  
+    if (exams.length > 0 && exams[0]?.question) {
+      loadQuestionElapsedTime();
+    }
+
     return () => {
       if (questionTimerRef.current) {
         clearInterval(questionTimerRef.current);
       }
     };
   }, [selectedNumber, exams]);
-  
+
   useEffect(() => {
     if (selectedNumber) {
-      AsyncStorage.setItem(`timeElapsed_${selectedNumber}`, timeElapsed.toString());
+      AsyncStorage.setItem(
+        `timeElapsed_${selectedNumber}`,
+        timeElapsed.toString()
+      );
     }
   }, [timeElapsed, selectedNumber]);
-  
+
   useEffect(() => {
     return () => {
       if (questionTimerRef.current) {
@@ -655,7 +660,6 @@ const handleTextInputChange = (text, questionId) => {
       }
     };
   }, []);
-  
 
   const getExam = async () => {
     // console.log("objobjobj", obj);
@@ -670,7 +674,7 @@ const handleTextInputChange = (text, questionId) => {
     try {
       const examsResponse = await getPreExam(datas);
       setExams(examsResponse.data);
-      console.log("----------",examsResponse.data)
+      console.log("----------", examsResponse.data);
       const subjectCounts = {};
 
       examsResponse?.data?.forEach((exam) => {
@@ -694,24 +698,20 @@ const handleTextInputChange = (text, questionId) => {
     } catch (error) {
       console.error("Error fetching exams:", error);
     } finally {
-        // setIsLoading(false);
+      // setIsLoading(false);
       setQuestionsLoading(false);
     }
   };
 
-  
-  
-
-    // // Format time in HH:MM:SS
-    // const formatedTime = (seconds) => {
-    //     const hours = Math.floor(seconds / 3600);
-    //     const minutes = Math.floor((seconds % 3600) / 60);
-    //     const remainingSeconds = seconds % 60;
-    //     return `${hours}:${minutes.toString().padStart(2, "0")}:${remainingSeconds
-    //       .toString()
-    //       .padStart(2, "0")}`;
-    //   };
-
+  // // Format time in HH:MM:SS
+  // const formatedTime = (seconds) => {
+  //     const hours = Math.floor(seconds / 3600);
+  //     const minutes = Math.floor((seconds % 3600) / 60);
+  //     const remainingSeconds = seconds % 60;
+  //     return `${hours}:${minutes.toString().padStart(2, "0")}:${remainingSeconds
+  //       .toString()
+  //       .padStart(2, "0")}`;
+  //   };
 
   const ClearResponseData = async () => {
     try {
@@ -757,7 +757,7 @@ const handleTextInputChange = (text, questionId) => {
       console.error(
         "Current question does not belong to any subject in the pattern."
       );
-      return; 
+      return;
     }
 
     const currentSubjectQuestions = allNum.filter(
@@ -765,85 +765,92 @@ const handleTextInputChange = (text, questionId) => {
         num >= currentSubject.starting_no && num <= currentSubject.ending_no
     );
 
-    const currentIndexInSubject = currentSubjectQuestions.indexOf(selectedNumber);
-
+    const currentIndexInSubject =
+      currentSubjectQuestions.indexOf(selectedNumber);
 
     if (currentIndexInSubject < currentSubjectQuestions.length - 1) {
-      const nextQuestionInSubject = currentSubjectQuestions[currentIndexInSubject + 1];
+      const nextQuestionInSubject =
+        currentSubjectQuestions[currentIndexInSubject + 1];
       setSelectedNumber(nextQuestionInSubject);
-
     } else {
-    const nextSubjectIndex = pattern.findIndex(subject => subject.id === currentSubject.id) + 1;
-    if (nextSubjectIndex < pattern.length) {
-      const nextSubject = pattern[nextSubjectIndex];
-      setSelectedNumber(nextSubject.starting_no);
+      const nextSubjectIndex =
+        pattern.findIndex((subject) => subject.id === currentSubject.id) + 1;
+      if (nextSubjectIndex < pattern.length) {
+        const nextSubject = pattern[nextSubjectIndex];
+        setSelectedNumber(nextSubject.starting_no);
+      }
     }
 
-
-    }
-
-    setSelectedOption(null); 
+    setSelectedOption(null);
   }, [selectedNumber, allNum, pattern]);
 
-  const handleSelectAndNext = useCallback(async (questionId) => {
-    // console.log("handleSelectAndNext called for question:", questionId);
-    // const answer = textInputValues[questionId];
-    const currentQuestionType = exams[questionId - 1]?.qtype;
+  const handleSelectAndNext = useCallback(
+    async (questionId) => {
+      // console.log("handleSelectAndNext called for question:", questionId);
+      // const answer = textInputValues[questionId];
+      const currentQuestionType = exams[questionId - 1]?.qtype;
 
-    if (answeredQuestions[questionId]) {  
-      moveToNextQuestion();  
-      setSelectedOption(null);
-      return;
-    }
-  
-    const answer = textInputValues[questionId];
-    if (!answer && currentQuestionType === 8) {
-        ToastAndroid.showWithGravity(
-            "Please enter the answer in the text field.",
-            ToastAndroid.SHORT,
-            ToastAndroid.CENTER
-          );
+      if (answeredQuestions[questionId]) {
+        moveToNextQuestion();
+        setSelectedOption(null);
         return;
-    } else if (currentQuestionType !== 8 && !selectedOption) {
-      ToastAndroid.showWithGravity(
+      }
+
+      const answer = textInputValues[questionId];
+      if (!answer && currentQuestionType === 8) {
+        ToastAndroid.showWithGravity(
+          "Please enter the answer in the text field.",
+          ToastAndroid.SHORT,
+          ToastAndroid.CENTER
+        );
+        return;
+      } else if (currentQuestionType !== 8 && !selectedOption) {
+        ToastAndroid.showWithGravity(
           "Please select an option.",
           ToastAndroid.SHORT,
           ToastAndroid.CENTER
         );
-        return;      
-  }
+        return;
+      }
 
-  if (currentQuestionType === 8) { 
-    await handleAnswerSelect(questionId, answer);
-}
+      if (currentQuestionType === 8) {
+        await handleAnswerSelect(questionId, answer);
+      }
 
-moveToNextQuestion();
-setSelectedOption(null); 
-}, [exams, handleAnswerSelect, moveToNextQuestion,answeredQuestions, selectedOption, textInputValues]);
-
-
+      moveToNextQuestion();
+      setSelectedOption(null);
+    },
+    [
+      exams,
+      handleAnswerSelect,
+      moveToNextQuestion,
+      answeredQuestions,
+      selectedOption,
+      textInputValues,
+    ]
+  );
 
   const handleAnswerSelect = useCallback(
     async (questionId, option) => {
       // console.log("handleAnswerSelect called with:", questionId, option);
-  
+
       const currentSubject = pattern.find(
         (subject) =>
           questionId >= subject.starting_no && questionId <= subject.ending_no
       );
-  
+
       if (!currentSubject) {
         console.error("Question doesn't belong to any subject in the pattern.");
         return;
       }
-  
+
       let answerToStore = option;
       if (exams[selectedNumber - 1]?.qtype === 8) {
         // answerToStore = textInputAnswer;
         answerToStore = textInputValues[questionId];
 
-         if (!answerToStore) {
-          if (Platform.OS === 'android') {
+        if (!answerToStore) {
+          if (Platform.OS === "android") {
             ToastAndroid.showWithGravity(
               "Please enter the answer in the text field.",
               ToastAndroid.SHORT,
@@ -853,8 +860,8 @@ setSelectedOption(null);
             Alert.alert("Please enter the answer in the text field.");
           }
           return;
-        } else if (!option) { 
-          if (Platform.OS === 'android') {
+        } else if (!option) {
+          if (Platform.OS === "android") {
             ToastAndroid.showWithGravity(
               "Please select an option.",
               ToastAndroid.SHORT,
@@ -865,25 +872,25 @@ setSelectedOption(null);
           }
           return;
         }
-        setTextInputAnswer(""); 
-      } else if (!option){  
-         if (Platform.OS === 'android') {
+        setTextInputAnswer("");
+      } else if (!option) {
+        if (Platform.OS === "android") {
           //  ToastAndroid.showWithGravity(
           //    "Please select an option.",
           //    ToastAndroid.SHORT,
           //    ToastAndroid.CENTER
           //  );
-         } else {
-           Alert.alert("Please select an option.");
-         }
-         return;
-       }
-  
+        } else {
+          Alert.alert("Please select an option.");
+        }
+        return;
+      }
+
       const answeredCountForSubject = Object.keys(answeredQuestions).filter(
         (qId) =>
           qId >= currentSubject.starting_no && qId <= currentSubject.ending_no
       ).length;
-  
+
       if (answeredCountForSubject >= currentSubject.no_of_qus_answer) {
         Alert.alert(
           "Answer Limit Reached",
@@ -891,30 +898,29 @@ setSelectedOption(null);
         );
         return;
       }
-  
-  
+
       try {
         const updatedAnswers = {
           ...answeredQuestions,
           [questionId]: { selected_ans: option, submit_ans: option },
         };
-  
+
         setAnsweredQuestions(updatedAnswers);
         setSelectedAnswers((prev) => ({
           ...prev,
           [selectedNumber]: answerToStore,
         }));
-  
+
         const updatedSkipped = { ...skippedQuestions };
         delete updatedSkipped[questionId];
         setSkippedQuestions(updatedSkipped);
-  
+
         const updatedReviewed = { ...reviewedQuestions };
         delete updatedReviewed[questionId];
         setReviewedQuestions(updatedReviewed);
         // console.log("Setting selectedOption to:", option);
         setSelectedOption(option);
-  
+
         await AsyncStorage.setItem(
           ANSWERED_QUESTIONS_KEY,
           JSON.stringify(updatedAnswers)
@@ -931,7 +937,16 @@ setSelectedOption(null);
         console.error("Error saving answer:", error);
       }
     },
-    [answeredQuestions, exams, pattern, selectedNumber, skippedQuestions, textInputValues, reviewedQuestions]);
+    [
+      answeredQuestions,
+      exams,
+      pattern,
+      selectedNumber,
+      skippedQuestions,
+      textInputValues,
+      reviewedQuestions,
+    ]
+  );
 
   const handleSkipQuestion = async () => {
     try {
@@ -971,30 +986,56 @@ setSelectedOption(null);
     setSubmitModalVisible(true);
   };
 
-
   const extractAndSanitizeHtml = (htmlString) => {
     if (!htmlString) {
       return { html: "", images: [] };
     }
-  
+
     // Sanitize HTML to prevent XSS vulnerabilities and unwanted tags
     const cleanHtml = sanitizeHtml(htmlString, {
-      allowedTags: ['img', 'p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'a', 'table', 'tr', 'td', 'th', 'thead', 'tbody', 'span', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'], // Allow more tags as needed
+      allowedTags: [
+        "img",
+        "p",
+        "br",
+        "strong",
+        "em",
+        "ul",
+        "ol",
+        "li",
+        "a",
+        "table",
+        "tr",
+        "td",
+        "th",
+        "thead",
+        "tbody",
+        "span",
+        "div",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+      ], // Allow more tags as needed
       allowedAttributes: {
-        'a': ['href'],
-        'img': ['src', 'alt', 'style'], // Allow inline styles for images
-        '*': ['style']  // Allow inline styles on other elements if needed (use with caution)
+        a: ["href"],
+        img: ["src", "alt", "style"], // Allow inline styles for images
+        "*": ["style"], // Allow inline styles on other elements if needed (use with caution)
       },
-      allowedSchemes: ['http', 'https', 'data'],
+      allowedSchemes: ["http", "https", "data"],
       transformTags: {
-        'img': (tagName, attribs) => ({
-          tagName: 'img',
-          attribs: { ...attribs, style: 'max-width: 100%; height: auto; display: inline-block; vertical-align: middle; margin: 0 5px;' } // Inline styles for images
-        })
-      }
+        img: (tagName, attribs) => ({
+          tagName: "img",
+          attribs: {
+            ...attribs,
+            style:
+              "max-width: 100%; height: auto; display: inline-block; vertical-align: middle; margin: 0 5px;",
+          }, // Inline styles for images
+        }),
+      },
     });
-  
-  
+
     // Extract image URLs after sanitization
     const imageUrls = [];
     const imgRegex = /<img[^>]+src="([^">]+)"/g;
@@ -1002,128 +1043,135 @@ setSelectedOption(null);
     while ((match = imgRegex.exec(cleanHtml))) {
       imageUrls.push(match[1]);
     }
-  
+
     return { html: cleanHtml, images: imageUrls }; // Return both HTML and image URLs
   };
 
-  
   const submitTestResult = async () => {
     try {
-        const data = {
-            "exam_paper_id": obj.exam_paper_id,
-            "exam_session_id": 0,
-            "student_user_exam_id": 0,
-            "questions": []
-        };
-console.log(data, "dataupdated")
-        for (let i = 1; i <= exams.length; i++) {
-            const questionId = exams[i - 1].id;
-            const answeredQuestion = answeredQuestions[i];
-            const skippedQuestion = skippedQuestions[i];
-            const reviewedQuestion = reviewedQuestions[i];
-            const textInputAnswer = textInputValues[i];
+      const data = {
+        exam_paper_id: obj.exam_paper_id,
+        exam_session_id: 0,
+        student_user_exam_id: 0,
+        questions: [],
+      };
+      console.log(data, "dataupdated");
+      for (let i = 1; i <= exams.length; i++) {
+        const questionId = exams[i - 1].id;
+        const answeredQuestion = answeredQuestions[i];
+        const skippedQuestion = skippedQuestions[i];
+        const reviewedQuestion = reviewedQuestions[i];
+        const textInputAnswer = textInputValues[i];
 
-            let status = "0";
-            let attemptAnswer = "";
-            let questionTime = 0;
+        let status = "0";
+        let attemptAnswer = "";
+        let questionTime = 0;
 
-            if (answeredQuestion) {
-                status = "2";
-                attemptAnswer = answeredQuestion.selected_ans;
-                try {
-                    const questionStartTime = await AsyncStorage.getItem(`questionStartTime_${i}`);
-                    if (questionStartTime) {
-                        questionTime = Math.floor((Date.now() - parseInt(questionStartTime, 10)) / 1000);
-                    }
-                } catch (error) {
-                    console.error('Error fetching question start time:', error);
-                }
-            } else if (skippedQuestion) {
-                status = "1";
+        if (answeredQuestion) {
+          status = "2";
+          attemptAnswer = answeredQuestion.selected_ans;
+          try {
+            const questionStartTime = await AsyncStorage.getItem(
+              `questionStartTime_${i}`
+            );
+            if (questionStartTime) {
+              questionTime = Math.floor(
+                (Date.now() - parseInt(questionStartTime, 10)) / 1000
+              );
             }
-
-            const subject = pattern.find(sub => i >= sub.starting_no && i <= sub.ending_no);
-
-            data.questions.push({
-                "question_id": questionId,
-                "status": exams[i - 1]?.qtype !== 8 ? status : "2", 
-                "question_time": questionTime,
-                "attempt_answer": exams[i - 1]?.qtype == 8 ? textInputAnswer : attemptAnswer, 
-                "reason_for_wrong": 0,
-                "comments": "",
-                "slno": i,
-                "subject_id": subject?.id,
-                "review": !!reviewedQuestion,
-                "is_disabled": false,
-            });
+          } catch (error) {
+            console.error("Error fetching question start time:", error);
+          }
+        } else if (skippedQuestion) {
+          status = "1";
         }
 
-        // console.log("Submit Data:", JSON.stringify(data));
-        setExam(data);
-
-
-
-        let completedMockTests = await AsyncStorage.getItem(COMPLETED_MOCK_TESTS_KEY);
-        completedMockTests = completedMockTests ? JSON.parse(completedMockTests) : [];
-
-        const existingTestIndex = completedMockTests.findIndex(
-            (test) => test.exam_pattern_id === obj.exam_pattern_id
+        const subject = pattern.find(
+          (sub) => i >= sub.starting_no && i <= sub.ending_no
         );
 
-        if (existingTestIndex !== -1) {
-            completedMockTests[existingTestIndex] = {
-                exam_pattern_id: obj.exam_pattern_id,
-                results: data,
-                exam_id: obj.exam_id,
-            };
-        } else {
-            completedMockTests.push({
-              exam_id: obj.exam_id,
-                exam_pattern_id: obj.exam_pattern_id,
-                results: data,
-            });
+        data.questions.push({
+          question_id: questionId,
+          status: exams[i - 1]?.qtype !== 8 ? status : "2",
+          question_time: questionTime,
+          attempt_answer:
+            exams[i - 1]?.qtype == 8 ? textInputAnswer : attemptAnswer,
+          reason_for_wrong: 0,
+          comments: "",
+          slno: i,
+          subject_id: subject?.id,
+          review: !!reviewedQuestion,
+          is_disabled: false,
+        });
+      }
+
+      // console.log("Submit Data:", JSON.stringify(data));
+      setExam(data);
+
+      let completedMockTests = await AsyncStorage.getItem(
+        COMPLETED_MOCK_TESTS_KEY
+      );
+      completedMockTests = completedMockTests
+        ? JSON.parse(completedMockTests)
+        : [];
+
+      const existingTestIndex = completedMockTests.findIndex(
+        (test) => test.exam_pattern_id === obj.exam_pattern_id
+      );
+
+      // if (existingTestIndex !== -1) {
+      //   completedMockTests[existingTestIndex] = {
+      //     exam_pattern_id: obj.exam_pattern_id,
+      //     results: data,
+      //     exam_id: obj.exam_id,
+      //   };
+      // } else {
+        completedMockTests.push({
+          exam_id: obj.exam_id,
+          exam_pattern_id: obj.exam_pattern_id,
+          results: data,
+        });
+      // }
+
+      await AsyncStorage.setItem(
+        COMPLETED_MOCK_TESTS_KEY,
+        JSON.stringify(completedMockTests)
+      );
+
+      let completedExams = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
+      completedExams = completedExams ? JSON.parse(completedExams) : [];
+      var examData = {
+        exam_id: examIdData?.[0]?.exam_id,
+        exam_paper_id: obj.exam_paper_id,
+        exam_type: examIdData?.[0]?.exam_type, // Corrected syntax here
+      };
+      // console.log(examData, "erridata")
+      completedExams.push(examData);
+      await AsyncStorage.setItem(
+        COMPLETED_EXAMS_KEY,
+        JSON.stringify(completedExams)
+      );
+
+      navigation.navigate("Login", { exam: data });
+
+      setRemainingTime(0);
+      setTimeElapsed(0);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+
+      try {
+        for (let i = 1; i <= exams.length; i++) {
+          await AsyncStorage.removeItem(`timeElapsed_${i}`);
         }
-
-        await AsyncStorage.setItem(COMPLETED_MOCK_TESTS_KEY, JSON.stringify(completedMockTests));
-
-
-
-        let completedExams = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
-        completedExams = completedExams ? JSON.parse(completedExams) : [];
-        var examData = {
-          exam_id: examIdData?.[0]?.exam_id,
-          exam_paper_id: obj.exam_paper_id,
-          exam_type: examIdData?.[0]?.exam_type, // Corrected syntax here
-        };
-        // console.log(examData, "erridata")
-        completedExams.push(examData);
-        await AsyncStorage.setItem(COMPLETED_EXAMS_KEY, JSON.stringify(completedExams));
-
-
-        navigation.navigate("Login", { exam: data });
-
-
-        setRemainingTime(0); 
-        setTimeElapsed(0);   
-        if (timerRef.current) {
-            clearInterval(timerRef.current);
-            timerRef.current = null;
-        }
-        
-        try {
-          for (let i = 1; i <= exams.length; i++) {
-            await AsyncStorage.removeItem(`timeElapsed_${i}`);
-          }
-        } catch (error) {
-          console.error("Error clearing timeElapsed data:", error);
-        }
-  
       } catch (error) {
-        console.error("Error saving data:", error);
+        console.error("Error clearing timeElapsed data:", error);
+      }
+    } catch (error) {
+      console.error("Error saving data:", error);
     }
-};
-
-
+  };
 
   // if (isLoading) {
   //   return (
@@ -1137,58 +1185,55 @@ console.log(data, "dataupdated")
   //     </View>
   //   );
   // }
-// console.log(remainingTime, "remainingTime")
+  // console.log(remainingTime, "remainingTime")
 
+  const handleReviewTag = async (questionId) => {
+    try {
+      const updatedReviewed = { ...reviewedQuestions, [selectedNumber]: true };
+      setReviewedQuestions(updatedReviewed);
 
-const handleReviewTag = async (questionId) => {
-  try {
-    const updatedReviewed = { ...reviewedQuestions, [selectedNumber]: true };
-    setReviewedQuestions(updatedReviewed);
+      const updatedAnswered = { ...answeredQuestions };
+      delete updatedAnswered[selectedNumber];
+      setAnsweredQuestions(updatedAnswered);
 
-    const updatedAnswered = { ...answeredQuestions };
-    delete updatedAnswered[selectedNumber];
-    setAnsweredQuestions(updatedAnswered);
+      const updatedSkipped = { ...skippedQuestions };
+      delete updatedSkipped[selectedNumber];
+      setSkippedQuestions(updatedSkipped);
 
-    const updatedSkipped = { ...skippedQuestions };
-    delete updatedSkipped[selectedNumber];
-    setSkippedQuestions(updatedSkipped);
+      await AsyncStorage.setItem(
+        REVIEWED_QUESTIONS_KEY,
+        JSON.stringify(updatedReviewed)
+      );
+      await AsyncStorage.setItem(
+        ANSWERED_QUESTIONS_KEY,
+        JSON.stringify(updatedAnswered)
+      );
+      await AsyncStorage.setItem(
+        SKIPPED_QUESTIONS_KEY,
+        JSON.stringify(updatedSkipped)
+      );
+    } catch (error) {
+      console.error("Error saving reviewed tag:", error);
+    }
+  };
 
-    await AsyncStorage.setItem(
-      REVIEWED_QUESTIONS_KEY,
-      JSON.stringify(updatedReviewed)
-    );
-    await AsyncStorage.setItem(
-      ANSWERED_QUESTIONS_KEY,
-      JSON.stringify(updatedAnswered)
-    );
-    await AsyncStorage.setItem(
-      SKIPPED_QUESTIONS_KEY,
-      JSON.stringify(updatedSkipped)
-    );
-  } catch (error) {
-    console.error("Error saving reviewed tag:", error);
-  }
-};
-
-
-
-// const handleTagQuestion = async () => {
-//   try {
-//     const updatedTags = { ...taggedQuestions };
-//     if (updatedTags[selectedNumber]) {
-//       delete updatedTags[selectedNumber];
-//     } else {
-//       updatedTags[selectedNumber] = true;
-//     }
-//     setTaggedQuestions(updatedTags);
-//     await AsyncStorage.setItem(
-//       TAGGED_QUESTIONS_KEY,
-//       JSON.stringify(updatedTags)
-//     );
-//   } catch (error) {
-//     console.error("Error tagging question:", error);
-//   }
-// };
+  // const handleTagQuestion = async () => {
+  //   try {
+  //     const updatedTags = { ...taggedQuestions };
+  //     if (updatedTags[selectedNumber]) {
+  //       delete updatedTags[selectedNumber];
+  //     } else {
+  //       updatedTags[selectedNumber] = true;
+  //     }
+  //     setTaggedQuestions(updatedTags);
+  //     await AsyncStorage.setItem(
+  //       TAGGED_QUESTIONS_KEY,
+  //       JSON.stringify(updatedTags)
+  //     );
+  //   } catch (error) {
+  //     console.error("Error tagging question:", error);
+  //   }
+  // };
 
   return (
     <LinearGradient
@@ -1205,7 +1250,7 @@ const handleReviewTag = async (questionId) => {
         finishTest={finishTest}
         isTimeUp={false}
       />
-      {questionsLoading&&exams.length==0 && (
+      {questionsLoading && exams.length == 0 && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color={theme.textColor} />
         </View>
@@ -1228,340 +1273,357 @@ const handleReviewTag = async (questionId) => {
           </Text>
         </View>
         <ScrollView>
-         {exams.length >0 && 
-          <View style={{ paddingHorizontal: 20 }}>
-          <View
-            // colors={theme.mcb1}
-            // start={{ x: 0, y: 1 }}
-            // end={{ x: 1, y: 1 }}
-            style={styles.header}
-          >
-            <View style={styles.headerline}>
-              {[...new Set(pattern.map((item) => item.subject))].map(
-                (subject, index) => {
-                  const sub = pattern.find(
-                    (item) => item.subject === subject
-                  );
-                  if (!sub) {
-                    return null;
-                  }
-
-                  return (
-                    <TouchableOpacity
-                      key={index}
-                      onPress={() => handleSubjectSelect(sub)}
-                    >
-                      <LinearGradient
-                        colors={
-                          selectedSubjectId == sub.id
-                            ? [theme.bg1, theme.bg2]
-                            :  ["#ffffff", "#ffffff"]
-                        }
-                        style={[
-                          styles.headerline1,
-                          {
-                            borderWidth: selectedSubjectId === sub.id ? 0 : 1,
-                            borderColor:
-                              selectedSubjectId === sub.id
-                                ? theme.textColor1
-                                : theme.textColor,
-                          },
-                        ]}
-                        start={{ x: 0, y: 1 }}
-                        end={{ x: 1, y: 1 }}
-                      >
-                        <Text
-                          style={[
-                            styles.headtext,
-                            {
-                              color:
-                                selectedSubjectId === sub.id
-                                  ? theme.textColor1
-                                  : theme.textColor,
-                            },
-                          ]}
-                        >
-                          {sub.subject}
-                        </Text>
-                      </LinearGradient>
-                    </TouchableOpacity>
-                  );
-                }
-              )}
-            </View>
-
-            {!expand && (
+          {exams.length > 0 && (
+            <View style={{ paddingHorizontal: 20 }}>
               <View
-                style={{
-                  flexDirection: "column",
-                  paddingStart: 20,
-                  paddingEnd: 20,
-                }}
+                // colors={theme.mcb1}
+                // start={{ x: 0, y: 1 }}
+                // end={{ x: 1, y: 1 }}
+                style={styles.header}
               >
+                <View style={styles.headerline}>
+                  {[...new Set(pattern.map((item) => item.subject))].map(
+                    (subject, index) => {
+                      const sub = pattern.find(
+                        (item) => item.subject === subject
+                      );
+                      if (!sub) {
+                        return null;
+                      }
+
+                      return (
+                        <TouchableOpacity
+                          key={index}
+                          onPress={() => handleSubjectSelect(sub)}
+                        >
+                          <LinearGradient
+                            colors={
+                              selectedSubjectId == sub.id
+                                ? [theme.bg1, theme.bg2]
+                                : ["#ffffff", "#ffffff"]
+                            }
+                            style={[
+                              styles.headerline1,
+                              {
+                                borderWidth:
+                                  selectedSubjectId === sub.id ? 0 : 1,
+                                borderColor:
+                                  selectedSubjectId === sub.id
+                                    ? theme.textColor1
+                                    : theme.textColor,
+                              },
+                            ]}
+                            start={{ x: 0, y: 1 }}
+                            end={{ x: 1, y: 1 }}
+                          >
+                            <Text
+                              style={[
+                                styles.headtext,
+                                {
+                                  color:
+                                    selectedSubjectId === sub.id
+                                      ? theme.textColor1
+                                      : theme.textColor,
+                                },
+                              ]}
+                            >
+                              {sub.subject}
+                            </Text>
+                          </LinearGradient>
+                        </TouchableOpacity>
+                      );
+                    }
+                  )}
+                </View>
+
+                {!expand && (
+                  <View
+                    style={{
+                      flexDirection: "column",
+                      paddingStart: 20,
+                      paddingEnd: 20,
+                    }}
+                  >
+                    <View
+                      style={{
+                        alignItems: "flex-end",
+                        marginTop: 15,
+                        marginRight: 20,
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.mockSubtitle,
+                          { color: theme.textColor },
+                        ]}
+                      >
+                        Total Questions :{exams.length}
+                      </Text>
+                    </View>
+
+                    <View style={styles.numberContainer}>
+                      {/* <TouchableOpacity onPress={scrollLeft}> */}
+                      <Image
+                        style={[styles.img, { tintColor: theme.textColor }]}
+                        source={require("../images/to.png")}
+                      />
+                      {/* </TouchableOpacity> */}
+
+                      <FlatList
+                        ref={flatListRef}
+                        horizontal
+                        data={allNum}
+                        keyExtractor={(item) => item.toString()}
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.numberScrollView}
+                        renderItem={({ item: num }) => (
+                          <TouchableOpacity
+                            onPress={() => {
+                              // if (filteredQuestionNumbers.includes(num)) {
+                              setSelectedNumber(num);
+                              // }
+                            }}
+                          >
+                            <View
+                              style={[
+                                styles.numberCircle,
+                                {
+                                  backgroundColor: answeredQuestions[num]
+                                    ? "#04A953"
+                                    : skippedQuestions[num]
+                                    ? "#DE6C00"
+                                    : reviewedQuestions[num]
+                                    ? "#36A1F5"
+                                    : theme.gray,
+                                  borderColor:
+                                    num === selectedNumber
+                                      ? "#fff"
+                                      : "transparent",
+                                  borderWidth: num === selectedNumber ? 1 : 0,
+                                },
+                              ]}
+                            >
+                              <Text style={{ color: "#FFF", fontSize: 16 }}>
+                                {num}
+                              </Text>
+                            </View>
+                          </TouchableOpacity>
+                        )}
+                        getItemLayout={getItemLayout}
+                      />
+
+                      {/* <TouchableOpacity onPress={scrollRight}> */}
+                      <Image
+                        style={[styles.img, { tintColor: theme.textColor }]}
+                        source={require("../images/fro.png")}
+                      />
+                      {/* </TouchableOpacity> */}
+                    </View>
+                  </View>
+                )}
+
+                {expand && (
+                  <View
+                    style={{
+                      flexDirection: "column",
+                      paddingStart: 10,
+                      paddingEnd: 20,
+                    }}
+                  >
+                    {pattern.map((subject, index) => {
+                      const subjectNumbers = [];
+                      if (
+                        selectedSubject &&
+                        subject.subject === selectedSubject.subject
+                      ) {
+                        for (
+                          let i = subject.starting_no;
+                          i <= subject.ending_no && i <= exams.length;
+                          i++
+                        ) {
+                          subjectNumbers.push(i);
+                        }
+                      }
+                      if (subjectNumbers.length > 0) {
+                        return (
+                          <View key={index}>
+                            <View
+                              style={{
+                                flexDirection: "row",
+                                marginTop: 15,
+                                marginLeft: 15,
+                              }}
+                            >
+                              <Text
+                                style={[
+                                  styles.mockSubtitle,
+                                  { color: theme.textColor, marginRight: 100 },
+                                ]}
+                              >
+                                {subject.section_name}
+                              </Text>
+                              <Text
+                                style={[
+                                  styles.mockSubtitle,
+                                  { color: theme.textColor },
+                                ]}
+                              >
+                                Total Questions :
+                              </Text>
+                              <Text
+                                style={[
+                                  styles.mockSubtitle,
+                                  { color: theme.textColor, marginLeft: -8 },
+                                ]}
+                              >
+                                {subject.ending_no - subject.starting_no + 1}
+                              </Text>{" "}
+                              {/* Calculate total questions per subject */}
+                            </View>
+
+                            <View
+                              style={{
+                                width: windowWidth * 0.9,
+                                paddingStart: 30,
+                                marginTop: 10,
+                              }}
+                            >
+                              <View style={styles.gridContainer}>
+                                {subjectNumbers.map((num) => {
+                                  let backgroundColor = theme.gray;
+                                  let borderColor = "transparent";
+                                  let borderWidth = 0;
+
+                                  if (answeredQuestions[num])
+                                    backgroundColor = "#04A953";
+                                  else if (skippedQuestions[num])
+                                    backgroundColor = "#DE6C00";
+                                  else if (reviewedQuestions[num])
+                                    backgroundColor = "#36A1F5";
+
+                                  if (num === selectedNumber) {
+                                    borderColor = "#fff";
+                                    borderWidth = 1;
+                                  }
+                                  return (
+                                    <TouchableOpacity
+                                      key={num}
+                                      onPress={() => {
+                                        setSelectedNumber(num);
+                                        setExpand(false);
+                                      }}
+                                      style={styles.gridItem}
+                                    >
+                                      <View
+                                        style={[
+                                          styles.numberCircle1,
+                                          {
+                                            backgroundColor,
+                                            borderColor,
+                                            borderWidth,
+                                          },
+                                        ]}
+                                      >
+                                        <Text
+                                          style={[
+                                            styles.numberText,
+                                            { color: "#FFF" },
+                                          ]}
+                                        >
+                                          {num}
+                                        </Text>
+                                      </View>
+                                    </TouchableOpacity>
+                                  );
+                                })}
+                              </View>
+                            </View>
+                          </View>
+                        );
+                      } else {
+                        return null;
+                      }
+                    })}
+                  </View>
+                )}
+
                 <View
                   style={{
-                    alignItems: "flex-end",
                     marginTop: 15,
-                    marginRight: 20,
+                    flexDirection: "row",
+                    marginBottom: 5,
                   }}
                 >
-                  <Text
-                    style={[styles.mockSubtitle, { color: theme.textColor }]}
-                  >
-                    Total Questions :{exams.length}
-                  </Text>
+                  <View style={{ alignItems: "center" }}>
+                    <Text style={[styles.res, { color: theme.textColor }]}>
+                      Not Seen
+                    </Text>
+                    <Text style={[styles.res, { color: theme.textColor }]}>
+                      {exams.length -
+                        Object.keys(answeredQuestions).length -
+                        Object.keys(skippedQuestions).length}
+                    </Text>
+                  </View>
+                  <View style={{ alignItems: "center" }}>
+                    <Text style={[styles.res, { color: "#04A953" }]}>
+                      Answered
+                    </Text>
+                    <Text style={[styles.res, { color: "#04A953" }]}>
+                      {Object.keys(answeredQuestions).length}
+                    </Text>
+                  </View>
+                  <View style={{ alignItems: "center" }}>
+                    <Text style={[styles.res, { color: "#DE6C00" }]}>
+                      Skipped
+                    </Text>
+                    <Text style={[styles.res, { color: "#DE6C00" }]}>
+                      {Object.keys(skippedQuestions).length}
+                    </Text>
+                  </View>
+                  <View style={{ alignItems: "center" }}>
+                    <Text style={[styles.res, { color: "#36A1F5" }]}>
+                      Review
+                    </Text>
+                    <Text style={[styles.res, { color: "#36A1F5" }]}>
+                      {Object.keys(reviewedQuestions).length}
+                    </Text>
+                  </View>
                 </View>
 
-                <View style={styles.numberContainer}>
-                  {/* <TouchableOpacity onPress={scrollLeft}> */}
-                  <Image
-                    style={[styles.img, { tintColor: theme.textColor }]}
-                    source={require("../images/to.png")}
-                  />
-                  {/* </TouchableOpacity> */}
-
-                  <FlatList
-    ref={flatListRef}
-    horizontal
-    data={allNum}
-    keyExtractor={(item) => item.toString()}
-    showsHorizontalScrollIndicator={false}
-    contentContainerStyle={styles.numberScrollView}
-    renderItem={({ item: num }) => ( 
-        <TouchableOpacity
-            onPress={() => {
-                // if (filteredQuestionNumbers.includes(num)) {
-                    setSelectedNumber(num);
-                // }
-            }}
-        >
-            <View 
-                style={[
-                    styles.numberCircle,
-                    {
-                        backgroundColor: answeredQuestions[num] ? "#04A953" : skippedQuestions[num] ? "#DE6C00" : reviewedQuestions[num] ? "#36A1F5" : theme.gray,
-                        borderColor: num === selectedNumber ? "#fff" : "transparent",
-                        borderWidth: num === selectedNumber ? 1 : 0,
-                    },
-                ]}
-            >
-                <Text style={{ color: "#FFF", fontSize: 16 }}>{num}</Text>
-            </View>
-        </TouchableOpacity>
-    )}
-    getItemLayout={getItemLayout} 
-  />
-
-
-                  {/* <TouchableOpacity onPress={scrollRight}> */}
-                  <Image
-                    style={[styles.img, { tintColor: theme.textColor }]}
-                    source={require("../images/fro.png")}
-                  />
-                  {/* </TouchableOpacity> */}
-                </View>
-              </View>
-            )}
-
-            {expand && (
-              <View
-                style={{
-                  flexDirection: "column",
-                  paddingStart: 10,
-                  paddingEnd: 20,
-                }}
-              >
-                {pattern.map((subject, index) => {
-                  const subjectNumbers = [];
-                  if (
-                    selectedSubject &&
-                    subject.subject === selectedSubject.subject
-                  ) {
-                    for (
-                      let i = subject.starting_no;
-                      i <= subject.ending_no && i <= exams.length;
-                      i++
-                    ) {
-                      subjectNumbers.push(i);
-                    }
-                  }
-                  if (subjectNumbers.length > 0) {
-                    return (
-                      <View key={index}>
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            marginTop: 15,
-                            marginLeft: 15,
-                          }}
-                        >
-                          <Text
-                            style={[
-                              styles.mockSubtitle,
-                              { color: theme.textColor, marginRight: 100 },
-                            ]}
-                          >
-                            {subject.section_name}
-                          </Text>
-                          <Text
-                            style={[
-                              styles.mockSubtitle,
-                              { color: theme.textColor },
-                            ]}
-                          >
-                            Total Questions :
-                          </Text>
-                          <Text
-                            style={[
-                              styles.mockSubtitle,
-                              { color: theme.textColor, marginLeft: -8 },
-                            ]}
-                          >
-                            {subject.ending_no - subject.starting_no + 1}
-                          </Text>{" "}
-                          {/* Calculate total questions per subject */}
-                        </View>
-
-                        <View
-                          style={{
-                            width: windowWidth * 0.9,
-                            paddingStart: 30,
-                            marginTop: 10,
-                          }}
-                        >
-                          <View style={styles.gridContainer}>
-                            {subjectNumbers.map((num) => {
-                              let backgroundColor = theme.gray;
-                              let borderColor = "transparent";
-                              let borderWidth = 0;
-
-                              if (answeredQuestions[num])
-                                backgroundColor = "#04A953";
-                              else if (skippedQuestions[num])
-                                backgroundColor = "#DE6C00";
-                              else if (reviewedQuestions[num])
-                                backgroundColor = "#36A1F5";
-
-                              if (num === selectedNumber) {
-                                borderColor = "#fff";
-                                borderWidth = 1;
-                              }
-                              return (
-                                <TouchableOpacity
-                                  key={num}
-                                  onPress={() => {
-                                    setSelectedNumber(num);
-                                    setExpand(false);
-                                  }}
-                                  style={styles.gridItem}
-                                >
-                                  <View
-                                    style={[
-                                      styles.numberCircle1,
-                                      {
-                                        backgroundColor,
-                                        borderColor,
-                                        borderWidth,
-                                      },
-                                    ]}
-                                  >
-                                    <Text
-                                      style={[
-                                        styles.numberText,
-                                        { color: "#FFF" },
-                                      ]}
-                                    >
-                                      {num}
-                                    </Text>
-                                  </View>
-                                </TouchableOpacity>
-                              );
-                            })}
-                          </View>
-                        </View>
-                      </View>
-                    );
-                  } else {
-                    return null;
-                  }
-                })}
-              </View>
-            )}
-
-            <View
-              style={{ marginTop: 15, flexDirection: "row", marginBottom: 5 }}
-            >
-              <View style={{ alignItems: "center" }}>
-                <Text style={[styles.res, { color: theme.textColor }]}>
-                  Not Seen
-                </Text>
-                <Text style={[styles.res, { color: theme.textColor }]}>
-                  {exams.length -
-                    Object.keys(answeredQuestions).length -
-                    Object.keys(skippedQuestions).length}
-                </Text>
-              </View>
-              <View style={{ alignItems: "center" }}>
-                <Text style={[styles.res, { color: "#04A953" }]}>
-                  Answered
-                </Text>
-                <Text style={[styles.res, { color: "#04A953" }]}>
-                  {Object.keys(answeredQuestions).length}
-                </Text>
-              </View>
-              <View style={{ alignItems: "center" }}>
-                <Text style={[styles.res, { color: "#DE6C00" }]}>
-                  Skipped
-                </Text>
-                <Text style={[styles.res, { color: "#DE6C00" }]}>
-                  {Object.keys(skippedQuestions).length}
-                </Text>
-              </View>
-              <View style={{ alignItems: "center" }}>
-                <Text style={[styles.res, { color: "#36A1F5" }]}>Review</Text>
-                <Text style={[styles.res, { color: "#36A1F5" }]}>
-                  {Object.keys(reviewedQuestions).length}
-                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setExpand(!expand);
+                  }}
+                >
+                  {!expand && (
+                    <Image
+                      source={require("../images/down.png")}
+                      style={{
+                        height: 30,
+                        width: 30,
+                        resizeMode: "contain",
+                        tintColor: theme.textColor,
+                      }}
+                    />
+                  )}
+                  {expand && (
+                    <Image
+                      source={require("../images/up.png")}
+                      style={{
+                        height: 30,
+                        width: 30,
+                        resizeMode: "contain",
+                        tintColor: theme.textColor,
+                      }}
+                    />
+                  )}
+                </TouchableOpacity>
               </View>
             </View>
-
-            <TouchableOpacity
-              onPress={() => {
-                setExpand(!expand);
-              }}
-            >
-              {!expand && (
-                <Image
-                  source={require("../images/down.png")}
-                  style={{
-                    height: 30,
-                    width: 30,
-                    resizeMode: "contain",
-                    tintColor: theme.textColor,
-                  }}
-                />
-              )}
-              {expand && (
-                <Image
-                  source={require("../images/up.png")}
-                  style={{
-                    height: 30,
-                    width: 30,
-                    resizeMode: "contain",
-                    tintColor: theme.textColor,
-                  }}
-                />
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-         }
+          )}
 
           <View style={{ paddingHorizontal: 20, marginTop: 10 }}>
-            <View
-              
-              style={styles.header}
-            >
+            <View style={styles.header}>
               <View style={{ flexDirection: "row", marginTop: 8 }}>
                 <Svg height="35" width={windowWidth * 0.35}>
                   <Defs>
@@ -1595,136 +1657,49 @@ const handleReviewTag = async (questionId) => {
                   </Text>
                 </View>
               </View>
-              {(exams[selectedNumber - 1]?.compquestion.length>0 ||exams[selectedNumber - 1]?.question.length>0) ? (
-    <View>
-
-<View>
-
-{exams[selectedNumber - 1]?.compquestion !==""&&   
-
-
-<HtmlComponent 
-             style={{
-               // ...AppStyles.oddMRegular,color:COLORS.BLACK,
-               fontSize:15,lineHeight:23}} 
-             containerStyle={{ marginBottom:20}} 
-             baseFontStyle={18}
-             text={`${exams[selectedNumber - 1]?.compquestion}`}
-             // tintColor={COLORS.BLACK}
-             />
-
-}
-
-
-<HtmlComponent 
-             style={{
-               // ...AppStyles.oddMRegular,color:COLORS.BLACK,
-               fontSize:15,lineHeight:23}} 
-             containerStyle={{ marginBottom:20}} 
-             baseFontStyle={18}
-             text={`${exams[selectedNumber - 1]?.question}`}
-             // tintColor={COLORS.BLACK}
-             />
-
-</View>
-
-{exams[selectedNumber - 1]?.qtype !== 8 ? (
-<View style={{ display: "flex", flexDirection: "row", flexWrap: "wrap" }}>
-{["A", "B", "C", "D"].map((option, index) => {
-const optionText =
-index === 0
-? exams[selectedNumber - 1]?.option1
-: index === 1
-? exams[selectedNumber - 1]?.option2
-: index === 2
-? exams[selectedNumber - 1]?.option3
-: exams[selectedNumber - 1]?.option4;
-const optionHtml = optionText;  
-const optionImages = [];     
-
-// console.log("Exam Data:", exams[selectedNumber - 1]); 
-// const { html: optionHtml, images: optionImages } = extractAndSanitizeHtml(optionText);      const isImageUrl = optionImages.length > 0;
-const isSelected = selectedAnswers[selectedNumber] === option;
-return (
-<TouchableOpacity
-key={option}
-style={[
-styles.opt,
-{
-borderColor: theme.textColor,
-borderRadius: 25,
-backgroundColor: "transparent",
-},
-]}
-onPress={() => {
-setSelectedOption(option);
-handleAnswerSelect(selectedNumber, option);
-}}
->
-<View style={[styles.optbg, { backgroundColor: theme.gray }]}>
-<Text style={[styles.option, { color: "#FFF" }]}>{option}</Text>
-</View>
-
-<View style={{flexDirection: "row",flexWrap: "wrap",justifyContent: "flex-start",}}>
+              {exams[selectedNumber - 1]?.compquestion.length > 0 ||
+              exams[selectedNumber - 1]?.question.length > 0 ? (
+                <View>
+             
+            <LoadQuestion
+        
+                  type="exam"
+                  item={exams[selectedNumber- 1]} 
+                  selectedAnswers={selectedAnswers}
+                  selectedNumber={selectedNumber}
+                  currentQuestionIndex={exams[selectedNumber- 1]}
+                  questionLength={exams.length}
+                  onChangeValue={(value)=>handleAnswerSelect(selectedNumber,value)}
+                  onSkip={()=>{ handleSkipQuestion();
+                    setSelectedOption(null);}}
+                  // onPrevious={()=>this.previous(currentQuestionIndex)}
+                  onNext={()=>{
+                    if (answeredQuestions[selectedNumber]) {
+                      moveToNextQuestion();
+                      return;
+                    }
+    
+                    handleSelectAndNext(selectedNumber);
+                    if (exams[selectedNumber - 1]?.qtype !== 8) {
+                      handleAnswerSelect(selectedNumber, selectedOption);
+                      setSelectedOption(null);
+                    }
+                    setTextInputAnswer("");
+                  }}
+                  onReviewLater={()=>handleReviewTag()}
+                  onSubmit={()=> handleSubmitTest()}
+                  // onReload={()=>this.onReload(questions[currentQuestionIndex].id,questions[currentQuestionIndex].selection_type)}
+                  handleTextInputChange={handleTextInputChange}
+                  handleSelectAndNext={handleSelectAndNext}
+                  handleAnswerSelect={handleAnswerSelect}
+                  textInputValues={textInputValues}
+                   />
 
 
-<HtmlComponent 
-             style={{
-               // ...AppStyles.oddMRegular,color:COLORS.BLACK,
-               fontSize:15,lineHeight:23, width: windowWidth * 0.6,}} 
-             containerStyle={{ marginBottom:20,marginTop:3}} 
-             baseFontStyle={18}
-             text={`${optionHtml} `}
-             // tintColor={COLORS.BLACK}
-             />
-
-</View>
-
-<View
-style={[
-styles.select,
-{
-borderColor: theme.textColor,
-backgroundColor: isSelected ? theme.textColor : "transparent",
-},
-]}
-/>
-</TouchableOpacity>
-);
-})}
-</View>
-) : (
-<View>
-<TextInput
-style={[
-styles.textInputStyle,
-{
-// backgroundColor: theme.textColor1,
-// borderColor: theme.textColor1,
-color: theme.textColor,
-},
-]}
-value={textInputValues[selectedNumber] || ""}
-onChangeText={(text) => {
-handleTextInputChange(text, selectedNumber);
-// console.log("TextInput changed for question:", selectedNumber, "to:", text);
-}}
-placeholder={`Enter Text`}
-keyboardType="numeric"
-placeholderTextColor={theme.textColor}
-multiline={true}
-onSubmitEditing={() => {
-// console.log("onSubmitEditing called for question:", selectedNumber);
-handleSelectAndNext(selectedNumber);
-}}
-onBlur={() => handleAnswerSelect(selectedNumber, textInputValues[selectedNumber])} 
-/>
-</View>
-)}
-    </View>
-) : (
-  <ActivityIndicator size="large" color={theme.textColor} />
-)}
+                </View>
+              ) : (
+                <ActivityIndicator size="large" color={theme.textColor} />
+              )}
               <View
                 style={{
                   marginTop: 10,
@@ -1739,13 +1714,29 @@ onBlur={() => handleAnswerSelect(selectedNumber, textInputValues[selectedNumber]
                                             source={require("../images/caution.png")}
                                         />
                                     </TouchableOpacity> */}
-                                    <TouchableOpacity onPress={handleReviewTag} style={[styles.ins, { backgroundColor: theme.textColor1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]}>
-                                        <Image
-                                            style={{ height: 20, width: 20, resizeMode: 'contain', tintColor: theme.textColor }}
-                                            source={require("../images/tag.png")}
-                                        />
-                                    </TouchableOpacity>
-                                    {/* <TouchableOpacity style={[styles.ins, { backgroundColor: theme.textColor1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]} onPress={() => navigation.navigate("Instruct")}>
+                  <TouchableOpacity
+                    onPress={handleReviewTag}
+                    style={[
+                      styles.ins,
+                      {
+                        backgroundColor: theme.textColor1,
+                        borderRadius: 16,
+                        justifyContent: "center",
+                        alignItems: "center",
+                      },
+                    ]}
+                  >
+                    <Image
+                      style={{
+                        height: 20,
+                        width: 20,
+                        resizeMode: "contain",
+                        tintColor: theme.textColor,
+                      }}
+                      source={require("../images/tag.png")}
+                    />
+                  </TouchableOpacity>
+                  {/* <TouchableOpacity style={[styles.ins, { backgroundColor: theme.textColor1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]} onPress={() => navigation.navigate("Instruct")}>
                                         <Image
                                             style={{ height: 20, width: 20, resizeMode: 'contain', tintColor: theme.textColor }}
                                             source={require("../images/info.png")}
@@ -1806,7 +1797,7 @@ onBlur={() => handleAnswerSelect(selectedNumber, textInputValues[selectedNumber]
                   { color: theme.textColor, fontWeight: "700" },
                 ]}
               >
-                Skip Question
+                Skip 
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -1821,17 +1812,17 @@ onBlur={() => handleAnswerSelect(selectedNumber, textInputValues[selectedNumber]
               }}
               onPress={() => {
                 if (answeredQuestions[selectedNumber]) {
-                    moveToNextQuestion();
-                    return;
+                  moveToNextQuestion();
+                  return;
                 }
-          
+
                 handleSelectAndNext(selectedNumber);
-                if (exams[selectedNumber - 1]?.qtype !== 8) {  
-                    handleAnswerSelect(selectedNumber, selectedOption); 
-                    setSelectedOption(null); 
+                if (exams[selectedNumber - 1]?.qtype !== 8) {
+                  handleAnswerSelect(selectedNumber, selectedOption);
+                  setSelectedOption(null);
                 }
-                setTextInputAnswer('');
-            }}
+                setTextInputAnswer("");
+              }}
             >
               <Text
                 style={[
@@ -1839,7 +1830,7 @@ onBlur={() => handleAnswerSelect(selectedNumber, textInputValues[selectedNumber]
                   { color: theme.textColor, fontWeight: "700" },
                 ]}
               >
-                Submit Selection
+                Save & Next
               </Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={handleSubmitTest}>
@@ -1861,7 +1852,7 @@ onBlur={() => handleAnswerSelect(selectedNumber, textInputValues[selectedNumber]
                     { color: theme.textColor1, fontWeight: "700" },
                   ]}
                 >
-                  Submit Test
+                  Submit
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -1936,10 +1927,9 @@ onBlur={() => handleAnswerSelect(selectedNumber, textInputValues[selectedNumber]
       </Modal>
     </LinearGradient>
   );
-}
+};
 
-export default MockTest
-
+export default MockTest;
 
 const styles = StyleSheet.create({
   gridContainer: {
@@ -1952,223 +1942,223 @@ const styles = StyleSheet.create({
     minWidth: 0, // min-width: 0px;
     boxSizing: "border-box", // box-sizing: border-box (React Native handles this automatically)
   },
-    container: {
-      flex: 1,
+  container: {
+    flex: 1,
+  },
+  header: {
+    alignItems: "center",
+    marginTop: 10,
+    padding: 10,
+    borderRadius: 30,
+    backgroundColor: "#ffffff", // White background
+    borderWidth: 0.5, // Thin border
+    borderColor: "#ccc", // Light gray border
+    shadowColor: "#000", // Shadow color
+    shadowOffset: { width: 0, height: 2 }, // Slightly raised
+    shadowOpacity: 0.2, // Subtle shadow
+    shadowRadius: 4, // Smooth edges
+    elevation: 3, // Android shadow
+  },
+  headerline: {
+    flexDirection: "row",
+    marginTop: 10,
+  },
+  headtext: {
+    fontSize: 15,
+    fontWeight: "700",
+    fontFamily: "CustomFont",
+    paddingStart: 6,
+    paddingEnd: 6,
+  },
+  headerline1: {
+    height: 30,
+    alignItems: "center",
+    borderRadius: 20,
+    marginHorizontal: 4,
+    justifyContent: "center",
+  },
+  mockSubtitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    paddingStart: 10,
+  },
+  numberContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 15,
+  },
+  numberCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    marginHorizontal: 5,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  numberCircle1: {
+    width: 35,
+    height: 35,
+    borderRadius: 5,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  img: {
+    height: 20,
+    width: 20,
+    resizeMode: "contain",
+  },
+  res: {
+    fontWeight: "700",
+    fontSize: 16,
+    marginLeft: 8,
+    marginRight: 8,
+  },
+  question: {
+    fontWeight: "400",
+    fontSize: 16,
+    marginHorizontal: 10,
+    lineHeight: 26,
+  },
+  ans: {
+    fontWeight: "400",
+    fontSize: 16,
+    paddingStart: 10,
+    paddingEnd: 10,
+  },
+  option: {
+    fontWeight: "400",
+    fontSize: 14,
+    alignContent: "center",
+  },
+  optbg: {
+    height: 38,
+    width: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  select: {
+    height: 16,
+    width: 16,
+    borderWidth: 1,
+    borderRadius: 8,
+    position: "absolute",
+    right: 15,
+  },
+  opt: {
+    flexDirection: "row",
+    width: windowWidth * 0.8,
+    marginTop: 8,
+    minHeight: 54,
+    alignItems: "center",
+    paddingStart: 10,
+    paddingEnd: 10,
+    borderWidth: 0.6,
+    position: "relative",
+    maxHeight: "100%",
+  },
+  ins: {
+    height: 32,
+    width: 32,
+    marginLeft: 8,
+    marginRight: 8,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalView: {
+    margin: 20,
+    borderRadius: 20,
+    padding: 35,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
     },
-    header: {
-      alignItems: "center",
-      marginTop: 10,
-      padding: 10,
-      borderRadius: 30,
-      backgroundColor: "#ffffff", // White background
-      borderWidth: 0.5, // Thin border
-      borderColor: "#ccc", // Light gray border
-      shadowColor: "#000", // Shadow color
-      shadowOffset: { width: 0, height: 2 }, // Slightly raised
-      shadowOpacity: 0.2, // Subtle shadow
-      shadowRadius: 4, // Smooth edges
-      elevation: 3, // Android shadow
-    },
-    headerline: {
-      flexDirection: "row",
-      marginTop: 10,
-    },
-    headtext: {
-      fontSize: 15,
-      fontWeight: "700",
-      fontFamily: "CustomFont",
-      paddingStart: 6,
-      paddingEnd: 6,
-    },
-    headerline1: {
-      height: 30,
-      alignItems: "center",
-      borderRadius: 20,
-      marginHorizontal: 4,
-      justifyContent: "center",
-    },
-    mockSubtitle: {
-      fontSize: 16,
-      fontWeight: "bold",
-      paddingStart: 10,
-    },
-    numberContainer: {
-      flexDirection: "row",
-      alignItems: "center",
-      marginTop: 15,
-    },
-    numberCircle: {
-      width: 40,
-      height: 40,
-      borderRadius: 10,
-      marginHorizontal: 5,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    numberCircle1: {
-      width: 35,
-      height: 35,
-      borderRadius: 5,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    img: {
-      height: 20,
-      width: 20,
-      resizeMode: "contain",
-    },
-    res: {
-      fontWeight: "700",
-      fontSize: 16,
-      marginLeft: 8,
-      marginRight: 8,
-    },
-    question: {
-      fontWeight: "400",
-      fontSize: 16,
-      marginHorizontal: 10,
-      lineHeight: 26,
-    },
-    ans: {
-      fontWeight: "400",
-      fontSize: 16,
-      paddingStart: 10,
-      paddingEnd: 10,
-    },
-    option: {
-      fontWeight: "400",
-      fontSize: 14,
-      alignContent: "center",
-    },
-    optbg: {
-      height: 38,
-      width: 32,
-      alignItems: "center",
-      justifyContent: "center",
-      borderRadius: 25,
-      marginRight: 10,
-    },
-    select: {
-      height: 16,
-      width: 16,
-      borderWidth: 1,
-      borderRadius: 8,
-      position: "absolute",
-      right: 15,
-    },
-    opt: {
-      flexDirection: "row",
-      width: windowWidth * 0.8,
-      marginTop: 8,
-      minHeight: 54,
-      alignItems: "center",
-      paddingStart: 10,
-      paddingEnd: 10,
-      borderWidth: 0.6,
-      position: "relative",
-      maxHeight: "100%",
-    },
-    ins: {
-      height: 32,
-      width: 32,
-      marginLeft: 8,
-      marginRight: 8,
-    },
-    centeredView: {
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: "rgba(0, 0, 0, 0.5)",
-    },
-    modalView: {
-      margin: 20,
-      borderRadius: 20,
-      padding: 35,
-      alignItems: "center",
-      shadowColor: "#000",
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: 0.25,
-      shadowRadius: 4,
-      elevation: 5,
-    },
-    modalText: {
-      marginBottom: 15,
-      textAlign: "center",
-      fontSize: 18,
-      fontWeight: "bold",
-      fontFamily: "CustomFont",
-    },
-    buttonContainer: {
-      flexDirection: "row",
-      justifyContent: "space-around",
-      width: "100%",
-    },
-    button: {
-      borderRadius: 20,
-      padding: 10,
-      elevation: 2,
-      marginHorizontal: 10,
-      width: 100,
-      alignItems: "center",
-    },
-    buttonLogin: {
-      backgroundColor: "transparent",
-    },
-    buttonRegister: {
-      backgroundColor: "#2196F3",
-    },
-    textStyle: {
-      color: "white",
-      fontWeight: "bold",
-      textAlign: "center",
-    },
-    gridContainer: {
-      flexDirection: "row",
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: "center",
+    fontSize: 18,
+    fontWeight: "bold",
+    fontFamily: "CustomFont",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
+  },
+  button: {
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2,
+    marginHorizontal: 10,
+    width: 100,
+    alignItems: "center",
+  },
+  buttonLogin: {
+    backgroundColor: "transparent",
+  },
+  buttonRegister: {
+    backgroundColor: "#2196F3",
+  },
+  textStyle: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  gridContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "flex-start",
+  },
+  gridItem: {
+    margin: 5,
+  },
+  textInputStyle: {
+    borderWidth: 1,
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 15,
+    width: 300,
+    marginTop: 20,
+    borderColor: "rgba(0, 0, 0, 0.5)",
+  },
+  numberScrollView: {
+    paddingHorizontal: 10,
+    alignItems: "center",
+  },
+  loadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
+  },
+  htmlStyles: {
+    div: {
       flexWrap: "wrap",
-      justifyContent: "flex-start",
     },
-    gridItem: {
-      margin: 5,
+    p: {
+      fontSize: 16,
     },
-    textInputStyle: {
-      borderWidth: 1,
-      padding: 10,
-      marginBottom: 10,
-      borderRadius: 15,
-      width: 300,
-      marginTop: 20,
-      borderColor: "rgba(0, 0, 0, 0.5)",
+    strong: {
+      fontWeight: "bold",
     },
-    numberScrollView: {
-      paddingHorizontal: 10,
-      alignItems: "center",
+    em: {
+      fontStyle: "italic",
     },
-    loadingOverlay: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: "rgba(0, 0, 0, 0.5)",
-      justifyContent: "center",
-      alignItems: "center",
-      zIndex: 10,
-    },
-    htmlStyles: {
-      div: {
-        flexWrap: "wrap",
-      },
-      p: {
-        fontSize: 16,
-      },
-      strong: {
-        fontWeight: "bold",
-      },
-      em: {
-        fontStyle: "italic",
-      },
-    },
-  });
+  },
+});

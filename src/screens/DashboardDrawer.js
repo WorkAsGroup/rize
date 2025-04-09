@@ -6,6 +6,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { darkTheme, lightTheme } from '../theme/theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Intro from './Intro';
+import Achivements from './dashboardItems/Achivements';
 import PerformanceAnalasys from './PerformanceAnalasys';
 
 const Drawer = createDrawerNavigator();
@@ -18,7 +19,8 @@ const Settings = () => (
 
 const CustomDrawerContent = (props) => {
   const colorScheme = useColorScheme();
-  const theme = colorScheme === "dark" ? darkTheme : lightTheme;
+  // const theme = colorScheme === "dark" ? darkTheme : lightTheme;
+  const theme =darkTheme;
   const navigation = useNavigation();
   const route = useRoute();
   const currentRouteName = route?.name;
@@ -26,11 +28,13 @@ const CustomDrawerContent = (props) => {
   const getIconSource = (routeName) => {
     switch (routeName) {
       case 'Dashboard':
-        return require('../images/dashboard.png');
+        return require('../images/man.png');
       case 'MockTests':
         return require('../images/test.png');
       case 'Performance':
-        return require('../images/performance.png');
+        return require('../images/performance-metrics.png');
+        case 'Achivements':
+          return require('../images/star-badge.png');
       case 'Settings':
         return require('../images/settings.png');
       default:
@@ -46,19 +50,22 @@ const CustomDrawerContent = (props) => {
   return (
     <DrawerContentScrollView {...props} style={{ backgroundColor: theme.textbgcolor }}>
       <View style={[styles.drawerHeader]}>
-        <Image source={require("../images/title.png")} style={{ height: 100, width: 160, tintColor: theme.textColor, resizeMode: 'contain', marginLeft: 10 }} />
+        <Image source={require("../images/logo.png")} style={{ height: 100, width: 160,  resizeMode: 'contain', marginLeft: 10 }} />
       </View>
 
       <TouchableOpacity style={[styles.drawerItem, currentRouteName === 'Dashboard' && styles.selectedDrawerItem]} onPress={() => handleNavigation('Dashboard')}>
         <Image source={getIconSource('Dashboard')} style={[styles.drawerIcon, { tintColor: theme.textColor }]} />
-        <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Dashboard</Text>
+        <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Test Zone</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={[styles.drawerItem, currentRouteName === 'PerformanceAnalasys' && styles.selectedDrawerItem]} onPress={() => handleNavigation('PerformanceAnalasys')}>
         <Image source={getIconSource('Performance')} style={[styles.drawerIcon, { tintColor: theme.textColor }]} />
-        <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Performance Analysys</Text>
+        <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Performance Analytics</Text>
       </TouchableOpacity>
-
+      <TouchableOpacity style={[styles.drawerItem, currentRouteName === 'Achivements' && styles.selectedDrawerItem]} onPress={() => handleNavigation('Achivements')}>
+        <Image source={getIconSource('Achivements')} style={[styles.drawerIcon, { tintColor: theme.textColor }]} />
+        <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Achivements</Text>
+      </TouchableOpacity>
       {/* ✅ LOGOUT BUTTON */}
       <TouchableOpacity onPress={props.onLogout} style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 20, marginTop: 20 }}>
         <Image source={require("../images/logout.png")} style={[styles.icon, { tintColor: theme.textColor, width: 22, height: 22 }]} />
@@ -110,7 +117,11 @@ const DashboardDrawer = ({ route }) => {
   component={PerformanceAnalasys}
   initialParams={{ onChangeAuth: route?.params?.onChangeAuth }}
 />
-
+<Drawer.Screen
+  name="Achivements"
+  component={Achivements}
+  initialParams={{ onChangeAuth: route?.params?.onChangeAuth }}
+/>
     </Drawer.Navigator>
   );
 };

@@ -7,30 +7,51 @@ import {
   useColorScheme,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from "react-native";
-import { avgScoringTime, weekAvgScoringTime, getAutoLogin, chapterWiseAvgScores } from "../core/CommonService"
-import React, { useEffect, useState } from "react";
+import {
+  avgScoringTime,
+  weekAvgScoringTime,
+  getAutoLogin,
+  chapterWiseAvgScores,
+  getDashboardExamResult,
+} from "../core/CommonService";
+import React, { useEffect, useMemo, useState } from "react";
 import { darkTheme, lightTheme } from "../theme/theme";
 import RNPickerSelect from "react-native-picker-select";
 import PerformanceStatusGraph from "./PerformanceAvgTimeGraph";
+
 import { useNavigation } from "@react-navigation/native";
+import Header from "../common/Header";
+import WeeklyPerformance from "./dashboardItems/WeeklyPeroformance";
+import { useExam } from "../ExamContext";
 
 const PerformanceAnalasys = ({ route }) => {
-  console.log(route.params)
+  // console.log(route.params);
   const navigation = useNavigation();
   const [selectedSubject, setSelectedSubject] = useState(1);
   const [selectedValue, setSelectedValue] = useState(1);
   const { onChangeAuth } = route.params;
-  const [weeksAvgScoringTime, setWeekAvgTimeResults] = useState([])
+  const [weeksAvgScoringTime, setWeekAvgTimeResults] = useState([]);
+  const [examResults, setExamResults] = useState([]);
+      const { selectedExam, setSelectedExam } = useExam();
+  const [selectedPerformanceType, setSelectedPerformanceType] =
+    useState("score");
+  const [dateRange, setDateRange] = useState("-");
+  const [totalExamCount, setTotalExamCount] = useState(0);
   const colorScheme = useColorScheme();
   const [studentExamId, setStudentExamId] = useState("");
   const [avgTimeResults, setAvgTimeResults] = useState([]);
   const [chaperWiseData, setChapteriseData] = useState([]);
-  const theme = colorScheme === "dark" ? darkTheme : lightTheme;
-  const [token, setToken] = useState("")
+  const [loading, setLoading] = useState(false);
+  // const theme = colorScheme === "dark" ? darkTheme : lightTheme;
+  const theme =  darkTheme;
+  const [token, setToken] = useState("");
   const handleLogout = async () => {
     onChangeAuth(null);
   };
+
+
 
   const options = [
     { label: "Last 30 Days", value: 1 },
@@ -44,13 +65,30 @@ const PerformanceAnalasys = ({ route }) => {
   //   { label: "Zoology", value: 5 },
   // ];
 
-  const performanceSubOptions = avgTimeResults?.periods?.[0]?.subjects?.map((subject, index) => ({
-    value: index+1,
-    label: subject.subject_name,
-})) || [];
+  const performanceSubOptions =
+    avgTimeResults?.periods?.[0]?.subjects?.map((subject, index) => ({
+      value: index + 1,
+      label: subject.subject_name,
+    })) || [];
 
 
-  const WeeklyPerformance = () => {
+    const performanceGraph = useMemo(() => {
+      if (avgTimeResults?.periods?.length > 0) {
+        return (
+          <PerformanceStatusGraph
+            performanceSubOptions={performanceSubOptions}
+            type={selectedSubject}
+            data={avgTimeResults}
+            weekData={weeksAvgScoringTime}
+            chaperWiseData={chaperWiseData}
+          />
+        );
+      }
+      return null;
+    }, [avgTimeResults, selectedSubject, weeksAvgScoringTime, chaperWiseData, performanceSubOptions]);
+    
+    
+  const WeeklyPerformancess = () => {
     return (
       <View
         style={[
@@ -79,165 +117,209 @@ const PerformanceAnalasys = ({ route }) => {
             />
           </View>
         </View>
-        <ScrollView 
-  horizontal={true} 
-  showsHorizontalScrollIndicator={false} 
-  contentContainerStyle={{ paddingHorizontal: 5 }}
->
-  <View
-    style={{
-      flexDirection: "row",
-      marginTop: 10,
-      marginBottom: 10,
-    }}
-  >
-    {performanceSubOptions && performanceSubOptions.map((item, index) => (
-      <TouchableOpacity
-        key={index}
-        style={{
-          backgroundColor: theme.textColor1,
-          padding: 8,
-          marginRight: 10,
-          borderBottomWidth: selectedSubject === index + 1 ? 1 : 0,
-          borderBottomColor:
-            selectedSubject === index + 1 ? theme.tx1 : "transparent",
-        }}
-        onPress={() => {
-          setSelectedSubject(item.value);
-        }}
-      >
-        <Text
-          style={{
-            color:
-              selectedSubject === index + 1 ? theme.tx1 : theme.textColor,
-          }}
+        <ScrollView
+          horizontal={true}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 5 }}
         >
-          {item.label}
-        </Text>
-      </TouchableOpacity>
-    ))}
-  </View>
-</ScrollView>
+          <View
+            style={{
+              flexDirection: "row",
+              marginTop: 10,
+              marginBottom: 10,
+            }}
+          >
+            {performanceSubOptions &&
+              performanceSubOptions.map((item, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={{
+                    backgroundColor: theme.textColor1,
+                    padding: 8,
+                    marginRight: 10,
+                    borderBottomWidth: selectedSubject === index + 1 ? 1 : 0,
+                    borderBottomColor:
+                      selectedSubject === index + 1 ? theme.tx1 : "transparent",
+                  }}
+                  onPress={() => {
+                    setSelectedSubject(item.value);
+                  }}
+                >
+                  <Text
+                    style={{
+                      color:
+                        selectedSubject === index + 1
+                          ? theme.tx1
+                          : theme.textColor,
+                    }}
+                  >
+                    {item.label+" "}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+          </View>
+        </ScrollView>
 
         {/* Graph */}
-        {avgTimeResults&&avgTimeResults?.periods?.length>0&& <PerformanceStatusGraph performanceSubOptions={performanceSubOptions} type={selectedSubject} data={avgTimeResults} weekData={weeksAvgScoringTime} chaperWiseData={chaperWiseData} />}
+        {performanceGraph}
       </View>
     );
   };
 
-
   useEffect(() => {
     const fetchUser = async () => {
       await getUser();
+      await getExamResults();
     };
     fetchUser();
-  }, []);
-  
+  }, [selectedExam]);
+
   const getUser = async () => {
-      try {
-        const response = await getAutoLogin();
-        // console.log("auto-login", response);
-        if (response.data) {
-          const nm = response.data.name;
-          const id = response.data.student_user_id;
-          const examId = response.data.examsData[0].student_user_exam_id;
+    setLoading(true);
+    try {
+      const response = await getAutoLogin();
+      // console.log("auto-login", response);
+      if (response.data) {
+        const nm = response.data.name;
+        const id = response.data.student_user_id;
+        const examId = response.data.examsData[0].student_user_exam_id;
         //   setName(nm);
         //   setStudentId(id);
-        setToken(response.data.token)
-          setStudentExamId(examId);
-          getAvgScoreTime(examId)
-          getWeekAvgScoreTime(examId)
-          getChapterAvgScore(examId)
-        } else {
-          console.warn("No user data received from API");
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        Alert.alert("Error", "Failed to get user data. Please check your connection and try again.");
+        setToken(response.data.token);
+        // setStudentExamId(examId);
+        getAvgScoreTime(selectedExam);
+        getWeekAvgScoreTime(selectedExam);
+        getChapterAvgScore(selectedExam);
+        setLoading(false);
+      } else {
+        setLoading(false);
+        console.warn("No user data received from API");
       }
-    };
-
-  const getAvgScoreTime = async(id) => {
-    const fields = {
-        student_user_exam_id: id ? id : studentExamId,
-        duration_id:selectedValue,
-        token: token,
-
+    } catch (error) {
+      setLoading(false);
+      console.error("Error fetching user data:", error);
+      // Alert.alert(
+      //   "Error",
+      //   "Failed to get user data. Please check your connection and try again."
+      // );
     }
-    // console.log("called", fields)
-    const result = await avgScoringTime(fields)
-    // console.log(result, "hellooo")
-    setAvgTimeResults(result?.data?.data);
-    
-  }
+  };
 
-  
-  const getWeekAvgScoreTime = async(id) => {
-    const fields = {
-        student_user_exam_id: id ? id : studentExamId,
-        duration_id:selectedValue,
-        token: token,
-
-    }
-    console.log("called", fields)
-    const result = await weekAvgScoringTime(fields)
-    // console.log(result, "hellooo")
-    setWeekAvgTimeResults(result?.data?.data);
-    
-  }
-  
-  const getChapterAvgScore = async(id) => {
+  const getAvgScoreTime = async (id) => {
     const fields = {
       student_user_exam_id: id ? id : studentExamId,
-        duration_id:selectedValue,
-        token: token,
+      duration_id: selectedValue,
+      token: token,
+    };
+    // console.log("called", fields)
+    const result = await avgScoringTime(fields);
+    // console.log(result, "hellooo")
+    setAvgTimeResults(result?.data?.data);
+  };
 
-    }
+  const getWeekAvgScoreTime = async (id) => {
+    const fields = {
+      student_user_exam_id: id ? id : studentExamId,
+      duration_id: selectedValue,
+      token: token,
+    };
+    console.log("called", fields);
+    const result = await weekAvgScoringTime(fields);
+    // console.log(result, "hellooo")
+    setWeekAvgTimeResults(result?.data?.data);
+  };
+
+  const getChapterAvgScore = async (id) => {
+    const fields = {
+      student_user_exam_id: id ? id : studentExamId,
+      duration_id: selectedValue,
+      token: token,
+    };
     // console.log("calledfwefwe", fields)
-    const result = await chapterWiseAvgScores(fields)
+    const result = await chapterWiseAvgScores(fields);
     // console.log(result, "helloooiiiiiiii")
     setChapteriseData(result?.data?.data);
-    
-  }
+  };
+  const getExamResults = async () => {
+    setLoading(true);
+    const data = {
+      student_user_exam_id: studentExamId,
+      duration_id: 1,
+    };
 
-  console.log(avgTimeResults, "results")
+    try {
+      const response = await getDashboardExamResult(data);
+      console.log("exam response", response);
+      setTotalExamCount(response.data.total_test_count);
+      setExamResults(response.data.periods);
+      setDateRange(response.data.duration_dates);
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      console.error("Error fetching mock exams:", error);
+      // Alert.alert(
+      //   "Error",
+      //   "Failed to get mock exams. Please check your connection and try again."
+      // );
+    }
+  };
+
+  console.log(avgTimeResults, "results");
+
+  useEffect(() => {
+    setSelectedExam(selectedExam)
+    if (token && selectedExam) {
+      getAvgScoreTime(selectedExam);
+      getWeekAvgScoreTime(selectedExam);
+      getChapterAvgScore(selectedExam);
+    }
+  }, [token, selectedExam, selectedValue]);
+  
+  const memoizedWeeklyPerformance = useMemo(() => {
+    return (
+      <WeeklyPerformance
+        examResults={examResults}
+        performanceSubOptions={performanceSubOptions}
+        selectedPerformanceType={selectedPerformanceType}
+        dateRange={dateRange}
+        setSelectedPerformanceType={setSelectedPerformanceType}
+        totalExamCount={totalExamCount}
+      />
+    );
+  }, [selectedExam,
+    examResults,
+    selectedPerformanceType,
+    dateRange,
+    setSelectedPerformanceType,
+    totalExamCount
+  ]);
+  
+
   return (
     <View style={[styles.container, { backgroundColor: theme.textbgcolor }]}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-        onPress={() => navigation.openDrawer()}
-        >
-          <Image
-            source={{
-              uri: "https://cdn-icons-png.flaticon.com/512/1828/1828859.png",
-            }}
-            style={[styles.icon, { tintColor: theme.textColor }]}
-          />
-        </TouchableOpacity>
-        <Image
-          source={require("../images/title.png")}
-          style={{
-            height: 60,
-            width: 160,
-            tintColor: theme.textColor,
-            resizeMode: "contain",
-            marginLeft: 10,
-          }}
-        />
-        <TouchableOpacity onPress={handleLogout} style={{ marginLeft: "auto" }}>
-          <Image
-            source={require("../images/logout.png")}
-            style={[styles.icon, { tintColor: theme.textColor }]}
-          />
-        </TouchableOpacity>
-      </View>
+      <Header setId={setStudentExamId} />
       <ScrollView>
-        <Text style={[styles.performanceTitle, { color: theme.textColor,marginBottom:10 }]}>
+        <Text
+          style={[
+            styles.performanceTitle,
+            { color: theme.textColor, marginBottom: 10 },
+          ]}
+        >
           Performance Analasys
         </Text>
-        <WeeklyPerformance />
-      
+     
+        {loading ? 
+             (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#6A5ACD" />
+                <Text style={styles.loadingText}>Loading...</Text>
+              </View>
+            ): ( <View >
+           {memoizedWeeklyPerformance}
+            <WeeklyPerformancess />
+            </View>)}
+       
       </ScrollView>
     </View>
   );
@@ -273,6 +355,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   icon: { width: 25, height: 25, tintColor: "black" },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    height: 500,
+    justifyContent: "center",
+  },
 });
 
 const pickerSelectStyles = {
@@ -283,7 +372,7 @@ const pickerSelectStyles = {
     borderWidth: 1,
     borderColor: "gray",
     borderRadius: 5,
-    color: "black",
+    color: "#ffffff",
     width: 150, // Ensure width remains consistent
   },
   inputAndroid: {
@@ -293,7 +382,7 @@ const pickerSelectStyles = {
     borderWidth: 1,
     borderColor: "gray",
     borderRadius: 5,
-    color: "black",
+    color: "#ffffff",
     width: 150,
   },
   chartContainer: {

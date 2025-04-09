@@ -20,7 +20,7 @@ const windowHeight = Dimensions.get("window").height;
 
 export default function Instruction({ navigation,route }) {
     const colorScheme = useColorScheme();
-    const theme = colorScheme === "dark" ? darkTheme : lightTheme;
+    const theme =  lightTheme ;
     const obj = route?.params?.obj;
     const examIdData = route?.params?.exam_id_Data
     console.log("mocktest1", obj );
@@ -43,13 +43,17 @@ export default function Instruction({ navigation,route }) {
       };
     
 
-    const renderersProps = {
+      const renderersProps = {
         img: {
           initialDimensions: { width: 20, height: 20 },
           enableExperimentalPercentWidth: true,
         },
+        textColor: theme.textColor, // Fixed typo
       };
-
+      const baseStyle = {
+        color: theme.textColor, 
+        fontSize: 14, // Adjust as needed
+      };
     return (
         <LinearGradient
             colors={theme.bmc}
@@ -216,14 +220,14 @@ export default function Instruction({ navigation,route }) {
                                     obj.instructions || "<p>No instructions provided.</p>"
                                   )}
                                   renderersProps={renderersProps}
-                                  // baseFontStyle={baseFontStyle}
+                                  baseStyle={baseStyle}
                                   // {...DEFAULT_PROPS}
                                   contentWidth={windowWidth}
                                 />
                
              
               </View>
-                            <Svg height="50" width={windowWidth * 0.9}>
+                            {/* <Svg height="50" width={windowWidth * 0.9}>
                                 <Defs>
                                     <SvgLinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
                                         <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
@@ -241,9 +245,9 @@ export default function Instruction({ navigation,route }) {
                                 >
                                     Actions you can take during exam
                                 </SvgText>
-                            </Svg>
+                            </Svg> */}
 
-                            <View style={{ marginTop: -20 }}>
+                            {/* <View style={{ marginTop: -20 }}>
                                 <View style={{ flexDirection: 'row', padding: 10 }}>
                                 <Image
                             style={{ height: 20, width: 20, justifyContent: 'flex-start',resizeMode:'contain',tintColor:theme.textColor }}
@@ -271,7 +275,7 @@ export default function Instruction({ navigation,route }) {
                                         </Text>
                                 </View>
 
-                                {/* <TouchableOpacity onPress={()=>{navigation.navigate("Signup")}}> */}
+                          
                                 
                                 <View>
                                   <View style={{ padding: 8,marginLeft:10, marginTop: 10,borderWidth:1,borderColor:theme.textColor,width:150,borderRadius:30 }}>
@@ -283,7 +287,7 @@ export default function Instruction({ navigation,route }) {
                                 </View>
 
 
-                            </View>
+                            </View> */}
 
                             <TouchableOpacity activeOpacity={0.8} onPress={() => {
                                 navigation.navigate("MockTest",{obj : obj, examIdData: examIdData})

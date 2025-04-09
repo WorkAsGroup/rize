@@ -34,13 +34,13 @@ const lightTheme = {
   };
   
   const darkTheme = {
-    background: ["#aeecd5", "#faed95"],
+    background: ["#8b51fB", "#e614e1"],
     bmc:["#292929","#292929"],
     bmc1:"#292929",
-    bg1:"#FFECD2",
-    bg2:"#FCB69F",
-    tx1:"#D4FC79",
-    tx2:"#96E6A1",
+    bg1:"#8b51fB",
+    bg2:"#e614e1",
+    tx1:"#8b51fB",
+    tx2:"#e614e1",
     textColor: "#D6D6D6",
     textColor1: "#000",
     formBackground: "#333",

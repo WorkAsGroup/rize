@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -36,14 +36,14 @@ import {
 import { darkTheme, lightTheme } from "../theme/theme";
 import CustomExamCreation from "./CustomExamCreation";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Dropdown } from "react-native-element-dropdown";
+import { useExam } from "../ExamContext";
 import ExamModalComponent from "./ExamModalComponent";
 import AchivementsModel from "./models/AchivementsModel";
 import { useRef } from "react";
-import WeeklyPerformance from "./dashboardItems/WeeklyPeroformance";
 import MockTests from "./dashboardItems/MockTests";
 import Achivements from "./dashboardItems/Achivements";
 import LeaderBoard from "./dashboardItems/LeaderBoard";
+import Header from "../common/Header";
 
 const COMPLETED_EXAMS_KEY = "completedExams";
 const COMPLETED_MOCK_TESTS_KEY = "completedMockTests";
@@ -55,18 +55,20 @@ const windowHeight = Dimensions.get("window").height;
 
 const DashboardContent = ({ route, navigation, onChangeAuth }) => {
   // const navigation = useNavigation();
+    const { selectedExam, setSelectedExam } = useExam();
   const [studentUserId, setStudentUserId] = useState(null);
   // const { onChangeAuth } = route.params;
   const [completedExams, setCompletedExams] = useState([]);
   const [completedMockTests, setCompletedMockTests] = useState([]);
   const colorScheme = useColorScheme();
-  const theme = colorScheme === "dark" ? darkTheme : lightTheme;
+  // const theme = colorScheme === "dark" ? darkTheme : lightTheme;
+  const theme = darkTheme;
   const [addExam, setAddExam] = useState(false);
   const [examResults, setExamResults] = useState([]);
   const [name, setName] = useState("");
   const [uid, setUid] = useState(route?.params?.exam?.uid ?? "");
   const [studentId, setStudentId] = useState("");
-  const [studentExamId, setStudentExamId] = useState("");
+  const [studentExamId, setStudentExamId] = useState(selectedExam);
   const [champ, setChamp] = useState([]);
   const [mocklist, setMocklist] = useState([]);
   const [pre, setPre] = useState([]);
@@ -92,15 +94,7 @@ const DashboardContent = ({ route, navigation, onChangeAuth }) => {
 
   const [items, setItems] = useState([]);
 
-  const toggleDropdown = () => {
-    setIsOpen(true);
-  };
-  const handleOptionSelect = (option) => {
-    // console.log(option, "options", option.exam_id)
-    setStudentExamId(option.student_user_exam_id);
-    setSelectedOption(option.exam_type);
-    setIsOpen(false);
-  };
+console.log(selectedExam, studentExamId,"selectedExam");
   const retrieveExam = async () => {
     try {
       const examData = await AsyncStorage.getItem("exam");
@@ -114,13 +108,14 @@ const DashboardContent = ({ route, navigation, onChangeAuth }) => {
     }
   };
 
-  useEffect(() => {
-if(items.length == 0) {
-  setItems([{ label: "➕ Add", value: "add"}])
-  // setAddExam(true);
-}
-  },[items])
 
+useEffect(() => {
+setStudentExamId(selectedExam);
+if(selectedExam) {
+  setSelectedOption(items.find((item) => item.stUserExamId === selectedExam));
+}
+console.log(items, selectedExam, "items")
+}, [selectedExam]);
   useEffect(() => {
     if (!route?.params?.exam) {
       retrieveExam();
@@ -180,33 +175,30 @@ console.log(validMockTests, "ValidMocks")
     console.log(examsData)
   getEx();
   },[])
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      await getYears();
-      await getMock();
-
-      await getAchieve();
-      await getLeaders();
-      await getPrevious();
-      if (studentExamId) {
-        await getExamResults();
-        await getCustomeExam();
-      }
-    } catch (error) {
-      console.error("Error fetching data in useEffect:", error);
-      Alert.alert(
-        "Error",
-        "Failed to refresh data. Please check your connection and try again."
-      ); // More user-friendly error handling
-    } finally {
-      setLoading(false);
-    }
-  }, [studentExamId]);
-
+//   const fetchData = useCallback(async () => {
+//     setLoading(true);
+//     try {
+  
+//       if (selectedExam) {
+//         await getCustomeExam();
+//         await getYears();
+//         await getMock();  
+//         await getPrevious();
+//       }
+//     } catch (error) {
+//       console.error("Error fetching data in useEffect:", error);
+//       Alert.alert(
+//         "Error",
+//         "Failed to refresh data. Please check your connection and try again."
+//       ); // More user-friendly error handling
+//     } finally {
+//       setLoading(false);
+//     }
+//   }, [studentExamId]);
+// console.log(studentExamId, "studentExamId");
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, [studentExamId]);
 
   useEffect(() => {
     setMock(mocklist);
@@ -233,7 +225,7 @@ console.log(validMockTests, "ValidMocks")
     };
     try {
       const res = await getPreviousPapers(data);
-      // console.log("Previouspao", res);
+      console.log("Previouspao", res);
       const tyu = res?.data;
       setPre(tyu);
     } catch (error) {
@@ -245,7 +237,7 @@ console.log(validMockTests, "ValidMocks")
   const getYears = async () => {
     try {
       const response = await getYearsData();
-      // console.log("years", response);
+      console.log("years", response);
     } catch (error) {
       console.error("Error fetching years data:", error);
       Alert.alert(
@@ -255,48 +247,9 @@ console.log(validMockTests, "ValidMocks")
     }
   };
 
-  const getAchieve = async () => {
-    const data = {
-      student_user_exam_id: studentExamId,
-    };
-    try {
-      const response = await getAchievements(data);
-      // console.log("getAchievements", JSON.stringify(response?.data));
-      if (response?.data) {
-        setAch(response.data);
-      }
-    } catch (error) {
-      console.error("Error fetching achievements:", error);
-      Alert.alert(
-        "Error",
-        "Failed to get achievements. Please check your connection and try again."
-      );
-    }
-  };
 
-  const getLeaders = async () => {
-    const data = {
-      student_user_exam_id: studentExamId,
-    };
-    try {
-      // console.log("getLeader Boards fields", data);
-      const response = await getLeaderBoards(data);
-      // console.log("getLeaderBoards", JSON.stringify(response.data));
-      if (response.data && Array.isArray(response.data)) {
-        setChamp(response.data);
-      } else {
-        setChamp();
-        console.warn("No leaderboard data received or data is not an array.");
-      }
-    } catch (error) {
-      console.error("Error fetching leaderboard data:", error);
-      setChamp();
-      Alert.alert(
-        "Error",
-        "Failed to get leaderboard data. Please check your connection and try again."
-      );
-    }
-  };
+
+
 
   const getMock = async () => {
     const data = {
@@ -304,38 +257,18 @@ console.log(validMockTests, "ValidMocks")
     };
     try {
       const response = await getMockExams(data);
-      // console.log("mock exam", response.data);
+      console.log("mock exam", response.data);
       const tyu = response?.data;
       setMocklist(tyu);
     } catch (error) {
       console.error("Error fetching mock exams:", error);
-      Alert.alert(
-        "Error",
-        "Failed to get mock exams. Please check your connection and try again."
-      );
+      // Alert.alert(
+      //   "Error",
+      //   "Failed to get mock exams. Please check your connection and try again."
+      // );
     }
   };
 
-  const getExamResults = async () => {
-    const data = {
-      student_user_exam_id: studentExamId,
-      duration_id: 1,
-    };
-
-    try {
-      const response = await getDashboardExamResult(data);
-      // console.log("exam response", response);
-      setTotalExamCount(response.data.total_test_count);
-      setExamResults(response.data.periods);
-      setDateRange(response.data.duration_dates);
-    } catch (error) {
-      console.error("Error fetching mock exams:", error);
-      Alert.alert(
-        "Error",
-        "Failed to get mock exams. Please check your connection and try again."
-      );
-    }
-  };
 
   const handleStartTest = async (item) => {
     // console.log("item", item);
@@ -403,100 +336,7 @@ console.log(validMockTests, "ValidMocks")
     // dispatch(setExamSessionId(data.exam_session_id));
     navigation.navigate("resultsPage", { state: examObject });
   };
-  const getUser = async () => {
-    try {
-      const response = await getAutoLogin();
-      console.log("auto-login-", response);
-
-      if (!response?.data) {
-        console.warn("No user data received from API");
-        return; // Early exit if no data
-      }
-
-      const { name: nm, student_user_id: id, examsData } = response.data;
-      setName(nm);
-      setStudentId(id);
-      setStudentUserId(id);
-      setExamsData(examsData);
-
-      if (!examsData || examsData.length === 0) {
-        const comData = AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
-        if (JSON.parse(comData).length < 1) {
-          setAddExam(true);
-        }
-        return; // Early exit if no examsData
-      }
-
-      const exams = await getExamType();
-
-      if (exams?.data?.length > 0) {
-        // Use a Map for efficient lookup of examsData
-        const examsDataMap = new Map(
-          examsData.map((exam) => [exam.exam_id, exam])
-        );
-
-        const mergedExamsData = exams.data.map((exam) => {
-          const existingExamData = examsDataMap.get(exam.exam_id);
-          // Use spread operator conditionally, providing a default empty object if existingExamData is undefined
-          return { ...exam, ...(existingExamData || {}) };
-        });
-
-        // Filter out entries where is_default is not present (meaning it wasn't in examsData)
-        const filteredMergedData = mergedExamsData.filter((exam) =>
-          exam.hasOwnProperty("is_default")
-        );
-        checkUserIdExamExist(filteredMergedData);
-
-        const dropdownItems = [
-          ...filteredMergedData.map((option) => ({
-            label: option.exam_type,
-            value: option.exam_id,
-            isDefault: option.is_default,
-            stUserExamId: option.student_user_exam_id,
-          })),
-          { label: "➕ Add", value: "add", custom: true },
-        ];
-
-        setItems(dropdownItems);
-
-        const defaultItem = dropdownItems.find((item) => item.isDefault === 1);
-        setSelectedOption(defaultItem || dropdownItems[0]);
-        setStudentExamId((defaultItem || dropdownItems[0]).stUserExamId);
-
-        console.log(
-          filteredMergedData,
-          "Filtered Merged Data",
-          examsData,
-          exams.data
-        );
-      } else {
-        // Handle the case where getExamType returns no data or an error
-        console.warn("No exam type data received from API");
-        if (examsData && examsData.length > 0) {
-          // Fallback to first exam in examsData if no exam types are available.
-          setStudentExamId(examsData[0].student_user_exam_id);
-          setItems([
-            {
-              label: examsData[0].exam_type || "Default Exam", //Provide a default label
-              value: examsData[0].exam_id,
-              stUserExamId: examsData[0].student_user_exam_id,
-            },
-          ]);
-          setSelectedOption(items[0]);
-        } else {
-          setItems([{ label: "➕ Add", value: "add"}]);
-        }
-      } 
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      checkUserIdExamExist([]);
-      // Alert.alert(
-      //   "Error",
-      //   "Failed to get user data. Please check your connection and try again."
-      // ); 
-      // Reinstated the Alert for better user experience
-    }
-  };
+ 
   const submitTestResult = useCallback(
     async (sendingProps) => {
       const { examData, exam_paper_id, exId} = sendingProps
@@ -550,363 +390,304 @@ console.log(validMockTests, "ValidMocks")
     []
   );
   
-  
+  const toggleDropdown = () => {
+    setIsOpen(true);
+  };
 
-  const submitAllStoredResults = useCallback(async (exId) => {
-    console.log("🚀 Starting submission for exam ID:", exId );
-  
-    setLoading(true); // Start loading animation
-  
-    try {
-      // 1️⃣ Retrieve completed exams from AsyncStorage
-      let completedExams = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
-      completedExams = completedExams ? JSON.parse(completedExams) : [];
-  
-      if (!Array.isArray(completedExams) || completedExams.length === 0) {
-        console.log("⚠️ No completed exams found.");
-        return;
-      }
-  
-      console.log("📂 Loaded completed exams:", completedExams);
-  
-      // 2️⃣ Track successful submissions
-      const successfulSubmissions = new Set();
-      const submissionsInProgress = new Set();
-  
-      // 3️⃣ Filter mock tests that match completed exams
-      // console.log(completedExams, completedExams[0]?.exam_paper_id, "nevaoihef")
-      let storedMockTests = await AsyncStorage.getItem(
-        COMPLETED_MOCK_TESTS_KEY
-      );
+ const getUser = async () => {
 
-      console.log(
-        completedExams,
-        JSON.parse(storedMockTests).map((i) => ({
-          exam_paper_id: i.results.exam_paper_id,
-          i,
-        })),
-        "storedMockTests"
-      );
-      
-      if (storedMockTests) {
-        const parsedMockTests = JSON.parse(storedMockTests);
-
-        const validMockTests = parsedMockTests.filter((test) => test.results);
-      
-        let submissionPromises = validMockTests
-        .filter(test => 
-          test.results &&
-          completedExams.some((cm) => 
-            cm.exam_paper_id === test.results.exam_paper_id && 
-            cm.exam_id === test.exam_id // Ensuring exam_id also matches
-          )
-        ) 
-        .map(async (mocTest) => { 
-          console.log(mocTest, "finalStep")
-          const exPaperId = mocTest?.results?.exam_paper_id;
-      
-          // 4️⃣ Avoid duplicate submissions
-          if (successfulSubmissions.has(exPaperId) || submissionsInProgress.has(exPaperId)) {
-            console.log(`🔄 Skipping already submitted exam_paper_id: ${exPaperId}`);
-            return;
-          }
-      
-          submissionsInProgress.add(exPaperId); // Mark as in progress
-          console.log("📤 Submitting exam:", { exPaperId, exId, data: mocTest.results });
-      
-          try {
-            // 5️⃣ Submit the test result and check response
-            var sendingProps = {
-              examData : mocTest.results,
-              exam_paper_id: exPaperId,
-               exId: exId ||  mocTest?.exam_id,
-              
-            }
-
-            console.log(sendingProps, "asleeprops")
-            const submissionSuccessful = await submitTestResult(
-              sendingProps
-            );
-      
-            console.log("✅ Submission Result:", {mock: mocTest.results,
-              exPaperId,
-              exId, status: submissionSuccessful });
-      
-            if (submissionSuccessful) {
-              successfulSubmissions.add(exPaperId); // Mark as successful
-            } else {
-              console.warn(`⚠️ Submission failed for ${exPaperId}: Response was false`);
-            }
-          } catch (error) {
-            console.error(`❌ Error submitting ${exPaperId}:`, error);
-          } finally {
-            submissionsInProgress.delete(exPaperId); // Remove from in-progress
-          }
-        });
-      
-      // 6️⃣ Wait for all submissions to complete
-      await Promise.all(submissionPromises);
-  
-      console.log("🏆 Successfully submitted exams:", [...successfulSubmissions]);
-  
-      // 7️⃣ Remove successfully submitted exams
-      let remainingExams = completedExams.filter(
-        exam => !successfulSubmissions.has(exam.exam_paper_id)
-      );
-      
-  
-      console.log("🗂 Remaining exams after filter:", remainingExams);
-  
-      // 8️⃣ Update AsyncStorage properly
-      if ([...successfulSubmissions].length > 0) {
-        const remaining = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
-        console.log([...successfulSubmissions], JSON.parse(remaining), "ExamsDataClear")
-        const filtered = JSON.parse(remaining).filter(checkEx => 
-          ![...successfulSubmissions].some(it => parseInt(checkEx.exam_paper_id) === parseInt(it))
-        );
-        
-      
-       await AsyncStorage.setItem(COMPLETED_EXAMS_KEY, JSON.stringify(filtered));
-       // Clear storage
-  
-        // ✅ Double-check: Reload storage to confirm it's cleared
-        let checkStorage = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
-        console.log("🔍 After removeItem, check storage:", checkStorage);
-  
-        if (!checkStorage) {
-          console.log("✅ Storage successfully cleared!");
-        } else {
-          console.warn("⚠️ Storage was NOT cleared properly!");
-        }
-      }
- 
-       if(successfulSubmissions.size > 0)  {
-        // getUser();
-        Alert.alert("Success", `${successfulSubmissions.size} result(s) submitted successfully.`);
-       }
-      } else {
-        // Some exams failed; update AsyncStorage with remaining ones
-        await AsyncStorage.setItem(COMPLETED_EXAMS_KEY, JSON.stringify(remainingExams));
-        console.log("📝 Updated AsyncStorage with remaining exams:", remainingExams);
-        setCompletedExams(remainingExams);
-      }
-    } catch (error) {
-      console.error("🔥 Error in submitAllStoredResults:", error);
-    } finally {
-      setLoading(false); // Stop loading
-    }
-  }, [completedMockTests, submitTestResult]);
-  
-
-  const saveWithOutExistedExamID = async (compExams) => {
-    setLoading(true); // Start loading
-  
     try {
       const response = await getAutoLogin();
-      console.log("🚀 Auto-login response:", response);
-  
+
       if (!response?.data) {
-        console.warn("⚠️ No user data received from API");
-        return; // Early exit if no data
-      }
-  
-      const { name: nm, student_user_id: id } = response.data;
-  
-      // Track already processed exam IDs to send the first occurrence to `addExam`
-      const processedExamIds = new Set();
-      const newExams = [];
-      const existingExams = [];
-  
-      // Iterate over exams and separate into new and existing
-      compExams.forEach((exam) => {
-        if (!processedExamIds.has(exam.exam_id)) {
-          // First occurrence, send to addExam
-          processedExamIds.add(exam.exam_id);  // Mark as processed
-          newExams.push(exam);  // This exam will be processed with `addExam`
-        } else {
-          // Subsequent occurrences, send to existingExams
-          existingExams.push(exam);  // This exam will be processed with `saveWithExistedExamID`
-        }
-      });
-  
-      // Process newExams (those sent for `addExam`)
-      await Promise.all(
-        newExams.map(async (exam) => {
-          try {
-            const payload = {
-              student_user_id: id,
-              exam_id: parseInt(exam.exam_id),
-              target_year: 2025,
-            };
-  
-            console.log("📤 Sending Payload:", payload);
-  
-            const addExamResponse = await addExams(payload);
-  
-            if (!addExamResponse?.data || addExamResponse.data.length === 0) {
-              console.error("❌ addExams failed:", addExamResponse);
-              return;
-            }
-  
-            const studentExamId = addExamResponse.data[0].student_user_exam_id;
-            console.log("✅ New student_user_exam_id:", studentExamId);
-  
-            // Submit only for new exams
-            await submitAllStoredResults(studentExamId);
-          } catch (error) {
-            console.error(`❌ Error in exam ID ${exam.exam_id}:`, error);
-          }
-        })
-      );
-  
-      // 🚀 Ensure all newExams are processed before calling existing exams
-      if (existingExams.length > 0) {
-        console.log("📌 Sending existing exams to saveWithExistedExamID:", existingExams);
-        await saveWithExistedExamID(existingExams); // Ensure this runs only after all new exams finish
-      }
-  
-      console.log("🎉 All exams processed successfully:", compExams);
-    } catch (error) {
-      console.error("🚨 Error processing exams:", error);
-    } finally {
-      setLoading(false); // Stop loading
-    }
-  };
-  
-  
-
-  const saveWithExistedExamID = async (exist) => {
-    setLoading(true); // Start loading
-
-    try {
-      await Promise.all(
-        exist.map(async (exam) => {
-          console.log(`🚀 Processing existing exam_id: ${exam?.student_user_exam_id}`);
-          await submitAllStoredResults(exam?.student_user_exam_id);
-        })
-      );
-    } catch (error) {
-      console.error("Error processing exams:", error);
-    } finally {
-      setLoading(false); // Stop loading
-    }
-  };
-
-  const checkUserIdExamExist = async (xdata) => {
-    setLoading(true); // Start loading
-    // debugger;
-    try {
-      let completedExams = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
-      completedExams = completedExams ? JSON.parse(completedExams) : [];
-      console.log("Checking User Exam Existence:", completedExams, xdata);
-
-      if (!Array.isArray(completedExams)) {
-        console.error("Invalid format for completed exams.");
+        console.warn("No user data received from API");
         return;
       }
 
-      if (xdata.length > 0) {
-        const res = xdata.filter((item) =>
-          completedExams.some((ex) => item.exam_id === ex.exam_id)
-        );
-        const nonExist = completedExams.filter((item) =>
-          xdata.every((ex) => item.exam_id !== ex.exam_id)
-        );
+      const { name, student_user_id, examsData } = response.data;
 
-        console.log("Existing Exams:", res, "Non-Existing Exams:", nonExist);
+      let comData = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
+      let parsedData = comData ? JSON.parse(comData) : null;
 
-        if (res.length > 0) saveWithExistedExamID(res);
-        if (nonExist.length > 0) saveWithOutExistedExamID(nonExist);
+      if (parsedData && Array.isArray(parsedData) && parsedData.length > 0) {
+        console.log("parse",parsedData);
+
+        const uniqueExams = parsedData.filter(
+          (exam, index, self) =>
+            index === self.findIndex((e) => e.exam_id === exam.exam_id)
+        );
+        
+        const updatedExamsData = await createExamIds(uniqueExams, student_user_id);
+        if (updatedExamsData) {
+          setExamsData(updatedExamsData);
+          addDropDownValues(updatedExamsData);
+
+          await submitAllStoredResults()
+        }
+        return
+
+      }
+
+      console.log("Fetched user data:", response.data);
+
+      setName(name);
+      setStudentId(student_user_id);
+      setStudentUserId(student_user_id);
+
+      if (!(examsData?.length)) {
+        setAddExam(true); // No exam data, prompt user to add an exam
       } else {
-        saveWithOutExistedExamID(completedExams);
+        setExamsData(examsData);
+        addDropDownValues(examsData);
+      }
+
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  };
+
+
+
+
+  const createExamIds = async (newExams, student_user_id) => {
+
+    try {
+      const results = await Promise.allSettled(newExams.map(exam =>
+        addExams({
+          student_user_id,
+          exam_id: Number(exam.exam_id),
+          target_year: 2025,
+        })
+      ));
+
+      const successfulExams = results
+        .filter((result) => result.status === "fulfilled")
+        .map((_, index) => newExams[index]);
+
+      if (successfulExams.length === 0) return null;
+
+      const response = await getAutoLogin();
+      return response?.data?.examsData || null;
+
+    } catch (error) {
+      console.error("❌ Error in createExamIds:", error);
+      return null;
+    }
+  };
+
+
+
+
+  const addDropDownValues = async (existingExams) => {
+    console.log("dropdownavlaues");
+
+    const exams = await getExamType();
+
+    const examsDataMap = new Map(
+      existingExams.map((exam) => [exam.exam_id, exam])
+    );
+
+    const mergedExamsData = exams.data.map((exam) => {
+      const existingExamData = examsDataMap.get(exam.exam_id);
+      return { ...exam, ...(existingExamData || {}) };
+    });
+    const filteredMergedData = mergedExamsData.filter((exam) =>
+      exam.hasOwnProperty("is_default")
+    );
+
+
+    const dropdownItems = [
+      ...filteredMergedData.map((option) => ({
+        label: option.exam_type,
+        value: option.exam_id,
+        isDefault: option.is_default,
+        stUserExamId: option.student_user_exam_id,
+      })),
+      { label: "➕ Add", value: "add", custom: true },
+    ];
+
+
+
+
+    setItems(dropdownItems);
+    const defaultItem = dropdownItems.find((item) => item.isDefault === 1);
+    let examID = (defaultItem || dropdownItems[0]).stUserExamId
+    setSelectedOption(defaultItem || dropdownItems[0]);
+    setStudentExamId(examID);
+
+    await fetchData(examID);
+
+  };
+
+
+
+  const submitAllStoredResults = async () => {
+    const response = await getAutoLogin();
+  
+    if (!response?.data) {
+      console.warn("No user data received from API");
+      return;
+    }
+  
+    const { examsData } = response.data;
+  
+    let storedMockTests = await AsyncStorage.getItem(COMPLETED_MOCK_TESTS_KEY);
+
+    console.log("storedMockTests",storedMockTests);
+    
+  
+    if (storedMockTests) {
+      let parsedMockTests = JSON.parse(storedMockTests);
+      let validMockTests = parsedMockTests.filter((test) => test.results);
+      let successfulExamPaperIds = new Set();
+      console.log("parsedMockTests",parsedMockTests);
+      
+  
+      try {
+        await Promise.all(
+          validMockTests.map(async (testData) => {
+            try {
+              let questions = testData?.results;
+              let exam_paper_id = testData?.results?.exam_paper_id;
+  
+              let examObj = examsData.find(
+                (item) => item.exam_id == testData.exam_id
+              );
+  
+              if (!examObj) {
+                console.warn(`⚠️ No matching exam found for ID: ${testData.exam_id}`);
+                return;
+              }
+  
+              let sendingProps = {
+                examData: questions,
+                exam_paper_id: exam_paper_id,
+                exId: examObj.student_user_exam_id,
+              };
+  
+              const submissionResponse = await submitTestResult(sendingProps);
+  
+              console.log("submissionResponse", submissionResponse);
+  
+              if (submissionResponse?.success) {
+                console.log(`✅ Successfully submitted ${exam_paper_id}`);
+                successfulExamPaperIds.add(exam_paper_id); // Mark for removal
+              } else {
+                console.warn(`⚠️ Submission failed for ${exam_paper_id}`);
+              }
+            } catch (error) {
+              console.error(`❌ Error submitting ${testData.exam_id}:`, error);
+            }
+          })
+        );
+  
+        // Optional: Filter out only successful submissions if you want to keep failed ones
+   
+  
+      } catch (error) {
+        console.error("❌ Error processing mock tests:", error);
+      }
+  
+      // 💥 Remove all stored mock tests completely after everything is done
+      try {
+        await AsyncStorage.removeItem(COMPLETED_MOCK_TESTS_KEY);
+        await AsyncStorage.removeItem(COMPLETED_EXAMS_KEY);
+        console.log("examsData",examsData);
+        
+        const defaultItem = examsData.find((item) => item.is_default === 1);
+        console.log("defaultItem",defaultItem);
+        
+        await fetchData(defaultItem.student_user_exam_id);
+        console.log("🧹 All stored mock tests have been removed from AsyncStorage.");
+      } catch (error) {
+        console.error("❌ Error clearing stored mock tests:", error);
+      }
+    }
+  };
+  
+  const getExamResults = async (examID) => {
+    const data = {
+      student_user_exam_id: examID,
+      duration_id: 1,
+    };
+
+    try {
+      const response = await getDashboardExamResult(data);
+      setTotalExamCount(response.data.total_test_count);
+      setExamResults(response.data.periods);
+      setDateRange(response.data.duration_dates);
+    } catch (error) {
+      console.error("Error fetching mock exams:", error);
+      Alert.alert(
+        "Error",
+        "Failed to get mock exams. Please check your connection and try again."
+      );
+    }
+  };
+
+
+
+
+  const fetchData = useCallback(async (examID) => {
+    setLoading(true);
+
+    try {
+      await Promise.all([getYears(), getMock(examID|| selectedExam), getPrevious(examID|| selectedExam)]);
+      if (examID|| selectedExam) {
+        await Promise.all([getExamResults(examID|| selectedExam), getCustomeExam(examID|| selectedExam)]);
       }
     } catch (error) {
-      console.error("Error in checkUserIdExamExist:", error);
+      console.error("Error fetching data:", error);
+      // Alert.alert("Error", "Failed to refresh data. Please check your connection and try again.");
     } finally {
-      setLoading(false); // Stop loading
+      setLoading(false);
     }
-  };
+  });
 
-
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchData().then(() => setRefreshing(false));
-  }, [fetchData]);
 
   // console.log(items, "itemsvaluses")
-  const handleSelect = (item) => {
-    if (item.value === "add") {
-      setAddExam(true);
-    } else {
-      setSelectedOption(item);
-      setStudentExamId(item.stUserExamId);
-    }
-  };
+
+
+
+const memoizedContent = useMemo(() => {
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#6A5ACD" />
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <>
+      <MockTests
+        selectedType={selectedType}
+        mocklist={mocklist}
+        pre={pre}
+        customExams={customExams}
+        setSelectedType={setSelectedType}
+        setMock={setMock}
+        setShowCustom={setShowCustom}
+        handleCheckResults={handleCheckResults}
+        handleStartTest={handleStartTest}
+      />
+    </>
+  );
+}, [selectedType, mocklist, pre, customExams]);
+
+
+
 
   // console.log(addExam, "modalstatus")
   return (
     <View style={[styles.container, { backgroundColor: theme.textbgcolor }]}>
       {/* Header */}
-      <View style={styles.header}>
-        {/* Hamburger Menu */}
-        <TouchableOpacity onPress={() => navigation.openDrawer()}>
-          <Image
-            source={{
-              uri: "https://cdn-icons-png.flaticon.com/512/1828/1828859.png",
-            }}
-            style={[styles.icon, { tintColor: theme.textColor }]}
-          />
-        </TouchableOpacity>
-
-        {/* App Logo */}
-        <Image
-          source={require("../images/title.png")}
-          style={[styles.logo, { tintColor: theme.textColor }]}
-        />
-
-        {/* Compact Dropdown */}
-        <View style={{ zIndex: 1000 }}>
-        {items.length > 0 && (
-          <Dropdown
-            style={{
-              backgroundColor: theme.background,
-              borderColor: theme.tx1,
-              borderWidth: 1,
-              minHeight: 35,
-              width: 120,
-              paddingHorizontal: 10,
-              borderRadius: 10,
-            }}
-            containerStyle={{
-              backgroundColor: theme.textColor1,
-              borderColor: theme.brad,
-              maxHeight: 150,
-            }}
-            placeholderStyle={{
-              color: theme.textColor,
-              fontSize: 12, // Smaller font size for placeholder
-            }}
-            selectedTextStyle={{
-              color: theme.textColor,
-              fontSize: 12, // Smaller font size for selected value
-            }}
-            itemTextStyle={{
-              fontSize: 11, // ✅ Decreased font size for dropdown items
-              color: theme.textColor,
-            }}
-            data={items.length>0?items: { label: "➕ Add", value: "add"}}
-            labelField="label"
-            valueField="value"
-            value={selectedOption?.value === "add" ? null : selectedOption}
-            onChange={(item) => handleSelect(item)}
-            placeholder="Select"
-          />
-        )}
-        </View>
-      </View>
-
+   
+<Header setAddExam={setAddExam} addExam={addExam} setId={setStudentExamId}  />
+{memoizedContent}
       {/* Welcome Message */}
-      <ScrollView
+      {/* <ScrollView
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -914,12 +695,8 @@ console.log(validMockTests, "ValidMocks")
             tintColor={theme.textColor}
           />
         }
-      >
-        <ExamModalComponent
-          show={addExam}
-          setShow={setAddExam}
-          studentUserId={studentUserId}
-        />
+      > */}
+   
 
         <SafeAreaView style={styles.centeredView}>
           <Modal
@@ -946,50 +723,15 @@ console.log(validMockTests, "ValidMocks")
 
               {/* Modal Content */}
 
-              <CustomExamCreation id={studentExamId} fetchData={fetchData} onClose={setShowCustom} />
+              <CustomExamCreation id={studentExamId} selectedOption={selectedOption} fetchData={fetchData} onClose={setShowCustom} />
             </View>
           </Modal>
-          {achivementShow && (
-            <AchivementsModel
-              visible={achivementShow}
-              onClose={() => setAchivementShow(false)} // ✅ Corrected this
-            />
-          )}
+    
         </SafeAreaView>
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#6A5ACD" />
-            <Text style={styles.loadingText}>Loading...</Text>
-          </View>
-        ) : (
-          <>
-            <WeeklyPerformance
-              examResults={examResults}
-              selectedPerformanceType={selectedPerformanceType}
-              dateRange={dateRange}
-              setSelectedPerformanceType={setSelectedPerformanceType}
-              totalExamCount={totalExamCount}
-            />
-
-            <MockTests
-              selectedType={selectedType}
-              mocklist={mocklist}
-              pre={pre}
-              customExams={customExams}
-              setSelectedType={setSelectedType}
-              setMock={setMock}
-              setShowCustom={setShowCustom}
-              handleCheckResults={handleCheckResults}
-              handleStartTest={handleStartTest}
-            />
-
-            <Achivements ach={ach} setAchivementShow={setAchivementShow} />
-            <LeaderBoard champ={champ} />
-          </>
-        )}
+     
 
         {/* <View style={styles.tabScreen}><Text>Performance</Text></View> */}
-      </ScrollView>
+      {/* </ScrollView> */}
     </View>
   );
 };
@@ -1038,7 +780,7 @@ const styles = StyleSheet.create({
   welcome: { marginTop: 10, fontSize: 16 },
   username: { fontSize: 24, fontWeight: "bold", marginBottom: 20 },
   performanceCard: { padding: 10, borderRadius: 10, elevation: 1 },
-  performanceTitle: { fontSize: 18, fontWeight: "bold" },
+
   subText: { color: "gray" },
   bigText: { fontSize: 30, fontWeight: "bold", marginTop: 5 },
   chart: { height: 150, marginTop: 10 },

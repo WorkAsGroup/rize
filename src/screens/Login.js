@@ -29,17 +29,15 @@ const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import axios from "axios";
 
 GoogleSignin.configure({
-	webClientId: "212625122753-o36nkar4vhepdof16e7ge3gmuaed2kio.apps.googleusercontent.com",
-    offlineAccess: true,
-});
+    webClientId: '657776415952-0upum9rpsfnslfmfuldlnr6r208e92fu.apps.googleusercontent.com', // must match the "web" client ID in Firebase
+    offlineAccess: false,
+  });
+  
 
-const GoogleLogin = async () => {
-	await GoogleSignin.hasPlayServices();
-	const userInfo = await GoogleSignin.signIn();
-	return userInfo;
-};
+
 
 export default function Login({ route }) {
 	const [error, setError] = useState('');
@@ -199,65 +197,36 @@ export default function Login({ route }) {
         }
     };
 
-    async function validateGoogleToken(token) {
-        try {
-            const ticket = await client.verifyIdToken({
-                idToken: token,
-                audience: CLIENT_ID, 
-            });
-    
-            const payload = ticket.getPayload();
-            console.log("Google Payload:", payload); 
-    
-            if (!payload || !payload.email) {
-                throw new Error('Invalid Google payload');
-            }
-    
-    
-            const userToken = generateUserToken(payload.email);
-    
-            console.log("Generated User Token:", userToken); 
-    
-    
-            return { success: true, data: {token: userToken, email: payload.email } };
-        } catch (error) {
-            console.error('Error validating Google ID token:', error);
-            return { success: false, error: error.message };
-        }
-    }
-
     const handleGoogleLogin = async () => {
         setLoading(true);
         try {
-            await GoogleSignin.hasPlayServices();
-            const userInfo = await GoogleSignin.signIn();
-            console.log("Google User Info:", userInfo); 
-
-            if(userInfo.user.idToken){
-
-                const response = await validateGoogleToken(userInfo.user.idToken); 
-                console.log("response form backend",response);
-                if(response.success){
-                    route.params.onChangeAuth(response.data.token);
-                    navigation.navigate("DashboardContent"); 
-                }
-
-            }
-
+          await GoogleSignin.hasPlayServices();
+          const userInfo = await GoogleSignin.signIn();
+      
+          const payload = {
+            idToken: userInfo.idToken,
+            email: userInfo.user.email,
+            name: userInfo.user.name,
+          };
+      
+          const response = await axios.post("https://mocktestapi.rizee.in/api/v1/auth/google-auth", payload);
+      
+          if (response.data.success) {
+            // Store token globally (e.g., in AsyncStorage or context)
+            // Avoid passing functions through navigation
+            navigation.navigate("DashboardContent");
+          } else {
+            showToastError("Google Login failed");
+          }
+      
         } catch (error) {
-            if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-                console.log("User cancelled the login flow.");
-            } else if (error.code === statusCodes.IN_PROGRESS) {
-                console.log("Operation (e.g., sign in) is in progress already.");
-            } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-                console.log("Play services not available or outdated.");
-            } else {
-                console.error("Google Sign-In Error:", error);
-            }
+          console.error("Google Sign-In Error:", error);
+          showToastError("Google Sign-In failed");
         } finally {
-            setLoading(false);
+          setLoading(false);
         }
-    };
+      };
+    
 
     const validateEmailOrPhone = (input) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
