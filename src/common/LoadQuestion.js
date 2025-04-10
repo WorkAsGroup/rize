@@ -47,7 +47,7 @@ const LoadQuestion = (props) => {
     handleSelectAndNext,handleAnswerSelect, textInputValues} = props;
 
 
-    console.log(item, "iurtiuegiuer")
+    // console.log(item, "iurtiuegiuer")
     // let qtypeName = [];
 
     // for(const qid of inputquestion.split(',')){
@@ -59,7 +59,7 @@ const LoadQuestion = (props) => {
     
     // qtypeName = qtypeName.toString(); 
 
-    console.log(selectedAnswers[selectedNumber],selectedNumber, "confirmation")
+    // console.log(selectedAnswers[selectedNumber],selectedNumber, "confirmation")
 
     if(qtype == 3 || qtype == 9){
         // question = question.replace(/src="/g,'src=\\"');

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, Dimensions, ActivityIndicator, useColorScheme, StyleSheet } from "react-native";
+import { View, Text, ScrollView, Dimensions, ActivityIndicator, useColorScheme, StyleSheet, TouchableOpacity } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { darkTheme, lightTheme } from "../theme/theme";
 import { Dropdown } from "react-native-element-dropdown";
@@ -11,11 +11,18 @@ const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData, chaperWi
   const [loading, setLoading] = useState(false);
   const[chapData, setChapData] = useState(chaperWiseData);
   const [yourTime, setYourTime] = useState({ labels: [], datasets: [] })
-  console.log(chapData, 'errrr')
+  console.log(chapData, 'errrr');
+
   const [overallScorePercent, setOverallScorePercent] = useState("")
   const defaultValue = chapData.length > 0 ? { label: chapData[0].subject_name, value: chapData[0].subject_id } : null;
   const [chapValue, setChapValue] = useState(defaultValue)
-
+  const [showUserAvgTime, setShowUserAvgTime] = useState(true);
+  const [showCommunityAvgTime, setShowCommunityAvgTime] = useState(true);
+  const [showYourAvgTime, setShowYourAvgTime] = useState(true);
+  const [showYourCommunityAvgTime, setShowYourCommunityAvgTime] = useState(true);
+  const [showWeekAvgTime, setShowWeekAvgTime] = useState(true);
+  const [showCommunityWeekAvgTime, setShowCommunityWeekAvgTime] = useState(true);
+  // const []
   const colorScheme = useColorScheme();
   const theme =  darkTheme ;
   console.log(performanceSubOptions, "oiefowieh")
@@ -50,17 +57,17 @@ const PerformanceStatusGraph = ({performanceSubOptions,  data,weekData, chaperWi
       labels: weekLabels,
       datasets: [
         {
-          label: "User Score",
+          label: 'Me',
           data: userScores,
-          color: (opacity = 1) => `rgba(255, 99, 132, ${opacity})`, // Red
+          color: () => '#F5E1C8',
           strokeWidth: 2,
         },
         {
-          label: "Community Score",
+          label: 'Community',
           data: communityScores,
-          color: (opacity = 1) => `rgba(54, 162, 235, ${opacity})`, // Blue
+          color: () => '#8A6BBE',
           strokeWidth: 2,
-        },
+        }
   
       ],
     });
@@ -205,6 +212,23 @@ if(data&&type) {
 
   },[data, type])
 
+  const filteredDatasets = chartData.datasets.filter(ds => {
+    if (ds.label === 'Me' && !showUserAvgTime) return false;
+    if (ds.label === 'Community' && !showCommunityAvgTime) return false;
+    return true;
+  });
+  const yourTimeDatasets = yourTime.datasets.filter(ds => {
+    if (ds.label === 'Me' && !showYourAvgTime) return false;
+    if (ds.label === 'Community' && !showYourCommunityAvgTime) return false;
+    return true;
+  });
+
+  const weekDatasets = weekChartData.datasets.filter(ds => {
+    if (ds.label === 'Me' && !showWeekAvgTime) return false;
+    if (ds.label === 'Community' && !showCommunityWeekAvgTime) return false;
+    return true;
+  });
+
   return (
 
         <View style={[{display: "flex", flexDirection: "column", marginTop: 10 ,
@@ -233,46 +257,56 @@ if(data&&type) {
           <Text style={{ textAlign: "center", marginTop: 20, color: "red" }}>No data available</Text>
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ backgroundColor: "#000" }}>
-  <CustomLineChart
-  chartData={chartData.datasets.map(ds => ds.data)}
+<CustomLineChart
+  chartData={filteredDatasets.map(ds => ds.data)}
   labels={chartData.labels}
-  // colors={chartData.datasets.map(ds => ds.color())}
+  colors={filteredDatasets.map(ds => ds.color())}
   yAxisFormatter={(val) => `${val}%`}
   labelFormatter={(val) => `${val}`}
   width={chartData.labels.length * 60}
+  yMin={0}           // 👈 Force Y-axis min
+  yMax={100}         // 👈 Force Y-axis max
 />
+
         </ScrollView>
         
         
         )}
 
-<View style={{ flexDirection: "row", alignItems: "center", gap: 12 ,padding: 15}}>
-  <View style={{ flexDirection: "row", alignItems: "center" }}>
-    <View
-      style={{
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        backgroundColor: "#8B51FE", // Purple dot
-        marginRight: 6,
-      }}
-    />
-    <Text style={{ color: "#fff" }}>Your's </Text>
-  </View>
+<View style={{ flexDirection: "row", alignItems: "center", gap: 12 ,padding: 15 }}>
+  {/* User's Toggle */}
+  <TouchableOpacity onPress={() => setShowUserAvgTime(prev => !prev)}>
+    <View style={{ flexDirection: "row", alignItems: "center", opacity: showUserAvgTime ? 1 : 0.4 }}>
+      <View
+        style={{
+          width: 12,
+          height: 12,
+          borderRadius: 6,
+          backgroundColor: "#8B51FE",
+          marginRight: 6,
+        }}
+      />
+      <Text style={{ color: "#fff" }}>Your's </Text>
+    </View>
+  </TouchableOpacity>
 
-  <View style={{ flexDirection: "row", alignItems: "center" }}>
-    <View
-      style={{
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        backgroundColor: "#FFB6C1", // Light pink dot
-        marginRight: 6,
-      }}
-    />
-    <Text style={{ color: "#fff" }}>Community's </Text>
-  </View>
+  {/* Community's Toggle */}
+  <TouchableOpacity onPress={() => setShowCommunityAvgTime(prev => !prev)}>
+    <View style={{ flexDirection: "row", alignItems: "center", opacity: showCommunityAvgTime ? 1 : 0.4 }}>
+      <View
+        style={{
+          width: 12,
+          height: 12,
+          borderRadius: 6,
+          backgroundColor: "#FFB6C1",
+          marginRight: 6,
+        }}
+      />
+      <Text style={{ color: "#fff" }}>Community's </Text>
+    </View>
+  </TouchableOpacity>
 </View>
+
 
         <Text style={{ fontSize: 18, fontWeight: "bold", textAlign: "left",color: theme.textColor }}> Your Time</Text>
         <View>
@@ -294,50 +328,56 @@ if(data&&type) {
           <Text style={{ textAlign: "center", marginTop: 20, color: "red" }}>No data available</Text>
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ backgroundColor: "#000" }}>
-         <CustomLineChart
-   chartData={yourTime.datasets.map(ds => ds.data)}
-   labels={yourTime.labels}
-   // colors={yourTime.datasets.map(ds => ds.color())}
-   yAxisFormatter={(val) => {
-    if (val >= 60) return `${(val / 1000).toFixed(1)}k`;
-    return `${val}k`;
-  }}
-   labelFormatter={(val) => `${val}`}
-   width={yourTime.labels.length * 60}
+  <CustomLineChart
+  chartData={yourTimeDatasets.map(ds => ds.data)}
+  colors={yourTimeDatasets.map(ds => ds.color())}
+  labels={yourTime.labels}
+  yAxisFormatter={(val) => `${val} Sec`}
+  yMin={0}
+  yMax={100}
+  labelFormatter={(val) => `${val}`}
+  width={yourTime.labels.length * 60}
+
 />
+
 
           </ScrollView> 
           
         )}
       </View>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 ,padding: 15}}>
-  <View style={{ flexDirection: "row", alignItems: "center" }}>
-    <View
-      style={{
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        backgroundColor: "#8B51FE", // Purple dot
-        marginRight: 6,
-      }}
-    />
-    <Text style={{ color: "#fff" }}>Your's </Text>
-  </View>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 ,padding: 15 }}>
+  {/* User's Toggle */}
+  <TouchableOpacity onPress={() => setShowYourAvgTime(prev => !prev)}>
+    <View style={{ flexDirection: "row", alignItems: "center", opacity: showYourAvgTime ? 1 : 0.4 }}>
+      <View
+        style={{
+          width: 12,
+          height: 12,
+          borderRadius: 6,
+          backgroundColor: "#8B51FE",
+          marginRight: 6,
+        }}
+      />
+      <Text style={{ color: "#fff" }}>Your's </Text>
+    </View>
+  </TouchableOpacity>
 
-  <View style={{ flexDirection: "row", alignItems: "center" }}>
-    <View
-      style={{
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        backgroundColor: "#FFB6C1", // Light pink dot
-        marginRight: 6,
-      }}
-    />
-    <Text style={{ color: "#fff" }}>Community's </Text>
-  </View>
+  {/* Community's Toggle */}
+  <TouchableOpacity onPress={() => setShowYourCommunityAvgTime(prev => !prev)}>
+    <View style={{ flexDirection: "row", alignItems: "center", opacity: showYourCommunityAvgTime ? 1 : 0.4 }}>
+      <View
+        style={{
+          width: 12,
+          height: 12,
+          borderRadius: 6,
+          backgroundColor: "#FFB6C1",
+          marginRight: 6,
+        }}
+      />
+      <Text style={{ color: "#fff" }}>Community's </Text>
+    </View>
+  </TouchableOpacity>
 </View>
-
    <View style={{marginTop: 50}}>
    <View>
        
@@ -352,45 +392,54 @@ if(data&&type) {
         <Text style={{ textAlign: "center", marginTop: 10, color: "red" }}>No data available</Text>
       ) : (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ backgroundColor: "#000" }}>
-         <CustomLineChart
-  chartData={weekChartData.datasets.map(ds => ds.data)}
+        <CustomLineChart
+  chartData={weekDatasets.map(ds => ds.data)}
   labels={weekChartData.labels}
-  // colors={weekChartData.datasets.map(ds => ds.color())}
+  // colors={['#8B51FE', '#FFB6C1']} // Me and Community
+  colors={weekDatasets.map(ds => ds.color())}
   yAxisFormatter={(val) => `${val}`}
   labelFormatter={(val) => `${val}`}
   width={weekChartData.labels.length * 60}
+  yMax={120}
 />
+
 
         </ScrollView>
       )}
     
       </View>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 15 }}>
-  <View style={{ flexDirection: "row", alignItems: "center" }}>
-    <View
-      style={{
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        backgroundColor: "#8B51FE", // Purple dot
-        marginRight: 6,
-      }}
-    />
-    <Text style={{ color: "#fff" }}>Your's </Text>
-  </View>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 ,padding: 15 }}>
+  {/* User's Toggle */}
+  <TouchableOpacity onPress={() => setShowWeekAvgTime(prev => !prev)}>
+    <View style={{ flexDirection: "row", alignItems: "center", opacity: showWeekAvgTime ? 1 : 0.4 }}>
+      <View
+        style={{
+          width: 12,
+          height: 12,
+          borderRadius: 6,
+          backgroundColor: "#8B51FE",
+          marginRight: 6,
+        }}
+      />
+      <Text style={{ color: "#fff" }}>Your's </Text>
+    </View>
+  </TouchableOpacity>
 
-  <View style={{ flexDirection: "row", alignItems: "center" }}>
-    <View
-      style={{
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        backgroundColor: "#FFB6C1", // Light pink dot
-        marginRight: 6,
-      }}
-    />
-    <Text style={{ color: "#fff" }}>Community's </Text>
-  </View>
+  {/* Community's Toggle */}
+  <TouchableOpacity onPress={() => setShowCommunityWeekAvgTime(prev => !prev)}>
+    <View style={{ flexDirection: "row", alignItems: "center", opacity: showCommunityWeekAvgTime ? 1 : 0.4 }}>
+      <View
+        style={{
+          width: 12,
+          height: 12,
+          borderRadius: 6,
+          backgroundColor: "#FFB6C1",
+          marginRight: 6,
+        }}
+      />
+      <Text style={{ color: "#fff" }}>Community's </Text>
+    </View>
+  </TouchableOpacity>
 </View>
 
    </View>

@@ -26,7 +26,7 @@ const OptionCard = ({ option, optionText, value, disabled = false, double = fals
     const optionColor = value === null ? COLORS.ULTRA_LIGHT_GRAY : value ? COLORS.DIM_OVERLAY : COLORS.LIGHT_RED;
     // const icon = value === null ? require('../../images/circle.png') : value ? require('../../images/check-circle.png') : require('../../images/times-circle.png');
     const tintColor = value === null ? COLORS.LIGHT_TEXT_COLOR : value ? COLORS.OVERLAY_COLOR : COLORS.RED;
-console.log(isSelected, "eiourgfoierwufoyiweb")
+// console.log(isSelected, "eiourgfoierwufoyiweb")
     return (
         <Card style={{ ...styles.container, borderColor }}>
             <TouchableOpacity disabled={disabled} onPress={onChangeValue} activeOpacity={0.3}>

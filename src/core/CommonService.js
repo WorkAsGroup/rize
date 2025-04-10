@@ -36,10 +36,66 @@ export const endPoint = {
 	prevpap:"/api/v1/exams/start-previouspaper-session",
 	updatepassword:"/api/v1/auth/update-password",
 	chapterwisePerformance: "/api/v1/reports/preformance/chapterWise",
-	
+	addAutoSaveData: '/api/v1/exams/addAutoSaveData',
+    getAutoSaveData: '/api/v1/exams/autoSaveData',
+	autoSaveTime: '/api/v1/exams/auto-save-time',
   };
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+export const getAutoSaveTime = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.autoSaveTime, "with data:", fields);
+	
+	return await axios
+	  .get(apiurl + endPoint.autoSaveTime, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in year data:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };
+
+  export const addAutoSaveData = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.addAutoSaveData, "with data:", fields?.exam_paper_id, fields?.student_user_exam_id);
+	
+	return await axios
+	  .post(apiurl + endPoint.addAutoSaveData, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in submit exam:", error.response?.data || error.message);
+		return error;
+	  }); 
+  }; 
+
+  export const getAutoSaveData = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.getAutoSaveData, "with data:", fields?.exam_paper_id, fields?.student_user_exam_id);
+	
+	return await axios
+	  .post(apiurl + endPoint.getAutoSaveData, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in submit exam:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };  
 
 export const getSubmitExamResults = async (fields) => {
 	const headers = {

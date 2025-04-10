@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useDebugValue } from "react";
 import {
   View,
   Text,
@@ -32,6 +32,9 @@ import {
   getPreExamdata,
   getPreviousPapRes,
   getSubmitExamResults,
+  getAutoSaveData,
+  getAutoSaveTime,
+  addAutoSaveData,
 } from "../core/CommonService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
@@ -78,6 +81,8 @@ const StartExam = ({ navigation, route }) => {
   const [expand, setExpand] = useState(false);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const timerInterval = useRef(null);
+  const answeredQuestionsRef = useRef({});
+
   const obj = route?.params?.obj;
   const [textInputAnswer, setTextInputAnswer] = useState("");
   const [uid, setUid] = useState("");
@@ -90,17 +95,276 @@ const StartExam = ({ navigation, route }) => {
   const [exam, setExam] = useState([]);
   const numberCircleRefs = useRef({});
   const [questionsLoading, setQuestionsLoading] = useState(true);
-
+  const [autoSaveId, setAutoSaveId] = useState(obj?.auto_save_id? obj?.auto_save_id: 0)
   const previousTimeRef = useRef(timeElapsed);
   const timerRef = useRef(null);
   const [startTime, setStartTime] = useState(null);
   const questionId = selectedNumber;
-
+  const [autoSaveData, setAutoSaveData] = useState([]);
   const [questionStartTime, setQuestionStartTime] = useState(null);
   const [timeElapsed, setTimeElapsed] = useState(0);
 // console.log(obj, "objobjobj")
+const [autoTimeValue, setAutoTimeValue] = useState(0);
+const [autoSaveTimer ,setAutoSaveTimer] = useState(null);
+const autoTimerRef = useRef();
+const hasTriggeredRef = useRef()
+const [hasTriggeredAutoSave, setHasTriggeredAutoSave] =useState(true);
+
+useEffect(() => {
+  console.log(autoSaveId, autoTimeValue, 'wepjdiope');
+
+  // ✅ Only return early if autoTimeValue is 0 or undefined/null
+  if (!autoTimeValue) return;
+
+  hasTriggeredRef.current = false;
+  setAutoSaveTimer(autoTimeValue);
+
+  autoTimerRef.current = setInterval(() => {
+    setAutoSaveTimer(prev => {
+      const next = prev > 0 ? prev - 1 : 0;
+      console.log("⏳ Timer Value:", next);
+
+      if (next === 0 && !hasTriggeredRef.current) {
+        hasTriggeredRef.current = true;
+        console.log("🚨 Auto-saving now...");
+        handleAutoSaveFunction();
+      }
+
+      return next;
+    });
+  }, 1000);
+
+  return () => {
+    if (autoTimerRef.current) {
+      clearInterval(autoTimerRef.current);
+      autoTimerRef.current = null;
+      console.log("🛑 Timer cleared");
+    }
+  };
+}, [autoTimeValue]); // ✅ Removed autoSaveId dependency
+
+
+const getAutoSaveDuration = async () => {
+  try {
+    const resTime = await getAutoSaveTime({});
+    console.log(resTime, "asdefqed3q")
+    if(resTime){
+      setAutoSaveTimer(Number(resTime?.data?.[0].value))
+      setAutoTimeValue(Number(resTime?.data?.[0].value))
+    }
+    // console.log(resTime?.data?.[0].value, "resfweTime")
+  } catch (error) {
+    console.error("Error loading remaining time:", error);
+  }
+}
+
+
+
+const handleAutoSaveFunction = async () => {
+  // console.log("calles func")
+  const data = {
+    autoSaveId,
+    exam_paper_id: parseInt(obj.exam_paper_id),
+    exam_session_id: session_id ? session_id : 0,
+    student_user_exam_id: studentExamId,
+    questions_data: [],
+    uid: uid,
+    qsno: selectedNumber,
+    examtimer: timerRef.current,
+    questions_count: exams.length,
+    type: examtype === "previous"
+      ? "previous_exam"
+      : examtype === "mock"
+      ? "schedule_exam"
+      : "custom_exam",
+  };
+console.log(data,exams, answeredQuestions, "oeioeqijoei")
+
+for (let i = 0; i < exams.length; i++) {
+  try {
+    const slno = i + 1;
+    const exam = exams[i];
+    const questionId = exam.id;
+
+    const answeredQuestion = answeredQuestionsRef.current[String(slno)];
+
+    const skippedQuestion = skippedQuestions[String(slno)];
+    const reviewedQuestion = reviewedQuestions[String(slno)];
+    const textInputAnswer = textInputValues[String(slno)];
+
+    let status = "0";
+    let attemptAnswer = "";
+
+    if (answeredQuestion) {
+      status = "2";
+      attemptAnswer = answeredQuestion.selected_ans;
+    } else if (skippedQuestion) {
+      status = "1";
+    }
+
+    let questionTime = 0;
+    try {
+      const storedElapsedTime = await AsyncStorage.getItem(`timeElapsed_${slno}`);
+      questionTime = storedElapsedTime ? parseInt(storedElapsedTime, 10) : 0;
+    } catch (error) {
+      console.error("❌ Error fetching elapsed time for question", slno, error);
+    }
+
+    const subject = pattern.find(
+      (sub) => slno >= sub.starting_no && slno <= sub.ending_no
+    );
+
+    console.log(
+      questionId,
+      exam?.qtype !== 8 ? status : "2",
+      questionTime,
+      exam?.qtype == 8 ? textInputAnswer : attemptAnswer,
+      0,
+      slno,
+      subject?.id,
+      !!reviewedQuestion,
+      false,
+      "✅ LOOP CONTINUES"
+    );
+
+    data.questions_data.push({
+      question_id: questionId,
+      status: exam?.qtype !== 8 ? status : "2",
+      question_time: questionTime,
+      attempt_answer: exam?.qtype == 8 ? textInputAnswer : attemptAnswer,
+      reason_for_wrong: 0,
+      comments: "",
+      slno,
+      subject_id: subject?.id || 0, // Fallback to 0 if no subject
+      review: !!reviewedQuestion,
+      is_disabled: false,
+    });
+    setAutoSaveTimer(autoTimeValue); // resets countdown
+hasTriggeredRef.current = false;
+  } catch (err) {
+    setAutoSaveTimer(autoTimeValue); // resets countdown
+hasTriggeredRef.current = false;
+    console.error("❌ Error processing question at index ${i}", err);
+  }
+}
+
+
+  console.log("Submit Data:", JSON.stringify(data));
+  // setExam(data);
+
+  const questions = JSON.stringify(
+    data.questions_data.map((question) => ({
+      question_id: question.question_id,
+      status: question.status,
+      question_time: question.question_time,
+      attempt_answer: question.attempt_answer,
+      reason_for_wrong: question.reason_for_wrong,
+      comments: question.comments,
+      slno: question.slno,
+      subject_id: question.subject_id,
+      review: question.review,
+      is_disabled: question.is_disabled,
+    }))
+  );
+  data.questions_data = questions;
+
+  console.log("Submit Exam Data:", data);
+  try {
+    // setIsLoading(true);
+    const response = await addAutoSaveData(data);
+    console.log("Submit Response:", response);
+    setAutoSaveTimer(autoTimeValue)
+
+  } catch (error) {
+    // setIsLoading(false);
+    setAutoSaveTimer(autoTimeValue)
+    console.error("Error submitting results:", error);
+  }
+
+}
+const getAutoSavedData = async () => {
+  setIsLoading(true);
+
+  const params = {
+    autoSaveId: autoSaveId,
+  };
+
+  try {
+    const response = await getAutoSaveData(params);
+    const data = response?.data?.[0];
+console.log(data, "fetched Data")
+    if (data) {
+      const questionsData = JSON.parse(data.questions_data || "[]");
+
+      const answered = {};
+      const skipped = {};
+      const reviewed = {};
+      const textInputs = {};
+      const selectedAns = {};
+
+      for (let q of questionsData) {
+        const slno = String(q.slno);
+
+        // Restore answered/skipped/reviewed state
+        if (q.status === "2") {
+          answered[slno] = { selected_ans: q.attempt_answer };
+          selectedAns[slno] = q.attempt_answer; // ✅ restore to selectedAnswers
+        } else if (q.status === "1") {
+          skipped[slno] = true;
+        }
+
+        if (q.review) {
+          reviewed[slno] = true;
+        }
+
+        // Handle text input (qtype 8)
+        if (typeof q.attempt_answer === "string" && q.attempt_answer.trim() !== "") {
+          textInputs[slno] = q.attempt_answer;
+        }
+
+        // Restore individual question time
+        try {
+          await AsyncStorage.setItem(`timeElapsed_${slno}`, q.question_time.toString());
+        } catch (err) {
+          console.error("❌ Failed to set AsyncStorage for", slno, err);
+        }
+      }
+
+      // Update all states
+      setAnsweredQuestions(answered);
+      answeredQuestionsRef.current = answered;
+      setSkippedQuestions(skipped);
+      setReviewedQuestions(reviewed);
+      setTextInputValues(textInputs);
+      setSelectedAnswers(selectedAns); // ✅ sets selected options
+
+      // Optional: restore selected question number
+      if (data.qsno) {
+        setSelectedNumber(data.qsno);
+      }
+
+      // Optional: restore timer
+      if (data.examtimer) {
+        setRemainingTime(Number(data.examtimer));
+      }
+
+      console.log("✅ Restored saved data");
+    }
+  } catch (err) {
+    console.error("❌ Failed to get auto save data:", err);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   useEffect(() => {
+if(autoSaveId!==0&& autoSaveId !== undefined) {
+  getAutoSavedData();
+}
+  }, [autoSaveId])
+  useEffect(() => {
+    getAutoSaveDuration();
    getExam();
    getExamPattern()
    if (obj) {
@@ -126,7 +390,7 @@ const StartExam = ({ navigation, route }) => {
       try {
         const savedTime = await AsyncStorage.getItem(REMAINING_TIME_KEY);
         const timeToSet = obj.exam_duration; // This is in minutes
-        console.log(timeToSet, obj.exam_duration, "savedTime");
+        // console.log(timeToSet, obj.exam_duration, "savedTime");
   
         if (timeToSet) {
           setRemainingTime(parseInt(timeToSet, 10) * 60); // Convert to seconds
@@ -226,7 +490,7 @@ useEffect(() => {
         setTaggedQuestions(tagged ? JSON.parse(tagged) : {});
         const savedTime = await AsyncStorage.getItem(REMAINING_TIME_KEY);
         const timeToSet =  obj.exam_duration; 
-        console.log(timeToSet, obj.exam_duration, "savedTime");
+        // console.log(timeToSet, obj.exam_duration, "savedTime");
         
         if (timeToSet) {
             setRemainingTime(parseInt(timeToSet, 10)* 60);
@@ -273,7 +537,7 @@ const handleTextInputChange = (text, questionId) => {
     } else {
       scrollToQuestion(selectedNumber);
     }
-    console.log("setSelectedSubject", sub);
+    // console.log("setSelectedSubject", sub);
   };
 
   useEffect(() => {
@@ -321,7 +585,7 @@ const handleTextInputChange = (text, questionId) => {
     };
   }, [handleBackPress, isFirstLoad]);
   const getPrevExam = async () => {
-    console.log("objobjobj", obj);
+    // console.log("objobjobj", obj);
     setQuestionsLoading(true);
 
     const datas = {
@@ -334,7 +598,7 @@ const handleTextInputChange = (text, questionId) => {
           ? "schedule_exam"
           : "custom_exam",
     };
-    console.log(obj, "hoisefoue");
+    // console.log(obj, "hoisefoue");
     const startPrevSession = {
       previous_exam_paper_id: obj.previous_paper_id,
       student_user_exam_id: studentExamId,
@@ -345,13 +609,13 @@ const handleTextInputChange = (text, questionId) => {
     };
 
     try {
-      console.log(examtype, "weoihewouh");
+      // console.log(examtype, "weoihewouh");
       var sessionStart = "";
       if (examtype === "previous") {
         sessionStart = await getPreviousPapRes(
           examtype === "previous" ? startPrevSession : startSession
         );
-        console.log(sessionStart, "weoihfiweufhweiu");
+        // console.log(sessionStart, "weoihfiweufhweiu");
         setSessionid(sessionStart?.data?.exam_session_id);
       }
       const startExm = {
@@ -393,8 +657,8 @@ const handleTextInputChange = (text, questionId) => {
           }
         }
 
-        console.log("Subject Counts:", subjectCounts);
-        console.log("Exams Response:", examsResponse);
+        // console.log("Subject Counts:", subjectCounts);
+        // console.log("Exams Response:", examsResponse);
       }
     } catch (error) {
       console.error("Error fetching exams:", error);
@@ -414,7 +678,7 @@ const handleTextInputChange = (text, questionId) => {
         (exams || []).some((exam) => Number(exam?.subject) === Number(item?.subject_id))
       );
 
-      console.log("examPatternexamPattern", filterPattern, exams, examPattern.data);
+      // console.log("examPatternexamPattern", filterPattern, exams, examPattern.data);
       setPattern(filterPattern);
 
       if (examPattern.data && examPattern.data.length > 0) {
@@ -505,7 +769,7 @@ const handleTextInputChange = (text, questionId) => {
     }, []);
 
   const getExam = async () => {
-     console.log("objobjobj", obj);
+    //  console.log("objobjobj", obj);
      setQuestionsLoading(true);
  
      const datas = {
@@ -535,8 +799,8 @@ const handleTextInputChange = (text, questionId) => {
          }
        }
  
-       console.log("Subject Counts:", subjectCounts);
-       console.log("Exams Response:", examsResponse);
+      //  console.log("Subject Counts:", subjectCounts);
+      //  console.log("Exams Response:", examsResponse);
        setQuestionsLoading(false);
      } catch (error) {
        console.error("Error fetching exams:", error);
@@ -576,8 +840,8 @@ const handleTextInputChange = (text, questionId) => {
       }
     };
   const moveToNextQuestion = useCallback(() => {
-      console.log("Current Subject:", currentSubject);
-      console.log("Current Index in Subject:", currentIndexInSubject);
+      // console.log("Current Subject:", currentSubject);
+      // console.log("Current Index in Subject:", currentIndexInSubject);
       const currentSubject = pattern.find(
         (subject) =>
           selectedNumber >= subject.starting_no &&
@@ -617,7 +881,7 @@ const handleTextInputChange = (text, questionId) => {
     }, [selectedNumber, allNum, pattern]);
   
     const handleSelectAndNext = useCallback(async (questionId) => {
-      console.log("handleSelectAndNext called for question:", questionId);
+      // console.log("handleSelectAndNext called for question:", questionId);
       // const answer = textInputValues[questionId];
       const currentQuestionType = exams[questionId - 1]?.qtype;
   
@@ -654,7 +918,7 @@ const handleTextInputChange = (text, questionId) => {
   
  const handleAnswerSelect = useCallback(
     async (questionId, option) => {
-      console.log("handleAnswerSelect called with:", questionId, option);
+      // console.log("handleAnswerSelect called with:", questionId, option);
   
       const currentSubject = pattern.find(
         (subject) =>
@@ -727,8 +991,9 @@ const handleTextInputChange = (text, questionId) => {
           ...answeredQuestions,
           [questionId]: { selected_ans: option, submit_ans: option },
         };
-  
+        
         setAnsweredQuestions(updatedAnswers);
+        answeredQuestionsRef.current = updatedAnswers;
         setSelectedAnswers((prev) => ({
           ...prev,
           [selectedNumber]: answerToStore,
@@ -741,7 +1006,7 @@ const handleTextInputChange = (text, questionId) => {
         const updatedReviewed = { ...reviewedQuestions };
         delete updatedReviewed[questionId];
         setReviewedQuestions(updatedReviewed);
-        console.log("Setting selectedOption to:", option);
+        // console.log("Setting selectedOption to:", option);
         setSelectedOption(option);
   
         await AsyncStorage.setItem(
@@ -859,7 +1124,7 @@ const handleTextInputChange = (text, questionId) => {
       });
     }
   
-    console.log("Submit Data:", JSON.stringify(data));
+    // console.log("Submit Data:", JSON.stringify(data));
     setExam(data);
   
     const questions = JSON.stringify(
@@ -878,11 +1143,11 @@ const handleTextInputChange = (text, questionId) => {
     );
     data.questions = questions;
   
-    console.log("Submit Exam Data:", data);
+    // console.log("Submit Exam Data:", data);
     try {
       setIsLoading(true);
       const response = await getSubmitExamResults(data);
-      console.log("Submit Response:", response);
+      // console.log("Submit Response:", response);
       const sampleObj = {
         exam_session_id: response?.data?.exam_session_id
           ? response.data.exam_session_id
@@ -917,7 +1182,7 @@ const handleTextInputChange = (text, questionId) => {
       </View>
     );
   }
-console.log(exams, "remainingTime")
+// console.log(exams, "remainingTime")
 
 
 const handleReviewTag = async (questionId) => {
@@ -951,7 +1216,7 @@ const handleReviewTag = async (questionId) => {
 };
 
 
-console.log(pattern, "patternsss")
+// console.log(pattern, "patternsss")
 
 return (
   <LinearGradient
@@ -1593,7 +1858,7 @@ return (
                 { color: theme.textColor, fontWeight: "700" },
               ]}
             >
-              Skip Question
+              Skip 
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -1626,7 +1891,7 @@ return (
                 { color: theme.textColor, fontWeight: "700" },
               ]}
             >
-              Submit Selection
+              Submit 
             </Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleSubmitTest}>

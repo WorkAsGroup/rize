@@ -271,42 +271,44 @@ console.log(validMockTests, "ValidMocks")
 
 
   const handleStartTest = async (item) => {
-    // console.log("item", item);
     const previousExam = pre.find((p) => p.exam_name === item.exam_name);
-
+  
     let previousPaperId = null;
     if (previousExam) {
       previousPaperId = previousExam.previous_paper_id;
-      // console.log("previousPaperId:", previousPaperId);
     } else {
       console.log("No previous exam found for:", item.exam_name);
     }
-
+  
+    let sessionId = null; // Move outside so it’s accessible later
+  
     try {
-      // Add a try/catch block for better error handling
-      const dat = {
-        previous_exam_paper_id: previousPaperId,
-        student_user_exam_id: studentExamId,
-      };
-
-      const response = await getPreviousPapRes(dat);
-      // console.log("getPreviousPapRes Response:", JSON.stringify(response));
-
-      let sessionId = null; // Initialize sessionId
-      if (response && response.data && response.data.exam_session_id) {
-        sessionId = response.data.exam_session_id;
+      if (selectedType === "Previous") {
+        const dat = {
+          previous_exam_paper_id: previousPaperId,
+          student_user_exam_id: studentExamId,
+        };
+  
+        const response = await getPreviousPapRes(dat);
+  
+        if (response && response.data && response.data.exam_session_id) {
+          sessionId = response.data.exam_session_id;
+        } else {
+          console.warn("⚠️ No session ID returned in response");
+        }
       }
-
+  
       navigation.navigate("InstructionAuth", {
         obj: item,
         studentExamId: studentExamId,
         examtype: selectedType,
-        session_id: sessionId ? sessionId : item.custom_exam_id,
+        session_id: sessionId ? sessionId : item.custom_exam_id, // Fallback
       });
     } catch (error) {
       console.error("Error in handleStartTest:", error);
     }
   };
+  
 
   const handlePrv = async (item) => {
     const previous_id = pre.filter((p) => p.exam_name === item.exam_name);

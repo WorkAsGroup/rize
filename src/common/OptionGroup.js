@@ -29,7 +29,7 @@ const OptionGroup = ({ value: propValue, onChangeValue, multiple = false, option
             }
         }
     };
-console.log(selectedAnswers[selectedNumber] == 'C',"FinalCheck")
+// console.log(selectedAnswers[selectedNumber] == 'C',"FinalCheck")
     return (
         <View style={AppStyles.column}>
             <OptionCard 

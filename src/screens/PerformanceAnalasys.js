@@ -277,16 +277,20 @@ const PerformanceAnalasys = ({ route }) => {
   
   const memoizedWeeklyPerformance = useMemo(() => {
     return (
-      <WeeklyPerformance
+      <View>
+{examResults&&<WeeklyPerformance
         examResults={examResults}
         performanceSubOptions={performanceSubOptions}
         selectedPerformanceType={selectedPerformanceType}
         dateRange={dateRange}
         setSelectedPerformanceType={setSelectedPerformanceType}
         totalExamCount={totalExamCount}
-      />
+      />}
+
+      </View>
+      
     );
-  }, [selectedExam,
+  }, [
     examResults,
     selectedPerformanceType,
     dateRange,

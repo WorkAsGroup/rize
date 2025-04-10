@@ -52,36 +52,44 @@ console.log( mocklist, pre, customExams, "weioufgwoeyuyewfuywe")
                 ) : item.exam_session_id !== 0 && item.auto_save_id === 0 ? (
                   // Replay & Results Button
                   <View style={[styles.startExamBtn, { flexDirection: "row", marginRight: 10 }]}>
-                   {selectedType !== "custom" && <TouchableOpacity
-                      onPress={() => handleStartTest(item, "mockTest")}
-                      style={[styles.textExamBtn, styles.replayButton]}
+                   {selectedType !== "custom" &&   <TouchableOpacity
+                     onPress={() => handleStartTest(item, "mockTest")}
+                      style={[styles.textExamBtn, styles.resultsButton, , { marginRight: 5 }]}
                     >
-                      <Text style={styles.buttonText}>🔄</Text>
+                      {/* <Text style={styles.buttonText}>Results</Text> */}
+                      <Image source={require("../../images/synchronize.png")} style={[styles.icon]} />
                     </TouchableOpacity>}
                     <TouchableOpacity
                       onPress={() => handleCheckResults(item, "schedule_exam")}
                       style={[styles.textExamBtn, styles.resultsButton]}
                     >
-                      <Text style={styles.buttonText}>Results</Text>
+                      {/* <Text style={styles.buttonText}>Results</Text> */}
                       <Image source={require("../../images/pie-chart.png")} style={styles.icon} />
                     </TouchableOpacity>
                   </View>
                 ) : item.exam_session_id !== 0 && item.auto_save_id !== 0 ? (
                   // Resume & Results Button
                   <View style={[styles.startExamBtn, { flexDirection: "row", marginRight: 10 }]}>
-                    <LinearGradient
+                    {/* <LinearGradient
                       colors={["#B465DA", "#CF6CC9", "#EE609C", "#EE609C"]}
                       style={[styles.gradientButton, { marginRight: 10 }]}
                     >
                       <TouchableOpacity onPress={() => handleStartTest(item, "mockTest")}>
-                        <Text style={styles.textExamBtn}>Resume</Text>
+                      <Image source={require("../../images/replay.png")} style={{height: 18, width: 18}} />
                       </TouchableOpacity>
-                    </LinearGradient>
+                    </LinearGradient> */}
+                     <TouchableOpacity
+                     onPress={() => handleStartTest(item, "mockTest")}
+                      style={[styles.textExamBtn, styles.resultsButton, , { marginRight: 5 }]}
+                    >
+                      {/* <Text style={styles.buttonText}>Results</Text> */}
+                      <Image source={require("../../images/synchronize.png")} style={[styles.icon]} />
+                    </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => handleCheckResults(item, "schedule_exam")}
                       style={[styles.textExamBtn, styles.resultsButton]}
                     >
-                      <Text style={styles.buttonText}>Results</Text>
+                      {/* <Text style={styles.buttonText}>Results</Text> */}
                       <Image source={require("../../images/pie-chart.png")} style={styles.icon} />
                     </TouchableOpacity>
                   </View>
@@ -92,8 +100,8 @@ console.log( mocklist, pre, customExams, "weioufgwoeyuyewfuywe")
                     style={[styles.gradientButton, { marginRight: 10 }]}
                   >
                     <TouchableOpacity onPress={() => handleStartTest(item)}          >
-                      <Text style={styles.textExamBtn}>Resume</Text>
-                    </TouchableOpacity>
+                    <Image source={require("../../images/replay.png")} style={{height: 18, width: 18}} />
+                     </TouchableOpacity>
                   </LinearGradient>
                 )}
               </View>

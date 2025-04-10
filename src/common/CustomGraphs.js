@@ -24,7 +24,8 @@ const CustomLineChart = ({
 
   // Calculate dynamic max if not provided
   const allDataPoints = chartData.flat();
-  const calculatedYMax = Math.ceil(Math.max(...allDataPoints) / 1000) * 1000;
+  const calculatedYMax = Math.ceil(Math.max(...allDataPoints));
+
   const calculatedYMin = Math.min(...allDataPoints) > 0 ? 0 : Math.min(...allDataPoints);
 
   const finalYMax = yMax ?? calculatedYMax;

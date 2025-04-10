@@ -65,7 +65,7 @@ useEffect(() => {
             const value = selectedPerformanceType === "score"
                 ? Number(subject.obtained_marks) || 0
                 : Number(subject.average_time_spent) || 0;
-
+console.log(entry.subjects, "entrySubs")
             if (index === 0) first += value;
             else if (index === 1) second += value;
             else if (index === 2) third += value;
@@ -135,6 +135,7 @@ useEffect(() => {
 
 // when selecting a subject manually
 const handleChangeSubject = (item) => {
+console.log(examResults, item, "weidj")
     setSelectedSubject(item);
     setIsCustomSubjectMode(true);
     setLoading(true);
