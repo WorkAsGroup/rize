@@ -10,7 +10,9 @@ const windowHeight = Dimensions.get("window").height;
 const MockTests = ({selectedType, mocklist, handleStartTest,pre,handleCheckResults,  customExams,setMock,setShowCustom, setSelectedType}) => {
 console.log( mocklist, pre, customExams, "weioufgwoeyuyewfuywe")
       const colorScheme = useColorScheme();
-
+      const [selectedPYQExam, setSelectedPYQExam] = useState('mains')
+      const [mains, setMains] = useState([]);
+const [advance, setAdvance] = useState([]);
     // const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   const theme = darkTheme;
 
@@ -18,7 +20,26 @@ console.log( mocklist, pre, customExams, "weioufgwoeyuyewfuywe")
         setSelectedType(type);
     
       };
+      useEffect(() => {
+        if (pre && Array.isArray(pre)) {
+          const mainsList = [];
+          const advanceList = [];
+      
+          pre.forEach((exam) => {
 
+              if (exam.pexamtype === 1) {
+                mainsList.push(exam);
+              } else if (exam.pexamtype === 2) {
+                advanceList.push(exam);
+              }
+    
+          });
+      
+          setMains(mainsList);
+          setAdvance(advanceList);
+        }
+      }, [pre]);
+      
 
       const renderItemMock = ({ item }) => {
         // console.log(item, "exam status")
@@ -201,6 +222,26 @@ console.log( mocklist, pre, customExams, "weioufgwoeyuyewfuywe")
             </TouchableOpacity>
           </View>
         </ScrollView>
+        {selectedType=="previous"&& (
+          <View style={{display: 'flex', flexDirection: "row", alignContent: "center"}}>
+            <TouchableOpacity  style={styles.gradientButton} onPress={() => setSelectedPYQExam("mains")}>
+            <LinearGradient
+                      colors={["#B465DA", "#CF6CC9", "#EE609C", "#EE609C"]}
+                      style={styles.gradientButton}
+                    >
+                      <Text style={styles.textExamBtn}>Mains</Text>
+                    </LinearGradient>
+            </TouchableOpacity>
+            <TouchableOpacity  style={styles.gradientButton} onPress={() => setSelectedPYQExam("advance")}>
+            <LinearGradient
+                      colors={["#B465DA", "#CF6CC9", "#EE609C", "#EE609C"]}
+                      style={styles.gradientButton}
+                    >
+                      <Text style={styles.textExamBtn}>Advance</Text>
+                    </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        )}
         {selectedType == "custom" && <TouchableOpacity
           style={{ display: "flex", justifyContent: `${customExams&&customExams.length> 0 ? "flex-end":"center"}`, alignItems:  `${customExams&&customExams.length> 0 ? "flex-end":"center"}`, width: "100%" }}
           activeOpacity={0.8}
@@ -223,7 +264,7 @@ console.log( mocklist, pre, customExams, "weioufgwoeyuyewfuywe")
           </LinearGradient>
         </TouchableOpacity>}
         <FlatList
-          data={selectedType==="mock" ? mocklist : selectedType==="previous" ? pre : customExams}
+          data={selectedType==="mock" ? mocklist : selectedType==="previous" ? selectedPYQExam == "mains" ? mains:advance : customExams}
           renderItem={renderItemMock}
           
           keyExtractor={(item) => item.id ? item.id.toString() : Math.random().toString()}

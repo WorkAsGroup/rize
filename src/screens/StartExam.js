@@ -642,7 +642,7 @@ const handleTextInputChange = (text, questionId) => {
 
         const subjectCounts = {};
 
-        examsResponse?.data.forEach((exam) => {
+        examsResponse?.data?.forEach((exam) => {
           const subjectValue =
             exam.subject !== undefined ? exam.subject : "Unknown Subject";
 
