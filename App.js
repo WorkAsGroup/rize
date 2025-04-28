@@ -4,7 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { View, StyleSheet, Image, useColorScheme, BackHandler } from 'react-native';
 import { darkTheme, lightTheme } from './src/theme/theme';
-import { ExamProvider } from './src/ExamContext';
+
 import Login from './src/screens/Login';
 import Signup from './src/screens/Signup';
 import AccountCreated from './src/screens/AccountCreated';
@@ -19,7 +19,8 @@ import Instruction from './src/screens/Instruction';
 import MockTest from './src/screens/MockTest';
 import Instruct from './src/screens/Instruct';
 import EmailVerification from './src/screens/EmailVerification';
-
+import { Provider } from 'react-redux';
+import  store  from './src/store/store';
 
 import ResultMainComponent from './src/screens/ResultsMainConponent';
 import InstructionAuth from './src/screens/InstructionAuth';
@@ -41,27 +42,28 @@ const AuthNavigator = ({ onChangeAuth }) => {
   
 
   return (
+    <Provider store={store}>
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-    <Stack.Screen name="Intro" component={Intro} />
-    <Stack.Screen name="Login" component={Login} initialParams={{ onChangeAuth: onChangeAuth }} />
-    <Stack.Screen name="Signup" component={Signup} />
-    <Stack.Screen name="OTPScreen" component={OTPScreen} initialParams={{ onChangeAuth: onChangeAuth }} />
-    <Stack.Screen name="ResetPassword" component={ResetPassword} />
-    <Stack.Screen name="ResetLink" component={ResetLink} />
-    <Stack.Screen name="AccountCreated" component={AccountCreated} initialParams={{ onChangeAuth: onChangeAuth }}  />
-    <Stack.Screen name="Instruction" component={Instruction} />
-    <Stack.Screen name="Instruct" component={Instruct} />
-    <Stack.Screen name="MockTest" component={MockTest} />
-    <Stack.Screen name="Form" component={Form} /> 
-    <Stack.Screen name="EmailVerification" component={EmailVerification} />
-
-   <Stack.Screen name="ResetPasswordOTP" component={ResetPasswordOTP} />
-  </Stack.Navigator>
+      <Stack.Screen name="Intro" component={Intro} />
+      <Stack.Screen name="Login" component={Login} initialParams={{ onChangeAuth: onChangeAuth }} />
+      <Stack.Screen name="Signup" component={Signup} />
+      <Stack.Screen name="OTPScreen" component={OTPScreen} initialParams={{ onChangeAuth: onChangeAuth }} />
+      <Stack.Screen name="ResetPassword" component={ResetPassword} />
+      <Stack.Screen name="ResetLink" component={ResetLink} />
+      <Stack.Screen name="AccountCreated" component={AccountCreated} initialParams={{ onChangeAuth: onChangeAuth }} />
+      <Stack.Screen name="Instruction" component={Instruction} />
+      <Stack.Screen name="Instruct" component={Instruct} />
+      <Stack.Screen name="MockTest" component={MockTest} />
+      <Stack.Screen name="Form" component={Form} />
+      <Stack.Screen name="EmailVerification" component={EmailVerification} />
+      <Stack.Screen name="ResetPasswordOTP" component={ResetPasswordOTP} />
+    </Stack.Navigator>
+  </Provider>
   );
 };
 
 const AppNavigator = ({ onChangeAuth }) => (
-  <ExamProvider>
+  <Provider store={store} >
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="DashboardContent" >
        {(props) => <DashboardDrawer {...props} route={{ params: { onChangeAuth: onChangeAuth } }} />}
@@ -80,7 +82,7 @@ const AppNavigator = ({ onChangeAuth }) => (
 
 
   </Stack.Navigator>
-  </ExamProvider>
+  </Provider>
 );
 
 const SplashScreen = () => {

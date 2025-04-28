@@ -5,13 +5,14 @@ import { darkTheme, lightTheme } from "../../theme/theme";
 import LinearGradient from "react-native-linear-gradient";
 import { Dropdown } from 'react-native-element-dropdown';
 import { getLeaderBoards } from "../../core/CommonService";
+import { useSelector } from "react-redux";
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
 const LeaderBoard = ({studentExamId}) => {
-  
-    const [leaderBoardValue, setLeaderBoardValue] = useState(1);
+  const selectedExam = useSelector((state) => state.header.selectedExam);
+    const [leaderBoardValue, setLeaderBoardValue] = useState(0);
     const [leadData, setLeadData] = useState([]);
    const colorScheme = useColorScheme();
    const [champ, setChamp] = useState([]);
@@ -19,7 +20,7 @@ const LeaderBoard = ({studentExamId}) => {
         const theme =  darkTheme;
     const getLeaders = async () => {
       const data = {
-        student_user_exam_id: studentExamId,
+        student_user_exam_id: selectedExam,
       };
       try {
         // console.log("getLeader Boards fields", data);
@@ -56,8 +57,9 @@ const LeaderBoard = ({studentExamId}) => {
     }, [champ, leaderBoardValue]); // ✅ Now runs whenever `champ` updates
     
     const options = [
+   
+      { value: 0, label: "Daily" },
       { value: 1, label: "Weekly" },
-      { value: 0, label: "Daily" }
     ];
   
     // ✅ Handle Dropdown Change

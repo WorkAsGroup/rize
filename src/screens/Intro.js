@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from "react";
+import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -17,15 +17,18 @@ import LinearGradient from "react-native-linear-gradient";
 import { darkTheme, lightTheme } from "../theme/theme";
 import DropDownPicker from "react-native-dropdown-picker";
 import { Dropdown } from 'react-native-element-dropdown';
-import { getExamType, getPreExamOptions } from "../core/CommonService";
-
+import { addAnalytics, getExamType, getPreExamOptions } from "../core/CommonService";
+import { globalAnalytics } from "../store/thunks/questionsThunk";
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
-
+import { setDeviceId } from "../store/slices/headerSlice";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useDispatch, useSelector } from "react-redux";
 const COMPLETED_EXAMS_KEY = "completedExams";
+import { getUniqueId } from "react-native-device-info";
 
 export default function Intro({ navigation }) {
+  const dispatch = useDispatch();
   const colorScheme = useColorScheme();
   // const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   const theme = darkTheme;
@@ -38,7 +41,44 @@ export default function Intro({ navigation }) {
   const [examId, setExamId] = useState(null);
   const [examOpt, setExamOpt] = useState([]);
   const [mockTests, setMockTests] = useState([]);
+  const uniqueId = useSelector((state) => state.header.deviceId);
+ const uniqueIdRef = useRef();
 
+  
+ useEffect(() => {
+  uniqueIdRef.current = uniqueId;
+ },[uniqueId])
+
+  const handleAnalytics = async (id) => {
+      // console.log("hey Um called")
+      try {
+          // Define your params correctly
+          const params = {
+              "student_user_exam_id": selectedOption?.value,
+              "type": 0,
+              "source": 0,
+              "testonic_page_id": id,
+          };
+  
+          console.log(uniqueId,  "payloaddlscknl");
+  
+          // Create payload
+          const payload = {
+              ...params,
+              ip_address: uniqueIdRef.current ? uniqueIdRef.current: "",
+              location: "Hyderabad",
+          };
+  
+          console.log(payload, "payload");
+          const response = await addAnalytics(payload); 
+          console.log("Analytics Response:", response);
+  
+      } catch (error) {
+          // Handle errors gracefully
+          const errorMessage = error.response?.data?.message || error.message;
+          console.error("Error:", errorMessage);
+      }
+  };
   useEffect(() => {
     const initialize = async () => {
       await getExam();
@@ -46,6 +86,24 @@ export default function Intro({ navigation }) {
 
     initialize();
   }, []);
+
+   const getData = async () => {
+        const uniqueId = await getUniqueId(); // Get the unique device ID
+       dispatch( setDeviceId(uniqueId))
+        // Get the current route using navigation.getCurrentRoute()
+        // const currentRoute = navigation.getCurrentRoute(); 
+        
+        // Log the uniqueId and current route information
+      if(uniqueId) {
+        await handleAnalytics(4);
+      }
+    };
+
+  useEffect(() => {
+    getData();
+  },[])
+
+
 
   useEffect(() => {
     const loadCompletedExams = async () => {
@@ -96,11 +154,12 @@ export default function Intro({ navigation }) {
     setIsOpen(true);
   };
 
-  const handleOptionSelect = (option) => {
+  const handleOptionSelect = async(option) => {
     setIsLoading(true);
     setSelectedOption(option);
     setIsOpen(false);
     setIsLoading(false);
+    await handleAnalytics(5);
   };
 
   const closeDropdown = () => {
@@ -133,10 +192,8 @@ export default function Intro({ navigation }) {
 
       const mockData = filteredExams.map((exam, index) => {
         const durationInMinutes = exam.exam_duration || 180;
-        const hours = Math.floor(durationInMinutes / 60);
-        const minutes = durationInMinutes % 60;
-        const formattedDuration = `${hours} hours ${minutes < 10 ? "0" : ""}${minutes} minutes`;
-
+        const formattedDuration = `${durationInMinutes} minutes`;
+      
         return {
           id: index,
           examName: exam.exam_name || "Mock Test",
@@ -185,7 +242,7 @@ export default function Intro({ navigation }) {
                 Exam Name:
               </Text>
               <Text style={[styles.tag, { color: theme.textColor }]}>
-                {item.examName}
+                {item.examName}{" "}
               </Text>
             </View>
 
@@ -266,12 +323,11 @@ export default function Intro({ navigation }) {
           </Text>
           <Dropdown
             style={{
-              backgroundColor: theme.background,
+              backgroundColor: "#000",
               borderColor: theme.tx1,
               borderWidth: 1,
               minHeight: 40,
               width: 220,
-              // paddingH2rizontal: 10,
               borderRadius: 10,
             }}
             containerStyle={{
@@ -279,16 +335,11 @@ export default function Intro({ navigation }) {
               borderColor: theme.brad,
               maxHeight: 150,
             }}
-            // placeholderStyle={{
-            //   color: theme.textColor,
-            //   fontSize: 12, // Smaller font size for placeholder
-            // }}
             selectedTextStyle={{
               color: theme.textColor,
-              padding: 10, // Smaller font size for selected value
+              padding: 10, 
             }}
             itemTextStyle={{
-              // fontSize: 11, ✅ Decreased font size for dropdown items
               color: theme.textColor,
             }}
             data={options.map((exam) => ({ label: exam, value: exam }))}
@@ -297,6 +348,27 @@ export default function Intro({ navigation }) {
             value={selectedOption}
             onChange={(item) => handleOptionSelect(item.value)}
             placeholder="Select"
+            renderItem={(item) => {
+              const isSelected = item.value === selectedOption;
+              return (
+                <View
+                  style={{
+                    padding: 10,
+                    backgroundColor: isSelected ? 'gray' : theme.textColor1,  // Active item color
+                    borderRadius: 5,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: isSelected ? '#fff' : theme.textColor,
+                      fontWeight: isSelected ? 'bold' : 'normal',
+                    }}
+                  >
+                    {item.label}
+                  </Text>
+                </View>
+              );
+            }}
           />
 
         </View>

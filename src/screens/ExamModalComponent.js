@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Modal, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, Modal, StyleSheet, ActivityIndicator, DeviceEventEmitter, Image, TouchableOpacity } from "react-native";
 import { Button, IconButton } from "react-native-paper";
 import DropDownPicker from "react-native-dropdown-picker";
 import { getExamType, addExams } from "../core/CommonService";
+import { useSelector } from "react-redux";
 
-const ExamModalComponent = ({ show, setShow, studentUserId, onRefresh, existingExams }) => {
+const ExamModalComponent = ({ show, setShow,studentUserId,  onRefresh, existingExams }) => {
   const [loading, setLoading] = useState(false);
   const [examsData, setExamsData] = useState([]);
 
@@ -13,9 +14,9 @@ const ExamModalComponent = ({ show, setShow, studentUserId, onRefresh, existingE
   const [selectedExam, setSelectedExam] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
   const [years] = useState([{ label: "2025", value: "2025" }]);
-
+  // const studentUserId = useSelector((state) => state.header.selectedExam)
   const [errors, setErrors] = useState({ examId: "", yearId: "" });
-
+console.log(studentUserId, "weifweiufbwi")
   useEffect(() => {
     if (show) {
       setSelectedExam(null);
@@ -27,31 +28,43 @@ const ExamModalComponent = ({ show, setShow, studentUserId, onRefresh, existingE
   const getExamData = async () => {
     try {
       const exams = await getExamType();
-
       let filteredExamsData = [];
-console.log(existingExams, exams, "existingExams, examsData")
-      // If existingExams is null or empty, show all exams
+  
+      console.log(existingExams, exams, "existingExams, examsData");
+  
       if (!existingExams || existingExams.length === 0) {
         filteredExamsData = exams.data;
       } else {
-
-
-        const existingExamIds = new Set(existingExams.map((exam) => exam.exam_id));
-        filteredExamsData = exams.data.filter((exam) => !existingExamIds.has(exam.exam_id));
-
-        // If no exams were filtered, show all exams
+        // Extract only valid numeric IDs from existingExams
+        const existingExamIds = new Set(
+          existingExams
+            .map((exam) => Number(exam.value))
+            .filter((id) => !isNaN(id))
+        );
+  
+        // Filter out exams that already exist in existingExamIds
+        filteredExamsData = exams.data.filter(
+          (exam) => !existingExamIds.has(Number(exam.exam_id))
+        );
+  
+        // Optional: If nothing left after filtering, you can skip resetting to all
+        // If you want to strictly return only non-existing ones, remove this block:
+        /*
         if (filteredExamsData.length === 0) {
           filteredExamsData = exams.data;
         }
+        */
       }
-
-      console.log("Filtered Exams Data:", filteredExamsData);
+  
+      console.log("Filtered Exams Data (Non-Existing):", filteredExamsData);
       setExamsData(filteredExamsData || []);
     } catch (error) {
       console.error("Error fetching exam types:", error);
       setExamsData([]);
     }
   };
+  
+  
 
 
   useEffect(() => {
@@ -64,9 +77,9 @@ console.log(existingExams, exams, "existingExams, examsData")
     let newErrors = { examId: "", yearId: "" };
 
     if (!selectedExam) newErrors.examId = "Please select an exam";
-    if (!selectedYear) newErrors.yearId = "Please select a year";
+    // if (!selectedYear) newErrors.yearId = "Please select a year";
 
-    if (newErrors.examId || newErrors.yearId) {
+    if (newErrors.examId) {
       setErrors(newErrors);
       return;
     }
@@ -77,7 +90,7 @@ console.log(existingExams, exams, "existingExams, examsData")
       const payload = {
         student_user_id: studentUserId,
         exam_id: parseInt(selectedExam),
-        target_year: parseInt(selectedYear),
+        target_year:2025,
       };
 
       const response = await addExams(payload);
@@ -88,6 +101,12 @@ console.log(response, "response")
           setShow(false);
           setLoading(false);
         // }, 2000);
+
+         if(response.statusCode==200) {
+        setTimeout(() => {
+          DeviceEventEmitter.emit('allExamsSubmitted');
+        },1000)
+         }
       } else {
         setLoading(false);
       }
@@ -104,7 +123,10 @@ console.log(response, "response")
         <View style={styles.modalContent}>
           <View style={styles.header}>
             <Text style={styles.title}>Add New Exam</Text>
-            {(existingExams?.length > 0) && <IconButton icon="close" onPress={() => setShow(false)} />}
+            {(existingExams?.length > 0) && <TouchableOpacity onPress={() => setShow(false)} style={styles.closeButton}>
+  <Image source={require('../images/delete.png')} style={styles.closeIcon} />
+</TouchableOpacity>
+}
           </View>
 
 
@@ -135,7 +157,7 @@ console.log(response, "response")
           />
 
           {errors.examId && <Text style={styles.errorText}>{errors.examId}</Text>}
-          <Text style={styles.label}>Year</Text>
+          {/* <Text style={styles.label}>Year</Text>
           <DropDownPicker
             open={openYear}
             value={selectedYear}
@@ -155,7 +177,7 @@ console.log(response, "response")
             disabled={loading}
           />
 
-          {errors.yearId && <Text style={styles.errorText}>{errors.yearId}</Text>}
+          {errors.yearId && <Text style={styles.errorText}>{errors.yearId}</Text>} */}
           <Button mode="contained" disabled={loading} style={styles.button} onPress={handleSubmit}>
             {loading ? <ActivityIndicator color="#fff" size="small" /> : "Add Details"}
           </Button>
@@ -192,6 +214,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "bold",
   },
+    closeIcon: {
+      width: 25,
+      height: 25,
+    },
+
   errorText: {
     color: "red",
     fontSize: 12,

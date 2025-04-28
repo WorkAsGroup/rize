@@ -35,7 +35,7 @@ const HtmlComponent = (props) => {
         text = striptags(text,'<p><img>');
     }
     const source = {
-        html: text
+        html: `${text} `
       };
 
     CUSTOM_STYLES = { 

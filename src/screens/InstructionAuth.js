@@ -19,6 +19,8 @@ import Svg, {
   Stop,
   Text as SvgText,
 } from "react-native-svg";
+import { addAnalytics } from "../core/CommonService";
+import { useSelector } from "react-redux";
 var striptags = require("striptags");
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
@@ -26,12 +28,56 @@ const windowHeight = Dimensions.get("window").height;
 export default function InstructionAuth({ navigation, route }) {
   const colorScheme = useColorScheme();
   const [session_id, setSessionid] = useState(route?.params?.session_id);
-  const theme = colorScheme === "dark" ? darkTheme : lightTheme;
+  const theme =  lightTheme;
   const obj = route?.params?.obj;
   const studentExamId = route?.params?.studentExamId;
   const examtype = route?.params?.examtype;
+  const uniqueId = useSelector((state) => state.header.deviceId);
+  
+  
+    
+  
+  const handleAnalytics = async () => {
+   
+      try {
+          // Define your params correctly
+          const params = { 
+              "student_user_exam_id": 0,
+              "type": 0,
+              "source": 0,
+              "testonic_page_id": route?.params?.type == "mock" ? 47 : route?.params?.type == "previous" ? 51 : 56,
+          };
+  
+          console.log(uniqueId,  "payloaddlscknl");
+  
+          // Create payload
+          const payload = {
+              ...params,
+              ip_address: uniqueId ? uniqueId: "",
+              location: "Hyderabad", // Ensure location is correctly handled (but you should pass the location data properly here)
+          };
+  
+          console.log(payload, "payload");
+  
+          // Send analytics request
+          const response = await addAnalytics(payload); // Assuming addAnalytics is an API call function
+          console.log("Analytics Response:", response);
+  
+      } catch (error) {
+          // Handle errors gracefully
+          const errorMessage = error.response?.data?.message || error.message;
+        
+          console.error("Error:", errorMessage);
+      }
+  };
 
-  console.log("mocktest1", obj);
+
+  useEffect(() => {
+    if(uniqueId&&route?.params?.type)
+      handleAnalytics()
+
+  },[uniqueId, route?.params?.type])
+  // console.log("mocktest1", obj);
   const sanitizeHtml = (text) => {
     if (text.length > 0) {
       text = text.replace("&nbsp;", " ");
@@ -120,7 +166,7 @@ padding:10px auto;
                       for the "{obj.exam_name}"
                     </Text>
                   </View>
-                  <Text>
+                  <Text style={{ color: theme.textColor,}}>
                     Read all the instructions carefully before start an exam.
                   </Text>
                   <View>
@@ -202,199 +248,18 @@ padding:10px auto;
                   // baseFontStyle={baseFontStyle}
                   // {...DEFAULT_PROPS}
                   contentWidth={windowWidth}
+                  tagsStyles={{
+                    p: { color: theme.textColor },
+                    span: { color: theme.textColor },
+                    div: { color: theme.textColor },
+                  }}
                 />
-                {/* <Svg height="40" width={windowWidth * 0.9}>
-                                    <Defs>
-                                        <SvgLinearGradient id="grad" x1="0" y1="1" x2="1" y2="1">
-                                            <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
-                                            <Stop offset="1" stopColor={theme.bg2} stopOpacity="1" />
-                                        </SvgLinearGradient>
-                                    </Defs>
-                                    <SvgText
-                                        fill="url(#grad)"
-                                        fontSize="24"
-                                        fontWeight="bold"
-                                        x="150"
-                                        y="20"
-                                        textAnchor="middle"
-                                        alignmentBaseline="middle"
-                                        fontFamily="CustomFont"
-
-                                    >
-                                        Please read the following
-                                    </SvgText>
-                                </Svg>
-
-                                <Svg height="40" width={windowWidth * 0.9} marginTop={-10}>
-                                    <Defs>
-                                        <SvgLinearGradient id="grad" x1="0" y1="1" x2="1" y2="1">
-                                            <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
-                                            <Stop offset="1" stopColor={theme.bg2} stopOpacity="1" />
-                                        </SvgLinearGradient>
-                                    </Defs>
-                                    <SvgText
-                                        fill="url(#grad)"
-                                        fontSize="24"
-                                        fontWeight="bold"
-                                        x="130"
-                                        y="20"
-                                        textAnchor="middle"
-                                        alignmentBaseline="middle"
-                                        fontFamily="CustomFont"
-
-                                    >
-                                        instructions carefully
-                                    </SvgText>
-                                </Svg>
-
-                                <Svg height="50" width={windowWidth * 0.9}>
-                                    <Defs>
-                                        <SvgLinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
-                                            <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
-                                            <Stop offset="1" stopColor={theme.bg2} stopOpacity="1" />
-                                        </SvgLinearGradient>
-                                    </Defs>
-                                    <SvgText
-                                        fill="url(#grad)"
-                                        fontSize="16"
-                                        fontWeight="bold"
-                                        x="50"
-                                        y="20"
-                                        textAnchor="middle"
-                                        alignmentBaseline="middle"
-                                    >
-                                        For MCQs -
-                                    </SvgText>
-                                </Svg>
-                                <View style={{ marginTop: -20 }}>
-                                    <View style={{ flexDirection: 'row', padding: 10 }}>
-                                        <Text
-                                            style={{ height: 10, width: 10, backgroundColor: theme.textColor, borderRadius: 10, borderWidth: 1, marginRight: 5, marginTop: 3 }}
-
-                                        />
-                                        <Text style={{ color: theme.textColor, marginTop: -2, width: "85%", fontWeight: '400', fontSize: 16, marginLeft: 3 }}>
-                                            1 Mark will be awarded for every correct answer and 0 Mark will be deducted for every incorrect answer
-                                        </Text>
-                                    </View>
-
-
-                                </View>
-
-                                <Svg height="50" width={windowWidth * 0.9}>
-                                    <Defs>
-                                        <SvgLinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
-                                            <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
-                                            <Stop offset="1" stopColor={theme.bg2} stopOpacity="1" />
-                                        </SvgLinearGradient>
-                                    </Defs>
-                                    <SvgText
-                                        fill="url(#grad)"
-                                        fontSize="16"
-                                        fontWeight="bold"
-                                        x="105"
-                                        y="20"
-                                        textAnchor="middle"
-                                        alignmentBaseline="middle"
-                                    >
-                                        Do's while taking the test
-                                    </SvgText>
-                                </Svg>
-                                <View style={{ marginTop: -20 }}>
-                                    <View style={{ flexDirection: 'row', padding: 10 }}>
-                                        <Text
-                                            style={{ height: 10, width: 10, backgroundColor: theme.textColor, borderRadius: 10, borderWidth: 1, marginRight: 5, marginTop: 3 }}
-
-                                        />
-                                        <Text style={{ color: theme.textColor, marginTop: -2, width: "85%", fontWeight: '400', fontSize: 16, marginLeft: 3 }}>
-                                            Make sure you begin the test with a plan. Start with your strongest section.                                        </Text>
-                                    </View>
-                                    <View style={{ flexDirection: 'row', paddingStart: 10, }}>
-                                        <Text
-                                            style={{ height: 10, width: 10, backgroundColor: theme.textColor, borderRadius: 10, borderWidth: 1, marginRight: 5, marginTop: 3 }}
-
-                                        />
-                                        <Text style={{ color: theme.textColor, marginTop: -2, width: "85%", fontWeight: '400', fontSize: 16, marginLeft: 3 }}>
-                                            Go through the entire paper and attempt the questions you know first.</Text>                                    </View>
-                                    <View style={{ flexDirection: 'row', paddingStart: 10, marginTop: 10 }}>
-                                        <Text
-                                            style={{ height: 10, width: 10, backgroundColor: theme.textColor, borderRadius: 10, borderWidth: 1, marginRight: 5, marginTop: 3 }}
-
-                                        />
-                                        <Text style={{ color: theme.textColor, marginTop: -2, width: "85%", fontWeight: '400', fontSize: 16, marginLeft: 3 }}>
-                                            Make sure you save at least 20-30 mins in the end to revisit your answers in an online test, you can change your answer at any time.                                       </Text>
-                                    </View>
-
-                                </View> */}
+              
               </View>
 
-              {/* <Svg height="50" width={windowWidth * 0.9}>
-                                <Defs>
-                                    <SvgLinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
-                                        <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
-                                        <Stop offset="1" stopColor={theme.bg2} stopOpacity="1" />
-                                    </SvgLinearGradient>
-                                </Defs>
-                                <SvgText
-                                    fill="url(#grad)"
-                                    fontSize="16"
-                                    fontWeight="bold"
-                                    x="125"
-                                    y="20"
-                                    textAnchor="middle"
-                                    alignmentBaseline="middle"
-                                >
-                                    Don'ts while taking the test
-                                </SvgText>
-                            </Svg> */}
-              {/* <View style={{ marginTop: -20 }}>
-                                <View style={{ flexDirection: 'row', padding: 10 }}>
-                                    <Text
-                                        style={{ height: 10, width: 10, backgroundColor: theme.textColor, borderRadius: 10, borderWidth: 1, marginRight: 5, marginTop: 3 }}
+     
 
-                                    />
-                                    <Text style={{ color: theme.textColor, marginTop: -2, width: "85%", fontWeight: '400', fontSize: 16, marginLeft: 3 }}>
-                                        Don't change the date and time of the device in between the test otherwise ,it will get auto submitted.                                        </Text>
-                                </View>
-                                <View style={{ flexDirection: 'row', paddingStart: 10, }}>
-                                    <Text
-                                        style={{ height: 10, width: 10, backgroundColor: theme.textColor, borderRadius: 10, borderWidth: 1, marginRight: 5, marginTop: 3 }}
-
-                                    />
-                                    <Text style={{ color: theme.textColor, marginTop: -2, width: "85%", fontWeight: '400', fontSize: 16, marginLeft: 3 }}>
-                                        Don't switch to web or app for the same test once you started in the current app.</Text>                                    </View>
-                                <View style={{ flexDirection: 'row', paddingStart: 10, marginTop: 10 }}>
-                                    <Text
-                                        style={{ height: 10, width: 10, backgroundColor: theme.textColor, borderRadius: 10, borderWidth: 1, marginRight: 5, marginTop: 3 }}
-
-                                    />
-                                    <Text style={{ color: theme.textColor, marginTop: -2, width: "85%", fontWeight: '400', fontSize: 16, marginLeft: 3 }}>
-                                        Don't submit the test before time. Try to use the entire duration of the test wisely.                                       </Text>
-                                </View>
-
-
-                            </View> */}
-
-              {/* <Svg height="50" width={windowWidth * 0.9}>
-                                <Defs>
-                                    <SvgLinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
-                                        <Stop offset="0" stopColor={theme.bg1} stopOpacity="1" />
-                                        <Stop offset="1" stopColor={theme.bg2} stopOpacity="1" />
-                                    </SvgLinearGradient>
-                                </Defs>
-                                <SvgText
-                                    fill="url(#grad)"
-                                    fontSize="16"
-                                    fontWeight="bold"
-                                    x="140"
-                                    y="20"
-                                    textAnchor="middle"
-                                    alignmentBaseline="middle"
-                                >
-                                    Actions you can take during exam
-                                </SvgText>
-                            </Svg> */}
-
-              <Text>👍 Good luck for your exam</Text>
+              <Text style={{color: theme.textColor}}>👍 Good luck for your exam</Text>
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => {
@@ -403,6 +268,7 @@ padding:10px auto;
                     obj: obj,
                     studentExamId: studentExamId,
                     examtype: examtype,
+                    type: route?.params?.type,
                     session_id: session_id,
                   });
                 }}

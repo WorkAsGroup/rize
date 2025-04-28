@@ -2,10 +2,12 @@ import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-nativ
 import HtmlComponent from './HtmlComponent';
 import AppStyles from './AppStyles';
 import COLORS from './Colors';
-import React, { Fragment } from 'react'
+import React, { Fragment, useEffect, useRef } from 'react'
 import OptionGroup from './OptionGroup';
 import { theme } from '../core/theme';
 import UserUtils from './UserUtils';
+import { useSelector } from 'react-redux';
+
 
 
 
@@ -41,12 +43,21 @@ const ReloadButton = ({onPress}) =>{
 
 const LoadQuestion = (props) => {
     // console.log(props, "lsidjceoicoreicoericeoricer")
-    const {item,currentQuestionIndex,questionLength,onChangeValue,onSkip,onPrevious=null,onReviewLater,onReload=null,onNext,onSubmit,type='exam'} = props;  
-    let {id,question,option1,option2,option3,option4,qtype,inputquestion='',compquestion,mat_question,list1type,list2type,answer,attempted,result,reviewLater,section_name='',section='',explanation,bookmarked,isSubmitted,errorReason} = item;
+    const {item,attempted,currentQuestionIndex,questionLength,onChangeValue,onSkip,onPrevious=null,onReviewLater,onReload=null,onNext,onSubmit,type='exam'} = props;  
+    let {id,question,option1,option2,option3,option4,qtype,inputquestion='',compquestion,mat_question,list1type,list2type,answer,result,reviewLater,section_name='',section='',explanation,bookmarked,isSubmitted,errorReason} = item;
     const {selectedAnswers, selectedNumber, globalQuestionTypes,currentTab,questions,  handleTextInputChange,
     handleSelectAndNext,handleAnswerSelect, textInputValues} = props;
+// console.log(attempted, "aeilfjwoeifowencoweubc")
+const studentExamId = useSelector((state) => state.header.selectedExam);
+const studentExamIdRef = useRef(); 
+// console.log(studentExamId, "alednoieldoweindowe")
 
 
+useEffect(() => {
+if(studentExamId!==null) {
+    studentExamIdRef.current=studentExamId
+}
+},[studentExamId])
     // console.log(item, "iurtiuegiuer")
     // let qtypeName = [];
 
@@ -203,37 +214,53 @@ const LoadQuestion = (props) => {
 
                             
                           
-<TextInput
-                        style={[
-                          styles.textInputStyle,
-                          {
-                            // backgroundColor: theme.textColor1,
-                            // borderColor: theme.textColor1,
-                            color: theme.textColor,
-                          },
-                        ]}
-                        value={textInputValues[selectedNumber] || ""}
-                        onChangeText={(text) => {
-                          handleTextInputChange(text, selectedNumber);
-                          // console.log("TextInput changed for question:", selectedNumber, "to:", text);
-                        }}
-                        placeholder={`Enter answer`}
-                        keyboardType="numeric"
-                        placeholderTextColor={theme.textColor}
-                        multiline={true}
-                        onSubmitEditing={() => {
-                          // console.log("onSubmitEditing called for question:", selectedNumber);
-                          handleSelectAndNext(selectedNumber);
-                        }}
-                        onBlur={() =>
-                          handleAnswerSelect(
-                            selectedNumber,
-                            textInputValues[selectedNumber]
-                          )
-                        }
-                      />
+{
+    studentExamIdRef.current == null ? (
+        <TextInput
+    style={[styles.textInputStyle, { color: theme.textColor }]}
+    value={textInputValues?textInputValues[selectedNumber] : ""}
+    onChangeText={(text) => {
+        handleTextInputChange(text, selectedNumber);
+    }}
+    placeholder={`Enter answer`}
+    keyboardType="numeric"
+    placeholderTextColor={theme.textColor}
+    multiline={true}
+    onSubmitEditing={() => {
+        handleSelectAndNext(selectedNumber);
+    }}
+    onBlur={() =>
+        handleAnswerSelect(
+            selectedNumber,
+            textInputValues?textInputValues[selectedNumber] : "",
+        )
+    }
+/>
+    ) :(
+        <TextInput
+    style={[styles.textInputStyle, { color: theme.textColor }]}
+    value={attempted}
+    onChangeText={(text) => {
+        handleTextInputChange(text, selectedNumber);
+    }}
+    placeholder={`Enter answer`}
+    keyboardType="numeric"
+    placeholderTextColor={theme.textColor}
+    multiline={true}
+    onSubmitEditing={() => {
+        handleSelectAndNext(selectedNumber);
+    }}
+    onBlur={() =>
+        handleAnswerSelect(
+            selectedNumber,
+            attempted,
+        )
+    }
+/>
+    )
+}
 
-      
+                       
                             
 
                         </Fragment>

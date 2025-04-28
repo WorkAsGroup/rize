@@ -14,6 +14,7 @@ import LinearGradient from "react-native-linear-gradient";
 import Svg, { Path } from "react-native-svg";
 import { darkTheme, lightTheme } from "../theme/theme";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ImageBackground } from "react-native";
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
@@ -60,56 +61,58 @@ export default function EmailVerification({navigation,route}) {
  
 
   return (
-    <LinearGradient
-      colors={theme.background}
-      style={styles.container}
-      start={{ x: 0, y: 1 }}
-      end={{ x: 1, y: 1 }}
-    >
+        <ImageBackground
+        source={require("../images/commonBack.jpg")}  // Or a URI: { uri: 'https://...' }
+        style={{ width: '100%', height: '100%',}}
+        // imageStyle={{ }}  // optional: for rounded corners
+      >
       <View contentContainerStyle={styles.scrollContainer}>
         <View style={styles.header}>
-          <Image
-            style={[styles.logo, { tintColor: theme.textColor1 }]}
-            source={require("../images/title.png")}
-          />
-          <Text style={[styles.tagline, { color: theme.textColor1 }]}>
-            Your path to success starts here!
-          </Text>
+           <Image
+                                 style={[styles.logo,]}
+                                 source={require("../images/logo.png")}
+                             />
+                            <Text style={[styles.tagline, { color: theme.textColor1 }]}>
+           <Text style={{ fontWeight: 'bold',fontSize: 25, color: '#e614e1' }}>Unlock</Text> the Gateway to{" "}
+           
+         </Text>
+         <Text style={[styles.tagline, { color: "#e614e1", marginLeft: 120, marginTop: 5 }]}>
+                              Better Learning !{" "}
+                             </Text>
+         
         </View>
 
-        <Svg height="180" width="100%" viewBox="145 140 320 320">
-          <Path fill={theme.path} d="M 80 300 c 150 -180 690 -180 830 0" />
-        </Svg>
+     
 
         <View
           style={[
             styles.formContainer,
-            { backgroundColor: theme.path },
+            { backgroundColor: "transparent"  },
           ]}
         >
-          <View style={{ top: -180,padding:20 }}>
-          <Text style={[ { color: theme.wb,fontSize:20,marginBottom:10 ,textAlign: "center",fontWeight:'700'}]}>
+          <View style={{ top: -80,padding:20 }}>
+          <Text style={[ { color: "#fffff",fontSize:20,marginBottom:10 ,textAlign: "center",fontWeight:'700'}]}>
                             Add Email
                         </Text>
 
                       
-            <Text style={[styles.welcomeText, { color: theme.white }]}>
+            <Text style={[styles.welcomeText, { color: "#fffff"}]}>
              Please provide your email ID to recover your
             </Text>
-            <Text style={[styles.welcomeText, { color: theme.white }]}>
+            <Text style={[styles.welcomeText, { color: "#fffff"}]}>
              account in case you lose access to your phone
             </Text>
-            <Text style={[styles.welcomeText, { color: theme.white }]}>
+            <Text style={[styles.welcomeText, { color: "#fffff"}]}>
             number and to receive results over email.
             </Text>
             <TextInput
                             style={[
                                 styles.input,
                                 {
-                                    borderColor: theme.inputBorder,
-                                    backgroundColor: "#fff",
+                                    borderColor: "#e614e1",
+                                    backgroundColor: "transparent",
                                     borderWidth:  0,
-                                    color: "#000",
+                                    color: "#fffff",
                                     marginTop:20
                                 },
                             ]}
@@ -184,7 +187,7 @@ export default function EmailVerification({navigation,route}) {
                   },
                 ]}
               >
-                Login to access:
+                Login to access:{" "}
               </Text>
               <View style={{justifyContent:'flex-end',height:50}}>
               <ScrollView
@@ -215,7 +218,7 @@ export default function EmailVerification({navigation,route}) {
           </View>
         </View>
       </View>
-    </LinearGradient>
+      </ImageBackground>
   );
 }
 

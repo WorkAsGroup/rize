@@ -2,13 +2,15 @@ import React, { useState } from "react";
 import { View, Text, Modal, Image, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
-
+import { setFinishTest } from "../../store/slices/examSlice";
 // import { getInstructions } from "../../examInstructions/instructionsSelectors";
 import congratsLogo from "../../images/congratsLogo.png";
 import timeOverLogo from "../../images/timeOverLogo.png";
+import { useDispatch } from "react-redux";
 
-const SubmitTestModal = ({studentExamId,data, setFinishTest, finishTest, isTimeUp, examType }) => {
+const SubmitTestModal = ({studentExamId,data, finishTest, isTimeUp, examType }) => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
 // console.log(studentExamId,data, finishTest, isTimeUp, examType, "submit")
  const [loading, setLoading] = useState(false);
   // const examInstructionDetails = useSelector(getInstructions);
@@ -19,7 +21,7 @@ const SubmitTestModal = ({studentExamId,data, setFinishTest, finishTest, isTimeU
     // } else {
     //   // navigation.navigate(APP_ROUTES.DASHBOARD);
     // }
-    setFinishTest(false);
+   dispatch(setFinishTest(false))
     navigation.navigate("DashboardContent")
  
   };
@@ -35,7 +37,7 @@ const SubmitTestModal = ({studentExamId,data, setFinishTest, finishTest, isTimeU
     }
     // dispatch(setExamSessionId(data.exam_session_id));
     navigation.navigate("resultsPage", { state: examObject });
-    setFinishTest(false);
+    dispatch(setFinishTest(false));
   };
  
   return (

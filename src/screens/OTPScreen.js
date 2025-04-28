@@ -17,6 +17,7 @@ import { darkTheme, lightTheme } from "../theme/theme";
 import { getLoginDetails,reSendOTP,  getOTPSubmittedDetails } from "../core/CommonService";
 import Toast from 'react-native-toast-message';
 import OTPTextInput from './OTPTextInput'; 
+import { ImageBackground } from "react-native";
 
 
 const windowWidth = Dimensions.get("window").width;
@@ -25,7 +26,7 @@ const windowHeight = Dimensions.get("window").height;
 export default function OTPScreen({ navigation, route }) {
     const colorScheme = useColorScheme();
     const[errorMsg, setErrorMsg] = useState("")
-    const theme = colorScheme === "dark" ? darkTheme : lightTheme;
+    const theme = darkTheme;
     const mobile = route?.params?.mobile;
     const [reSend, setReSend] = useState(false)
     const [studentId, setStudentId ]= useState(route?.params?.studentId);
@@ -180,12 +181,11 @@ console.log(response.data, route.params, "success")
     }
 
     return (
-        <LinearGradient
-        colors={theme.background}
-        style={styles.container}
-        start={{ x: 0, y: 1 }}
-        end={{ x: 1, y: 1 }}
-      >
+       <ImageBackground
+           source={require("../images/commonBack.jpg")}  // Or a URI: { uri: 'https://...' }
+           style={{ width: '100%', height: '100%',}}
+           // imageStyle={{ }}  // optional: for rounded corners
+         > 
         <KeyboardAvoidingView 
           behavior={Platform.OS === "ios" ? "padding" : "height"} 
           style={{ flex: 1 }}
@@ -196,34 +196,34 @@ console.log(response.data, route.params, "success")
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.header}>
-              <Image
-                style={[styles.logo, { tintColor: theme.textColor1 }]}
-                source={require("../images/title.png")}
-              />
-              <Text style={[styles.tagline, { color: theme.textColor1 }]}>
-                Your path to success starts here!
-              </Text>
+               <Image
+                                     style={[styles.logo,]}
+                                     source={require("../images/logo.png")}
+                                 />
+                                <Text style={[styles.tagline, { color: "#ffffff" }]}>
+               <Text style={{ fontWeight: 'bold',fontSize: 25, color: '#e614e1' }}>Unlock</Text> the Gateway to{" "}
+               
+             </Text>
+             <Text style={[styles.tagline, { color: "#e614e1", marginLeft: 120, marginTop: 5 }]}>
+                                  Better Learning !{" "}
+                                 </Text>
             </View>
       
-            <Svg height="180" width="100%" viewBox="145 140 320 320">
-              <Path fill={theme.path} d="M 80 300 c 150 -180 690 -180 830 0" />
-            </Svg>
+           
       
-            <View style={[styles.formContainer, { backgroundColor: theme.path }]}>
-              <View style={{ top: -200, padding: 20 }}>
-                <Text style={[styles.welcomeText, { color: theme.wb }]}>
-                  Welcome {mobile}!
-                </Text>
-                <Text style={[styles.instructionsText, { color: theme.wb, paddingBottom: 20 }]}>
+            <View style={[styles.formContainer, { backgroundColor: "transparent" }]}>
+              <View style={{ top: -10, padding: 20 }}>
+
+                <Text style={[styles.instructionsText, { color: "#ffffff", paddingBottom: 20 }]}>
                   If you need to update any information, click the button below.
                 </Text>
       
                 <TouchableOpacity
-                  style={[styles.actionButton, { borderColor: theme.wb, padding: 10 }]}
+                  style={[styles.actionButton, { borderColor: "#ffffff", padding: 10 }]}
                   onPress={handleUpdateInfo}
                   disabled={loading}
                 >
-                  <Text style={[styles.instructionsText, { color: theme.wb, fontWeight: "600" }]}>
+                  <Text style={[styles.instructionsText, { color: "#ffffff", fontWeight: "600" }]}>
                     Update Information
                   </Text>
                 </TouchableOpacity>
@@ -239,39 +239,63 @@ console.log(response.data, route.params, "success")
                 {errorMsg !== "" && <Text style={{ color: "red" }}>{errorMsg}*</Text>}
       
                 {reSend ? (
-                  <TouchableOpacity
-                    style={[
-                      styles.resendButton,
-                      { backgroundColor: theme.buttonBackground, width: 120, padding: 5 }
-                    ]}
-                    onPress={handleResendOTP}
-                  >
-                    <Text style={[styles.submitButtonText, { color: theme.textColor1 }]}>
-                      Resend OTP
-                    </Text>
-                  </TouchableOpacity>
+                 <TouchableOpacity 
+                
+                                        onPress={handleResendOTP}>
+                                             <LinearGradient
+                                                                 colors={["#e614e1", "#8b51fe"]}
+                                                                style={[
+                                                                    styles.resendButton,
+                                                                  
+                                                                ]}
+                                                               
+                                                                >
+                                             <Text
+                                                style={[
+                                                    styles.submitButtonText,
+                                                    { color: "#fffff" },
+                                                ]}
+                                            >
+                                                Resend OTP
+                                            </Text>
+                                            </LinearGradient>
+                                        </TouchableOpacity>
                 ) : (
-                  <Text style={[styles.timerText, { color: theme.wb, paddingTop: 20, marginBottom: 10 }]}>
+                  <Text style={[styles.timerText, { color: "#ffffff", paddingTop: 20, marginBottom: 10 }]}>
                     Time Remaining: {formatTime(timeRemaining)}
                   </Text>
                 )}
       
                 {/* Submit Button */}
-                <TouchableOpacity
-                  style={[styles.submitButton, { backgroundColor: theme.buttonBackground }]}
-                  onPress={handleSubmitOTP}
-                  disabled={loading}
-                >
-                  <Text style={[styles.submitButtonText, { color: theme.textColor1 }]}>
-                    {loading ? "Verifying..." : "Submit OTP"}
-                  </Text>
-                </TouchableOpacity>
+           <TouchableOpacity
+                                    onPress={handleSubmitOTP}
+                                   
+                                     disabled={loading}
+                                 >
+                                      <LinearGradient
+                                                          colors={["#e614e1", "#8b51fe"]}
+                                                         style={[
+                                                             styles.submitButton,
+                                                           
+                                                         ]}
+                                                        
+                                                         >
+                                     <Text
+                                         style={[
+                                             styles.submitButtonText,
+                                             { color: theme.textColor1 },
+                                         ]}
+                                     >
+                                         {loading ? "Verifying..." : "Submit OTP"}
+                                     </Text>
+                                     </LinearGradient>
+                                 </TouchableOpacity>
               </View>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
         <Toast ref={(ref) => Toast.setRef(ref)} />
-      </LinearGradient>
+        </ImageBackground>
       
     );
 }
@@ -290,7 +314,7 @@ const styles = StyleSheet.create({
     },
     logo: {
         width: 250,
-        height: 50,
+        height: 150,
         resizeMode: "contain",
     },
     tagline: {

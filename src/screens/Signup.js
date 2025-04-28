@@ -9,23 +9,26 @@ import {
     useColorScheme,
     Dimensions,
     Image,
+    ImageBackground,
+    ActivityIndicator,
 } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import Svg, { Path } from "react-native-svg";
 import { darkTheme, lightTheme } from "../theme/theme";
-import { getSignUpDetails } from "../core/CommonService";
+import { addAnalytics, getSignUpDetails } from "../core/CommonService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Toast from 'react-native-toast-message'; 
+import Toast from 'react-native-toast-message';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { useSelector } from "react-redux";
 
 GoogleSignin.configure({
-	webClientId: "212625122753-o36nkar4vhepdof16e7ge3gmuaed2kio.apps.googleusercontent.com",
+    webClientId: "212625122753-o36nkar4vhepdof16e7ge3gmuaed2kio.apps.googleusercontent.com",
 });
 
 const GoogleLogin = async () => {
-	await GoogleSignin.hasPlayServices();
-	const userInfo = await GoogleSignin.signIn();
-	return userInfo;
+    await GoogleSignin.hasPlayServices();
+    const userInfo = await GoogleSignin.signIn();
+    return userInfo;
 };
 
 const windowWidth = Dimensions.get("window").width;
@@ -34,21 +37,55 @@ const windowHeight = Dimensions.get("window").height;
 export default function Signup({ navigation }) {
     const colorScheme = useColorScheme();
     const [check, setCheck] = useState(false);
-    const theme = colorScheme === "dark" ? darkTheme : lightTheme;
-
+    const theme = darkTheme;
+    const [loading, setLoading] = useState(false);
     const scrollRef = useRef(null);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [name, setName] = useState("");
     const [mobile, setMobile] = useState("");
     const [password, setPassword] = useState("");
     const [errors, setErrors] = useState({});
-    const [passwordVisible, setPasswordVisible] = useState(false); 
-    const [mobileOrEmail,setMobileOrEmail] = useState("mobile");
+    const [passwordVisible, setPasswordVisible] = useState(false);
+    const [mobileOrEmail, setMobileOrEmail] = useState("mobile");
     const togglePasswordVisibility = () => {
         setPasswordVisible(!passwordVisible);
     };
     const [email, setEmail] = useState("");
+    const uniqueId = useSelector((state) => state.header.deviceId);
 
+
+  
+
+    const handleAnalytics = async () => {
+        console.log("hey Um called")
+        try {
+            // Define your params correctly
+            const params = {
+                "student_user_exam_id": 0,
+                "type": 0,
+                "source": 0,
+                "testonic_page_id": 3,
+            };
+    
+            console.log(uniqueId,  "payloaddlscknl");
+    
+            // Create payload
+            const payload = {
+                ...params,
+                ip_address: uniqueId ? uniqueId: "",
+                location: "Hyderabad",
+            };
+    
+            console.log(payload, "payload");
+            const response = await addAnalytics(payload); 
+            console.log("Analytics Response:", response);
+    
+        } catch (error) {
+            // Handle errors gracefully
+            const errorMessage = error.response?.data?.message || error.message;
+            console.error("Error:", errorMessage);
+        }
+    };
     const handleMobileEmailToggle = () => {
         setMobileOrEmail(mobileOrEmail === "mobile" ? "email" : "mobile");
         if (mobileOrEmail === "mobile") {
@@ -60,36 +97,36 @@ export default function Signup({ navigation }) {
 
 
     const handleGoogleLogin = async () => {
-		setLoading(true);
-		try {
-			const response = await GoogleLogin();
-			const { idToken, user } = response;
+        setLoading(true);
+        try {
+            const response = await GoogleLogin();
+            const { idToken, user } = response;
 
-			if (idToken) {
-				const resp = await authAPI.validateToken({
-					token: idToken,
-					email: user.email,
-				});
-				await handlePostLoginData(resp.data);
-			}
-		} catch (apiError) {
-			setError(
-				apiError?.response?.data?.error?.message || 'Something went wrong'
-			);
-		} finally {
-			setLoading(false);
-		}
-	};
+            if (idToken) {
+                const resp = await authAPI.validateToken({
+                    token: idToken,
+                    email: user.email,
+                });
+                await handlePostLoginData(resp.data);
+            }
+        } catch (apiError) {
+            setError(
+                apiError?.response?.data?.error?.message || 'Something went wrong'
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const validate = () => {
         let isValid = true;
         let errors = {};
-    
+
         if (!name.trim()) {
             errors.name = "Name is required";
             isValid = false;
         }
-    
+
         if (mobileOrEmail === "mobile") {
             if (!mobile.trim()) {
                 errors.mobile = "Mobile number is required";
@@ -98,7 +135,7 @@ export default function Signup({ navigation }) {
                 errors.mobile = "Invalid mobile number";
                 isValid = false;
             }
-        } else { 
+        } else {
             if (!email.trim()) {
                 errors.email = "Email is required";
                 isValid = false;
@@ -107,9 +144,9 @@ export default function Signup({ navigation }) {
                 isValid = false;
             }
         }
-    
-    
-    
+
+
+
         if (!password.trim()) {
             errors.password = "Password is required";
             isValid = false;
@@ -122,11 +159,12 @@ export default function Signup({ navigation }) {
             showToastError("Please enter your signup details.");
             isValid = false;
         }
-    
-        return { isValid, errors }; 
+
+        return { isValid, errors };
     };
 
     const handleSignup = async () => {
+ 
         let mobileValue = mobile;
         let emailValue = email;
 
@@ -139,7 +177,7 @@ export default function Signup({ navigation }) {
 
         if (!isValid) {
             showToastError(Object.values(errors).join('\n'));
-            return; 
+            return;
         }
         if (!check) {
             showToast("Please agree to the privacy policy and terms of service.")
@@ -152,30 +190,30 @@ export default function Signup({ navigation }) {
             email: emailValue,
             password: password,
         };
-    
-    
+
+
         try {
-           
+            setLoading(true)
 
             const response = await getSignUpDetails(data);
-            console.log("Signup API Response:", response.statusCode);
-    
+            console.log("Signup API Response:", response);
+            
+            if (Number(response.statusCode) == 409) {
+                showToast("User already exists.");
+                setLoading(false);
+                return;
+              
+            }
+            
             if (response.statusCode === 201) {
-                navigation.navigate("OTPScreen", { 
-                    mobile: mobileValue || emailValue, 
+                await handleAnalytics();
+                navigation.navigate("OTPScreen", {
+                    mobile: mobileValue || emailValue,
                     studentId: response?.data?.student_user_id,
                     from: "signUp",
                 });
+                setLoading(false);
                 showToast("OTP Sent Successfully");
-            } else if (response.statusCode === 409) {
-                const existingUserIdentifier = mobileValue ? mobileValue: emailValue;
-    
-                // navigation.navigate("OTPScreen", { 
-                //     mobile: existingUserIdentifier, 
-                //     studentId: response?.data?.student_user_id 
-                // });
-                showToast("User already exists.");
-    
             } else {
                 let errorMessage = "Signup failed. Please try again.";
                 if (response.data && response.data.message) {
@@ -183,38 +221,43 @@ export default function Signup({ navigation }) {
                 } else if (typeof response.data === 'string') {
                     errorMessage = response.data;
                 }
+                setLoading(false);
                 showToastError(errorMessage);
+              
             }
+            
+            
         } catch (error) {
-            console.error("Signup API Error:", error); 
-            showToastError("Something went wrong. Please try again later."); 
+            setLoading(false);
+            console.error("Signup API Error:", error);
+            showToastError("Something went wrong. Please try again later.");
         }
-    
+
     };
 
     const showToast = (message) => {
-      Toast.show({
-        type: 'info',
-        text1: message,
-        position: 'top',
-        visibilityTime: 4000,
-        autoHide: true,
-        topOffset: 30,
-        bottomOffset: 40,
-      });
+        Toast.show({
+            type: 'info',
+            text1: message,
+            position: 'top',
+            visibilityTime: 4000,
+            autoHide: true,
+            topOffset: 30,
+            bottomOffset: 40,
+        });
     };
 
     const showToastError = (message) => {
         Toast.show({
-          type: 'error',
-          text1: message,
-          position: 'top',
-          visibilityTime: 4000,
-          autoHide: true,
-          topOffset: 30,
-          bottomOffset: 40,
+            type: 'error',
+            text1: message,
+            position: 'top',
+            visibilityTime: 4000,
+            autoHide: true,
+            topOffset: 30,
+            bottomOffset: 40,
         });
-      };
+    };
 
     const accessOptions = [
         "Personalized dashboard",
@@ -237,57 +280,59 @@ export default function Signup({ navigation }) {
     }, [currentIndex, accessOptions.length]);
 
     return (
-        <LinearGradient
-            colors={theme.background}
-            style={styles.container}
-            start={{ x: 0, y: 1 }}
-            end={{ x: 1, y: 1 }}
+        <ImageBackground
+            source={require("../images/commonBack.jpg")}  // Or a URI: { uri: 'https://...' }
+            style={{ width: '100%', height: '100%', }}
+        // imageStyle={{ }}  // optional: for rounded corners
         >
             <View contentContainerStyle={styles.scrollContainer}>
-                            <TouchableOpacity onPress={() => { navigation.navigate("Intro") }}>
-                                                            <Image
-                                                                style={{ height: 36, width: 36, margin: 15,marginBottom: -10,justifyContent: 'flex-start' }}
-                                                                source={require("../images/back.png")}
-                                                            />
-                                                        </TouchableOpacity>
+                <TouchableOpacity onPress={() => { navigation.navigate("Intro") }}>
+                    <Image
+                        style={{ height: 36, width: 36, margin: 15, marginBottom: -10, justifyContent: 'flex-start' }}
+                        source={require("../images/back.png")}
+                    />
+                </TouchableOpacity>
                 <View style={styles.header}>
                     <Image
-                        style={[styles.logo, { tintColor: theme.textColor1 }]}
-                        source={require("../images/title.png")}
+                        style={[styles.logo,]}
+                        source={require("../images/logo.png")}
                     />
-                    <Text style={[styles.tagline, { color: theme.textColor1 }]}>
-                        Your path to success starts here!
+                    <Text style={[styles.tagline, { color: "#ffffff" }]}>
+                        <Text style={{ fontWeight: 'bold', fontSize: 25, color: '#e614e1' }}>Unlock</Text>   the Gateway to{" "}
+
                     </Text>
+                    <Text style={[styles.tagline, { color: "#e614e1", marginLeft: 120, marginTop: 5 }]}>
+                        Better Learning !{" "}
+                    </Text>
+
                 </View>
 
-                <Svg height="180" width="100%" viewBox="145 140 320 320">
-                    <Path fill={theme.path} d="M 80 300 c 150 -180 690 -180 830 0" />
-                </Svg>
+
 
                 <View
                     style={[
                         styles.formContainer,
-                        { backgroundColor: theme.path },
+                        { backgroundColor: "transparent" },
                     ]}
                 >
-                    <View style={{ top: -180, padding: 20 }}>
-                        <Text style={[styles.welcomeText, { color: theme.wb }]}>
+                    <View style={{ top: 20, padding: 20 }}>
+                        {/* <Text style={[styles.welcomeText, { color: theme.wb }]}>
                             Hi, Let's get started!
-                        </Text>
+                        </Text> */}
 
                         <TextInput
                             style={[
                                 styles.input,
                                 {
-                                    borderColor: errors.name ? theme.red : theme.inputBorder,
-                                    backgroundColor: "#fff",
-                                    borderWidth: errors.password ? 1 : 0,
-                                    color: "#000"
+                                    borderColor: errors.name ? theme.red : "#e614e1",
+                                    backgroundColor: "transparent",
+                                    borderWidth: errors.password ? 1 : 1,
+                                    color: "#ffffff"
 
                                 },
                             ]}
                             placeholder="Name"
-                            placeholderTextColor={theme.gray}
+                            placeholderTextColor="#ffffff"
                             value={name}
                             onChangeText={(text) => {
                                 // const filteredText = text.replace(/[^A-Za-z\s]/g, "");
@@ -299,21 +344,21 @@ export default function Signup({ navigation }) {
                         />
                         {errors.name && <Text style={[styles.errorText, { color: theme.red }]}>{errors.name}</Text>}
 
-                        <View style={{ flexDirection: "row", alignItems: "center" }}>
+                        <View style={{ flexDirection: "row", alignItems: "center", color: "#fffff" }}>
                             {mobileOrEmail === "mobile" ? (
                                 <TextInput
                                     style={[
                                         styles.input,
                                         {
-                                            borderColor: errors.mobile ? theme.red : theme.inputBorder,
-                                            backgroundColor: "#fff",
-                                            borderWidth: errors.mobile ? 1 : 0,
-                                            color: "#000",
+                                            borderColor: errors.mobile ? theme.red : "#e614e1",
+                                            backgroundColor: "transparent",
+                                            borderWidth: errors.mobile ? 1 : 1,
+                                            color: "#ffffff",
                                             flex: 1, // Take up remaining space
                                         },
                                     ]}
                                     placeholder="Mobile"
-                                    placeholderTextColor={theme.gray}
+                                    placeholderTextColor="#ffffff"
                                     keyboardType="number-pad"
                                     maxLength={10}
                                     value={mobile}
@@ -331,15 +376,15 @@ export default function Signup({ navigation }) {
                                     style={[
                                         styles.input,
                                         {
-                                            borderColor: errors.email ? theme.red : theme.inputBorder,
-                                            backgroundColor: "#fff",
-                                            borderWidth: errors.email ? 1 : 0,
-                                            color: "#000",
+                                            borderColor: errors.email ? theme.red : "#e614e1",
+                                            backgroundColor: "transparent",
+                                            borderWidth: errors.email ? 1 : 1,
+                                            color: "#ffffff",
                                             flex: 1,
                                         },
                                     ]}
                                     placeholder="Email"
-                                    placeholderTextColor={theme.gray}
+                                    placeholderTextColor="#ffffff"
                                     keyboardType="email-address"
                                     value={email}
                                     onChangeText={(text) => {
@@ -351,22 +396,24 @@ export default function Signup({ navigation }) {
                                 />
                             )}
 
-                         
+
                         </View>
                         {errors.mobile && <Text style={[styles.errorText, { color: theme.red }]}>{errors.mobile}</Text>}
                         {errors.email && <Text style={[styles.errorText, { color: theme.red }]}>{errors.email}</Text>}
 
-                        <View style={[styles.passwordContainer, { borderColor: errors.password ? theme.red : theme.inputBorder }]}>
+                        <View style={[styles.passwordContainer, { borderColor: errors.password ? theme.red : "#e614e1" }]}>
                             <TextInput
                                 style={[
                                     styles.passwordInput,
                                     {
-                                        color: "#000",
+                                        color: "#ffffff",
+                                        backgroundColor: "transparent",
                                     },
                                 ]}
                                 placeholder="New Password"
-                                placeholderTextColor={theme.gray}
-                                secureTextEntry={!passwordVisible} 
+                                placeholderTextColor="#ffffff"
+                                secureTextEntry={!passwordVisible}
+
                                 value={password}
                                 onChangeText={(text) => {
                                     setPassword(text);
@@ -379,7 +426,7 @@ export default function Signup({ navigation }) {
                                 <Image
                                     source={passwordVisible ? require('../images/eye_open.png') : require('../images/eye_close.png')}
                                     style={styles.eyeIcon}
-                                    tintColor={theme.gray} 
+                                    tintColor="#ffffff"
                                 />
                             </TouchableOpacity>
                         </View>
@@ -389,51 +436,76 @@ export default function Signup({ navigation }) {
                             <TouchableOpacity onPress={() => setCheck(!check)}>
                                 <Image
                                     style={{
-                                        tintColor: check ? "#fff" : "#000",
+                                        tintColor: check ? "green" : "#ffffff",
                                         marginRight: 5,
-                                        height:25,
-                                        width:25,
+                                        height: 25,
+                                        width: 25,
                                     }}
                                     source={require("../images/check_box.png")}
                                 />
                             </TouchableOpacity>
 
-                            <Text style={[styles.checkboxText, { color: theme.wb }]}>
-                                I have read and agree to the privacy policy, terms of service
+                            <Text style={[styles.checkboxText, { color: "#ffffff" }]}>
+                                I have read and agree to the privacy policy, terms of service {" "}
                             </Text>
                         </View>
 
-                        <TouchableOpacity
-                            style={[styles.loginButton, { backgroundColor: theme.buttonBackground }]}
-                            onPress={handleSignup}
-                        >
-                            <Text style={[styles.loginButtonText, { color: theme.textColor1 }]}>
-                                Sign Up
-                            </Text>
-                        </TouchableOpacity>
 
-                        <View style={{display:"flex", flexDirection: "row",justifyContent:'center',alignItems:'center'}}>
-                        
+                     
+
+                           <TouchableOpacity
+                                                   
+                                                    onPress={!loading&&handleSignup}
+                                                >
+                                                       <LinearGradient
+                                                 colors={["#e614e1", "#8b51fe"]}
+                                                style={[
+                                                    styles.loginButton,
+                                                  
+                                                ]}
+                                                >
+                                                    <Text
+                                                       style={[
+                                                            styles.loginButtonText,
+                                                            { color: theme.textColor1 },
+                                                        ]}
+                                                    >
+                                                        {loading ? <View style={{display:"flex", flexDirection: "row", alignItems: "center"}}>
+                                                            <Text  style={[
+                                                           
+                                                            { color: theme.textColor1 },
+                                                        ]}>Sign Up... </Text>
+                                                         <ActivityIndicator size="small" color={theme.textColor1} /> 
+                                                        </View>: "Sign Up "}
+                                                    </Text>
+                                                 
+                                                    </LinearGradient>
+                                                </TouchableOpacity>
+
+                        <View style={{ display: "flex", flexDirection: "row", justifyContent: 'center', alignItems: 'center' }}>
+                            {/*                         
                         <TouchableOpacity onPress={handleGoogleLogin}>
                                 <Image
                         style={{ height:30,width:30 }}
                         source={require("../images/google.png")}
                     />
-                                </TouchableOpacity>
-                                <TouchableOpacity 
-                                onPress={handleMobileEmailToggle} 
-                                style={{marginLeft:20,left:10}}
-                                >
-                                    <Image
-                                     style={[styles.logo1, { tintColor: "#fff" }]}
-                                     source={mobileOrEmail === "mobile" ? require("../images/email.png") : require("../images/phone.png")}/>
+                                </TouchableOpacity> */}
+                            <TouchableOpacity
+                                onPress={handleMobileEmailToggle}
+                                style={{ marginLeft: 20, left: 10, display: "flex", flexDirection: "row", alignItems: "center" }}
+                            >
+                                <Image
+                                    style={[styles.logo1, { tintColor: "#fff" }]}
+                                    source={mobileOrEmail === "mobile" ? require("../images/email.png") : require("../images/phone.png")} />
+                                <Text style={{ color: "#ffffff", marginLeft: 20 }}>{mobileOrEmail === "mobile" ? "Email" : "Phone"} {" "}</Text>
                             </TouchableOpacity>
+
                         </View>
 
                         {/* Footer Section */}
                         <View style={styles.footer}>
                             <View style={{ flexDirection: "row" }}>
-                                <Text style={[styles.newHereText, { color: theme.wb }]}>
+                                <Text style={[styles.newHereText, { color: "#ffffff" }]}>
                                     Already have an account?{" "}
                                 </Text>
                                 <TouchableOpacity onPress={() => navigation.navigate("Login")}>
@@ -476,7 +548,7 @@ export default function Signup({ navigation }) {
                 </View>
             </View>
             <Toast ref={(ref) => Toast.setRef(ref)} />
-        </LinearGradient>
+        </ImageBackground>
     );
 }
 
@@ -494,7 +566,7 @@ const styles = StyleSheet.create({
     },
     logo: {
         width: 250,
-        height: 50,
+        height: 150,
         resizeMode: "contain",
     },
     logo1: {
@@ -529,6 +601,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         fontSize: 14,
         marginHorizontal: 10,
+        color: "#ffffff",
     },
     checkboxContainer: {
         flexDirection: "row",
@@ -594,9 +667,9 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         marginBottom: 10,
         marginHorizontal: 10,
-        backgroundColor: '#fff',
+        backgroundColor: 'transparent',
         paddingRight: 10,
-      },
+    },
     passwordInput: {
         flex: 1,
         height: 40,
@@ -610,11 +683,11 @@ const styles = StyleSheet.create({
     eyeIcon: {
         width: 20,
         height: 20,
-        marginTop:4,
+        marginTop: 4,
         resizeMode: 'contain',
-        tintColor:'#8e8e8e'
+        tintColor: '#8e8e8e'
     },
- 
+
     toggleButtonText: {
         fontSize: 12,
         color: "#000"

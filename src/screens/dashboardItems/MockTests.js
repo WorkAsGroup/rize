@@ -3,95 +3,119 @@ import { useTheme } from "react-native-paper";
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, useColorScheme, FlatList, ActivityIndicator, ScrollView, RefreshControl, Alert, Modal, Pressable } from 'react-native';
 import { darkTheme, lightTheme } from "../../theme/theme";
 import LinearGradient from "react-native-linear-gradient";
+import { useSelector } from "react-redux";
 
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
-const MockTests = ({selectedType, mocklist, handleStartTest,pre,handleCheckResults,  customExams,setMock,setShowCustom, setSelectedType}) => {
-console.log( mocklist, pre, customExams, "weioufgwoeyuyewfuywe")
-      const colorScheme = useColorScheme();
-      const [selectedPYQExam, setSelectedPYQExam] = useState('mains')
-      const [mains, setMains] = useState([]);
-const [advance, setAdvance] = useState([]);
-    // const theme = colorScheme === "dark" ? darkTheme : lightTheme;
+const MockTests = ({ selectedType,loading, selecteditem,mocklist, handleStartTest, pre, handleCheckResults, customExams, setMock, setShowCustom, setSelectedType }) => {
+  // console.log( mocklist, pre, selectedExam,customExams, "weioufgwoeyuyewfuywe")
+  const colorScheme = useColorScheme();
+  const selectedExam = useSelector((state) => state.header.selectedExam);
+  const examLabel = useSelector((state) => state.header.examLabel);
+  const [selectedPYQExam, setSelectedPYQExam] = useState('mains')
+  const [mains, setMains] = useState([]);
+  const [advance, setAdvance] = useState([]);
+  // const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   const theme = darkTheme;
 
-    const handleSetMockType = (type) => {
-        setSelectedType(type);
-    
-      };
-      useEffect(() => {
-        if (pre && Array.isArray(pre)) {
-          const mainsList = [];
-          const advanceList = [];
-      
-          pre.forEach((exam) => {
+  const handleSetMockType = (type) => {
+    setSelectedType(type);
 
-              if (exam.pexamtype === 1) {
-                mainsList.push(exam);
-              } else if (exam.pexamtype === 2) {
-                advanceList.push(exam);
-              }
-    
-          });
-      
-          setMains(mainsList);
-          setAdvance(advanceList);
+  };
+
+  // console.log(selectedExam, examLabel, "weioufgwoeyuyewfuywe")
+  useEffect(() => {
+    // console.log(selectedExam, examLabel, "weioufgwoeyuyewfuywe")
+    if (pre && Array.isArray(pre)) {
+      const mainsList = [];
+      const advanceList = [];
+
+      pre.forEach((exam) => {
+
+        if (exam.pexamtype === 1) {
+          mainsList.push(exam);
+        } else if (exam.pexamtype === 2) {
+          advanceList.push(exam);
         }
-      }, [pre]);
-      
 
-      const renderItemMock = ({ item }) => {
-        // console.log(item, "exam status")
-        return (
-          <View style={[styles.itemContainer, { backgroundColor: theme.textColor1 }]} key={item?.exam_paper_id}>
-            {/* Exam Details */}
-            <View style={styles.detailsContainer}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.examName, { color: theme.textColor }]}>{item.exam_name}</Text>
-                <View style={styles.timeContainer}>
-                  <Image source={require("../../images/clock.png")} style={[styles.clockIcon, { tintColor: theme.textColor }]} />
-                  <Text style={[styles.timeText, { color: theme.textColor }]}>{item.exam_duration} Mins </Text>
-                </View>
-              </View>
-              {/* Start Button */}
-              <View style={{ marginTop: 10 }}>
-                {item.exam_session_id === 0 && item.auto_save_id === 0 ? (
-                  // Start Button
-                  <TouchableOpacity
-                    style={[styles.startExamBtn, { marginRight: 10 }]}
-                    // onPress={() => handleStartExam(item, "mockTest")}
-                    onPress={() => handleStartTest(item)}
-                  >
-                    <LinearGradient
-                      colors={["#B465DA", "#CF6CC9", "#EE609C", "#EE609C"]}
-                      style={styles.gradientButton}
-                    >
-                      <Text style={styles.textExamBtn}>Start ➡</Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                ) : item.exam_session_id !== 0 && item.auto_save_id === 0 ? (
-                  // Replay & Results Button
-                  <View style={[styles.startExamBtn, { flexDirection: "row", marginRight: 10 }]}>
-                   {selectedType !== "custom" &&   <TouchableOpacity
-                     onPress={() => handleStartTest(item, "mockTest")}
-                      style={[styles.textExamBtn, styles.resultsButton, , { marginRight: 5 }]}
-                    >
-                      {/* <Text style={styles.buttonText}>Results</Text> */}
-                      <Image source={require("../../images/synchronize.png")} style={[styles.icon]} />
-                    </TouchableOpacity>}
-                    <TouchableOpacity
-                      onPress={() => handleCheckResults(item, "schedule_exam")}
-                      style={[styles.textExamBtn, styles.resultsButton]}
-                    >
-                      {/* <Text style={styles.buttonText}>Results</Text> */}
-                      <Image source={require("../../images/pie-chart.png")} style={styles.icon} />
-                    </TouchableOpacity>
+      });
+
+      setMains(mainsList);
+      setAdvance(advanceList);
+    }
+  }, [pre]);
+
+
+  const renderItemMock = ({ item }) => {
+    // console.log(item, "exam status")
+    return (
+      <LinearGradient
+  colors={["#e614e1", "#8b51fe"]}
+  style={{
+    padding: 1, // thickness of the border
+    borderRadius: 10, // match with inner view radius
+    marginTop: 10,
+  }}
+  key={item?.exam_paper_id}
+>
+  <View style={[styles.itemContainer, { 
+    backgroundColor: theme.textColor1, 
+    borderRadius: 8, // should be slightly smaller than outer border if padding is small
+  }]}>
+      <View style={styles.detailsContainer}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.examName, { color: theme.textColor }]}>{item.exam_name}</Text>
+            <View style={styles.timeContainer}>
+              <Image source={require("../../images/clock.png")} style={[styles.clockIcon, { tintColor: theme.textColor }]} />
+              <Text style={[styles.timeText, { color: theme.textColor }]}>{" "}{item.exam_duration} Mins </Text>
+            </View>
+          </View>
+          {/* Start Button */}
+          <View style={{ marginTop: 10 }}>
+            {item.exam_session_id === 0 && item.auto_save_id === 0 ? (
+              // Start Button
+              <TouchableOpacity
+                style={[styles.startExamBtn, { marginRight: 10 }]}
+                // onPress={() => handleStartExam(item, "mockTest")}
+                onPress={() => handleStartTest(item, selectedType)}
+              >
+                <LinearGradient
+                  colors={["#e614e1", "#8b51fe",]}
+                  style={styles.gradientBorder}
+                >{
+                  (loading&&selecteditem?.exam_paper_id==item?.exam_paper_id) ? <View style={styles.innerButton}>
+                       <ActivityIndicator size="small" color="#ffffff" /> 
                   </View>
-                ) : item.exam_session_id !== 0 && item.auto_save_id !== 0 ? (
-                  // Resume & Results Button
-                  <View style={[styles.startExamBtn, { flexDirection: "row", marginRight: 10 }]}>
-                    {/* <LinearGradient
+              :
+                  <View style={styles.innerButton}>
+                    <Text style={styles.textExamBtn}>Start ➡</Text>
+                  </View>  }
+                </LinearGradient>
+              </TouchableOpacity>
+            ) : item.exam_session_id !== 0 && item.auto_save_id === 0 ? (
+              // Replay & Results Button
+              <View style={[styles.startExamBtn, { flexDirection: "row", marginRight: 10 }]}>
+                {selectedType !== "custom" && <TouchableOpacity
+                  onPress={() => handleStartTest(item, selectedType)}
+                  style={[styles.textExamBtn, styles.resultsButton, , { marginRight: 5 }]}
+                >
+                 
+                  {/* <Text style={styles.buttonText}>Results</Text> */}
+                  <Image source={require("../../images/synchronize.png")} style={[styles.icon]} />
+                </TouchableOpacity>}
+                <TouchableOpacity
+                  onPress={() => handleCheckResults(item, "schedule_exam")}
+                  style={[styles.textExamBtn, styles.resultsButton]}
+                >
+                  {/* <Text style={styles.buttonText}>Results</Text> */}
+                  <Image source={require("../../images/pie-chart.png")} style={styles.icon} />
+                </TouchableOpacity>
+              </View>
+            ) : item.exam_session_id !== 0 && item.auto_save_id !== 0 ? (
+              // Resume & Results Button
+              <View style={[styles.startExamBtn, { flexDirection: "row", marginRight: 10 }]}>
+                {/* <LinearGradient
                       colors={["#B465DA", "#CF6CC9", "#EE609C", "#EE609C"]}
                       style={[styles.gradientButton, { marginRight: 10 }]}
                     >
@@ -99,192 +123,274 @@ const [advance, setAdvance] = useState([]);
                       <Image source={require("../../images/replay.png")} style={{height: 18, width: 18}} />
                       </TouchableOpacity>
                     </LinearGradient> */}
-                     <TouchableOpacity
-                     onPress={() => handleStartTest(item, "mockTest")}
-                      style={[styles.textExamBtn, styles.resultsButton, , { marginRight: 5 }]}
-                    >
-                      {/* <Text style={styles.buttonText}>Results</Text> */}
-                      <Image source={require("../../images/synchronize.png")} style={[styles.icon]} />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleCheckResults(item, "schedule_exam")}
-                      style={[styles.textExamBtn, styles.resultsButton]}
-                    >
-                      {/* <Text style={styles.buttonText}>Results</Text> */}
-                      <Image source={require("../../images/pie-chart.png")} style={styles.icon} />
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  // Resume Button Only
-                  <LinearGradient
-                    colors={["#B465DA", "#CF6CC9", "#EE609C", "#EE609C"]}
-                    style={[styles.gradientButton, { marginRight: 10 }]}
-                  >
-                    <TouchableOpacity onPress={() => handleStartTest(item)}          >
-                    <Image source={require("../../images/replay.png")} style={{height: 18, width: 18}} />
-                     </TouchableOpacity>
-                  </LinearGradient>
-                )}
-              </View>
-            </View>
-    
-            {/* Exam Marks List */}
-            {item.marks?.length > 0 && (<ScrollView showsHorizontalScrollIndicator={false}
-    
-              horizontal contentContainerStyle={styles.marksContainer} >
-               <TouchableOpacity 
-      key={0} 
-      style={[styles.markButton, styles[`bgColor${0}`], styles[`borderColor${0}`]]}
-    >
-      <Text style={[styles.markText, { color: "#000" }]}>
-        Total: {item.marks.reduce((total, mark) => total + Number(mark.subject_score || 0), 0)}
-      </Text>
-    </TouchableOpacity>
-    
-              {item.marks.map((mark, index) => (
-                <TouchableOpacity key={index} style={[styles.markButton, styles[`bgColor${index+1}`], styles[`borderColor${index}`]]}>
-                  <Text style={[styles.markText, { color: "#000" }]}>{mark.subject}: {mark.subject_score}</Text>
+                <TouchableOpacity
+                  onPress={() => handleStartTest(item, selectedType)}
+                  style={[styles.textExamBtn, styles.resultsButton, , { marginRight: 5 }]}
+                >
+                  {/* <Text style={styles.buttonText}>Results</Text> */}
+                  <Image source={require("../../images/synchronize.png")} style={[styles.icon]} />
+                  
                 </TouchableOpacity>
-              ))}
-            </ScrollView>
+                <TouchableOpacity
+                  onPress={() => handleCheckResults(item, "schedule_exam")}
+                  style={[styles.textExamBtn, styles.resultsButton]}
+                >
+                  {/* <Text style={styles.buttonText}>Results</Text> */}
+                  <Image source={require("../../images/pie-chart.png")} style={styles.icon} />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              // Resume Button Only
+
+              <LinearGradient
+                colors={["#e614e1", "#8b51fe",]}
+                style={styles.gradientBorder}
+              >
+                     <TouchableOpacity onPress={() => handleStartTest(item, "replay")}          >
+                <View style={styles.innerButton}>
+             
+                    <Image source={require("../../images/replay.png")} style={{ height: 18, width: 18 }} />
+             
+                </View>
+                </TouchableOpacity>
+              </LinearGradient>
             )}
           </View>
-        );
-      };
-    
+        </View>
 
-    return (
-      <View style={[styles.performanceCard, { backgroundColor: theme.conbk, marginTop: 20, height: windowHeight * .85 }]}>
-        
-        <Text style={[styles.performanceTitle, { color: theme.textColor }]}>Mock Tests</Text>
-        <Text style={styles.subText}>Select your preferred exam and start practicing</Text>
-        <ScrollView
-          horizontal={true}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ flexGrow: 1, flexDirection: 'row', paddingHorizontal: -5, height: 60, paddingBottom: 15, }}
-        >
-          <View
-            style={{
-              flexDirection: 'row',
-              minWidth: '100%',
-              alignItems: 'center'
-            }}
+        {/* Exam Marks List */}
+        {item.marks?.length > 0 && (<ScrollView showsHorizontalScrollIndicator={false}
+
+          horizontal contentContainerStyle={styles.marksContainer} >
+          <TouchableOpacity
+            key={0}
+            style={[styles.markButton, styles[`bgColor${0}`], styles[`borderColor${0}`]]}
           >
-            <TouchableOpacity
-              style={{
-                backgroundColor: "transparent",
-                padding: 8,
-                borderBottomWidth: selectedType === 'mock' ? 1 : 0,
-                borderBottomColor: selectedType === 'mock' ? theme.tx1 : "transparent"
-              }}
-              onPress={() => {
-                setMock(mocklist);
-                handleSetMockType('mock');
-              }}
-            >
-              <Text style={{ color: selectedType === 'mock' ? theme.tx1 : theme.textColor, fontSize: 13 }}>Curated Tests </Text>
-            </TouchableOpacity>
-
-
-  <TouchableOpacity
-    style={{
-      backgroundColor: "transparent",
-      padding: 8,
-           borderBottomWidth: selectedType === 'previous' ? 1 : 0,
-                borderBottomColor: selectedType === 'previous' ? theme.tx1 : "transparent"
-    }}
-    onPress={() => {
-      handleSetMockType('previous');
-      setMock(pre);
-    }}
-  >
-    <Text style={{ color: selectedType === 'previous' ? theme.tx1 : theme.textColor, fontSize: 13 }}>
-      PYQs 
-    </Text>
-  </TouchableOpacity>
-{/* </LinearGradient> */}
-
-
-            <TouchableOpacity
-              style={{
-                backgroundColor: "transparent",
-                padding: 8,
-                marginLeft: 10,
-                borderBottomWidth: selectedType === 'custom' ? 1 : 0,
-                borderBottomColor: selectedType === 'custom' ? theme.tx1 : "transparent"
-              }}
-              onPress={() => {
-                handleSetMockType('custom');
-                setMock(customExams);
-              }}
-            >
-              <Text style={{ color: selectedType === 'custom' ? theme.tx1 : theme.textColor, fontSize: 13 }}>Custom Test</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-        {selectedType=="previous"&& (
-          <View style={{display: 'flex', flexDirection: "row", alignContent: "center"}}>
-            <TouchableOpacity  style={styles.gradientButton} onPress={() => setSelectedPYQExam("mains")}>
-            <LinearGradient
-                      colors={["#B465DA", "#CF6CC9", "#EE609C", "#EE609C"]}
-                      style={styles.gradientButton}
-                    >
-                      <Text style={styles.textExamBtn}>Mains</Text>
-                    </LinearGradient>
-            </TouchableOpacity>
-            <TouchableOpacity  style={styles.gradientButton} onPress={() => setSelectedPYQExam("advance")}>
-            <LinearGradient
-                      colors={["#B465DA", "#CF6CC9", "#EE609C", "#EE609C"]}
-                      style={styles.gradientButton}
-                    >
-                      <Text style={styles.textExamBtn}>Advance</Text>
-                    </LinearGradient>
-            </TouchableOpacity>
-          </View>
-        )}
-        {selectedType == "custom" && <TouchableOpacity
-          style={{ display: "flex", justifyContent: `${customExams&&customExams.length> 0 ? "flex-end":"center"}`, alignItems:  `${customExams&&customExams.length> 0 ? "flex-end":"center"}`, width: "100%" }}
-          activeOpacity={0.8}
-          onPress={() => setShowCustom(true)}
-        >
-          <LinearGradient
-            colors={[theme.tx1, theme.tx2]}
-            start={{ x: 0, y: 1 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.startButtonGradients}
-          >
-            <Text
-              style={[
-                styles.startButtonTexts,
-                { color: theme.textColor1, fontFamily: "CustomFont" },
-              ]}
-            >
-              + CREATE CUSTOM
+            <Text style={[styles.markText, { color: "#000" }]}>
+              Total: {item.marks.reduce((total, mark) => total + Number(mark.subject_score || 0), 0)}
             </Text>
-          </LinearGradient>
-        </TouchableOpacity>}
-        <FlatList
-          data={selectedType==="mock" ? mocklist : selectedType==="previous" ? selectedPYQExam == "mains" ? mains:advance : customExams}
-          renderItem={renderItemMock}
-          
-          keyExtractor={(item) => item.id ? item.id.toString() : Math.random().toString()}
-          nestedScrollEnabled={true}
-          ListEmptyComponent={<Text style={{ color: theme.textColor, textAlign: 'center' }}>No mock tests available.</Text>}
-        />
-      </View>
+          </TouchableOpacity>
+
+          {item.marks.map((mark, index) => (
+            <TouchableOpacity key={index} style={[styles.markButton, styles[`bgColor${index + 1}`], styles[`borderColor${index}`]]}>
+              <Text style={[styles.markText, { color: "#000" }]}>{mark.subject}: {mark.subject_score}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+        )}
+  </View>
+</LinearGradient>
+ 
     );
   };
+
+
+  return (
+    <View style={[styles.performanceCard, { backgroundColor: theme.conbk, marginTop: 20, height: windowHeight * .85 }]}>
+
+      <Text style={[styles.performanceTitle, { color: theme.textColor }]}>Mock Tests</Text>
+      <Text style={styles.subText}>Select your preferred exam and start practicing</Text>
+      <ScrollView
+        horizontal={true}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1, flexDirection: 'row', paddingHorizontal: -5, height: 60, paddingBottom: 15, }}
+      >
+        <View
+          style={{
+            flexDirection: 'row',
+            minWidth: '100%',
+            alignItems: 'center'
+          }}
+        >
+          <TouchableOpacity
+            style={{
+              backgroundColor: "transparent",
+              padding: 8,
+              borderBottomColor: selectedType === 'mock' ? theme.tx1 : "transparent"
+            }}
+            onPress={() => {
+              setMock(mocklist);
+              handleSetMockType('mock');
+            }}
+          >
+            <Text style={{ color: selectedType === 'mock' ? theme.tx1 : theme.textColor, fontSize: 16 }}>Curated Tests </Text>
+            {selectedType === 'mock' && (
+      <LinearGradient
+        colors={["#6A11CB", "#2575FC"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={{
+          height: 2,
+          width: '100%',
+          marginTop: 2,
+          borderRadius: 1,
+        }}
+      />
+    )}
+          </TouchableOpacity>
+
+
+          <TouchableOpacity
+  onPress={() => {
+    handleSetMockType('previous');
+    setMock(pre);
+  }}
+  style={{ padding: 8 }}
+>
+  <View style={{ alignItems: 'center' }}>
+    <Text
+      style={{
+        color: selectedType === 'previous' ? "#6A11CB" : theme.textColor,
+        fontSize: 16,
+        backgroundColor: 'transparent',
+      }}
+    >
+      {"  "}PYQs{"  "}
+    </Text>
+
+    {selectedType === 'previous' && (
+      <LinearGradient
+        colors={["#6A11CB", "#2575FC"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={{
+          height: 2,
+          width: '100%',
+          marginTop: 2,
+          borderRadius: 1,
+        }}
+      />
+    )}
+  </View>
+</TouchableOpacity>
+
+          {/* </LinearGradient> */}
+
+
+          <TouchableOpacity
+            style={{
+              backgroundColor: "transparent",
+              padding: 8,
+              marginLeft: 10,
+              borderBottomColor: selectedType === 'custom' ? theme.tx1 : "transparent"
+            }}
+            onPress={() => {
+              handleSetMockType('custom');
+              setMock(customExams);
+            }}
+          >
+      <Text style={{ color: selectedType === 'custom' ? theme.tx1 : theme.textColor, fontSize: 16 }}>Custom Tests </Text>
+            {selectedType === 'custom' && (
+      <LinearGradient
+        colors={["#6A11CB", "#2575FC"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={{
+          height: 2,
+          width: '100%',
+          marginTop: 2,
+          borderRadius: 1,
+        }}
+      />
+    )}
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+      {selectedType == "previous" && examLabel == 'JEE' && (
+       <View style={{ display: 'flex', flexDirection: "row", alignContent: "center", gap: 10 }}>
+       {/* MAINS Button */}
+       {selectedPYQExam === "mains" ? (
+         <TouchableOpacity onPress={() => setSelectedPYQExam("mains")}>
+           <LinearGradient
+             colors={["#e614e1", "#8b51fe"]}
+             style={styles.gradientButton}
+           >
+             <Text style={styles.textExamBtn}>MAINS</Text>
+           </LinearGradient>
+         </TouchableOpacity>
+       ) : (
+         <LinearGradient
+           colors={["#e614e1", "#8b51fe"]}
+           style={styles.gradientBorder}
+         >
+           <TouchableOpacity
+             onPress={() => setSelectedPYQExam("mains")}
+             style={styles.innerButton}
+           >
+             <Text style={styles.textExamBtn}>MAINS</Text>
+           </TouchableOpacity>
+         </LinearGradient>
+       )}
+     
+       {/* ADVANCE Button */}
+       {selectedPYQExam === "advance" ? (
+         <TouchableOpacity onPress={() => setSelectedPYQExam("advance")}>
+           <LinearGradient
+             colors={["#e614e1", "#8b51fe"]}
+             style={styles.gradientButton}
+           >
+             <Text style={styles.textExamBtn}>ADVANCE</Text>
+           </LinearGradient>
+         </TouchableOpacity>
+       ) : (
+         <LinearGradient
+           colors={["#e614e1", "#8b51fe"]}
+           style={styles.gradientBorder}
+         >
+           <TouchableOpacity
+             onPress={() => setSelectedPYQExam("advance")}
+             style={styles.innerButton}
+           >
+             <Text style={styles.textExamBtn}>ADVANCE</Text>
+           </TouchableOpacity>
+         </LinearGradient>
+       )}
+     </View>
+     
+      )}
+      {selectedType == "custom" && <TouchableOpacity
+        style={{ display: "flex", justifyContent: `${customExams && customExams.length > 0 ? "flex-end" : "center"}`, alignItems: `${customExams && customExams.length > 0 ? "flex-end" : "center"}`, width: "100%" }}
+        activeOpacity={0.8}
+        onPress={() => setShowCustom(true)}
+      >
+        <LinearGradient
+          colors={[theme.tx1, theme.tx2]}
+          start={{ x: 0, y: 1 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.startButtonGradients}
+        >
+          <Text
+            style={[
+              styles.startButtonTexts,
+              { color: theme.textColor1, fontFamily: "CustomFont" },
+            ]}
+          >
+            + CREATE CUSTOM
+          </Text>
+        </LinearGradient>
+      </TouchableOpacity>}
+      <FlatList
+        data={selectedType === "mock" ? mocklist : selectedType === "previous" ? examLabel !== 'JEE' ? pre : selectedPYQExam == "mains" ? mains : advance : customExams}
+        renderItem={renderItemMock}
+
+        keyExtractor={(item) => item.id ? item.id.toString() : Math.random().toString()}
+        nestedScrollEnabled={true}
+        ListEmptyComponent={<Text style={{ color: theme.textColor, textAlign: 'center' }}>No mock tests available.</Text>}
+      />
+    </View>
+  );
+};
 
 export default MockTests
 
 const styles = StyleSheet.create({
-    itemContainer: {
-        width: "98%",
-        margin: 5,
-        padding: 5,
-        borderRadius: 15,
-      },
-    performanceCard: { padding: 10, borderRadius: 10, elevation: 1 },
+  itemContainer: {
+    width: "99.3%",
+    margin: 1,
+    padding: 5,
+    borderRadius: 15,
+  },
+  performanceCard: { padding: 10, borderRadius: 10, elevation: 1 },
   performanceTitle: { fontSize: 18, fontWeight: 'bold' },
   subText: { color: 'gray' },
   bigText: { fontSize: 30, fontWeight: 'bold', marginTop: 5 },
@@ -428,7 +534,7 @@ const styles = StyleSheet.create({
   gradientButton: {
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 10,
+    borderRadius: 25,
   },
   textExamBtn: {
     color: "#fff",
@@ -458,5 +564,20 @@ const styles = StyleSheet.create({
     width: 17,
     height: 17,
     marginLeft: 5,
+  },
+  gradientBorder: {
+    padding: 2, // this is the thickness of the border
+    borderRadius: 25,
+  },
+  innerButton: {
+    backgroundColor: 'black', // or your background color
+    paddingVertical: 10,
+    paddingHorizontal: 25,
+    borderRadius: 25,
+    alignItems: 'center',
+  },
+  textExamBtn: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 })

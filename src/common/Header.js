@@ -1,11 +1,18 @@
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { DeviceEventEmitter, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React, { useEffect, useMemo, useState } from "react";
 import { Dropdown } from "react-native-element-dropdown";
 import { useNavigation } from "@react-navigation/native";
 import { theme } from "../core/theme";
-import { useExam } from "../ExamContext";
 import { getAutoLogin, getExamType } from "../core/CommonService";
 import ExamModalComponent from "../screens/ExamModalComponent";
+import { useSelector, useDispatch } from 'react-redux';
+import { setSelectedExam, setExamLabel } from '../store/slices/headerSlice';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+
+
+
+
 const Header = ({ route, setId }) => {
   const navigation = useNavigation();
 
@@ -13,7 +20,11 @@ const Header = ({ route, setId }) => {
   const [selectedOption, setSelectedOption] = useState(null);
   const [ addExam, setAddExam] = useState(false);
   const [examsData, setExamsData] = useState([]);
-  const { selectedExam, setSelectedExam } = useExam();
+  const [studentId, setStudentId] = useState("")
+const selectedExam = useSelector((state) => state.header.selectedExam);
+const examLabel = useSelector((state) => state.header.examLabel);
+const dispatch = useDispatch();
+
   const getUser = async () => {
     try {
       const response = await getAutoLogin();
@@ -26,7 +37,7 @@ const Header = ({ route, setId }) => {
 
       const { name: nm, student_user_id: id, examsData } = response.data;
       //   setName(nm);
-      //   setStudentId(id);
+        setStudentId(id);
       //   setStudentUserId(id);
       setExamsData(examsData);
 
@@ -73,8 +84,11 @@ const Header = ({ route, setId }) => {
         const defaultItem = dropdownItems.find((item) => item.isDefault === 1);
         setSelectedOption(defaultItem || dropdownItems[0]);
         setId(defaultItem?.stUserExamId || dropdownItems[0]?.stUserExamId)
-        setSelectedExam(defaultItem?.stUserExamId || dropdownItems[0]?.stUserExamId)
- 
+
+        // Example usage
+dispatch(setSelectedExam(defaultItem?.stUserExamId || dropdownItems[0]?.stUserExamId));
+dispatch(setExamLabel(defaultItem?.label||dropdownItems[0]?.label));
+ console.log(defaultItem, "default")
         // setStudentExamId((defaultItem || dropdownItems[0]).stUserExamId);
       } else {
         // Handle the case where getExamType returns no data or an error
@@ -90,11 +104,17 @@ const Header = ({ route, setId }) => {
             },
           ]);
           setSelectedOption(items[0]);
-          setId(items[0]?.stUserExamId)
-          setSelectedExam(items[0]?.stUserExamId)
+          setId(items[0]?.stUserExamId);
+          console.log(defaultItem, "default")
+          dispatch(setSelectedExam(items[0]?.stUserExamId));
+dispatch(setExamLabel(items[0]?.exam_type));
      
         } else {
           setItems([{ label: "➕ Add", value: "add" }]);
+          let storedMockTests = await AsyncStorage.getItem(COMPLETED_MOCK_TESTS_KEY);
+          if(!storedMockTests) {
+            setAddExam(true);
+          }
         }
       }
     } catch (error) {
@@ -119,15 +139,26 @@ const Header = ({ route, setId }) => {
   }, [items]);
 
 
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener('allExamsSubmitted', () => {
+      console.log("🎯 Received: All exams have been submitted!");
+      // You can dispatch an action, refetch data or update UI here
+    getUser(); // Example action
+    });
+  
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+  
 
-
-  const handleOptionSelect = (option) => {
-    // console.log(option, "options", option.exam_id)
-    setStudentExamId(option.student_user_exam_id);
-    setSelectedOption(option.exam_type);
+  // const handleOptionSelect = (option) => {
+  //   // console.log(option, "options", option.exam_id)
+  //   setStudentExamId(option.student_user_exam_id);
+  //   setSelectedOption(option.exam_type);
     
-    setIsOpen(false);
-  };
+  //   setIsOpen(false);
+  // };
 
     const handleSelect = (item) => {
       if (item.value === "add") {
@@ -135,7 +166,8 @@ const Header = ({ route, setId }) => {
       } else {
         setSelectedOption(item);
         setId(item.stUserExamId);
-        setSelectedExam((item.stUserExamId))
+        dispatch(setSelectedExam(item.stUserExamId));
+        dispatch(setExamLabel(item.label));
       }
     };
 
@@ -147,12 +179,12 @@ const Header = ({ route, setId }) => {
     },[selectedExam])
 
     const memoizedContent = useMemo(() => (
-       addExam===true ? (
+       addExam==true ? (
           <ExamModalComponent
               show={addExam}
               setShow={setAddExam}
               existingExams={items}
-              studentUserId={selectedExam}
+              studentUserId={studentId}
           />
       ) : null
   ), [ addExam,items]);
@@ -226,6 +258,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     padding: 10,
     backgroundColor: "transparent",
+    boxShadow: "0px 6px 10px -6px #b336f0",
+
   },
   icon: {
     width: 24,

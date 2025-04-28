@@ -8,6 +8,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Intro from './Intro';
 import Achivements from './dashboardItems/Achivements';
 import PerformanceAnalasys from './PerformanceAnalasys';
+import { useDispatch } from 'react-redux';
+import { setSelectedExam } from '../store/slices/headerSlice';
 
 const Drawer = createDrawerNavigator();
 
@@ -78,6 +80,7 @@ const CustomDrawerContent = (props) => {
 const DashboardDrawer = ({ route }) => {
   console.log(route, "route")
   const { onChangeAuth } = route?.params;
+  const dispatch = useDispatch();
   const colorScheme = useColorScheme();
   const navigation = useNavigation();
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
@@ -86,6 +89,7 @@ const DashboardDrawer = ({ route }) => {
   const handleLogout = async () => {
     try {
       await AsyncStorage.removeItem('authToken');
+      await dispatch(setSelectedExam(null))
       onChangeAuth(null);
       navigation.reset({
         index: 0,

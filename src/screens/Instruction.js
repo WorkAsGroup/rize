@@ -11,8 +11,13 @@ import {
 } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import RenderHtml from "react-native-render-html";
+import HtmlComponent from "../common/HtmlComponent";
 import { darkTheme, lightTheme } from "../theme/theme";
 import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Text as SvgText } from "react-native-svg";
+import AppStyles from "../common/AppStyles";
+import COLORS from "../common/Colors";
+import { useSelector } from "react-redux";
+import { addAnalytics } from "../core/CommonService";
 var striptags = require("striptags");
 
 const windowWidth = Dimensions.get("window").width;
@@ -25,6 +30,47 @@ export default function Instruction({ navigation,route }) {
     const examIdData = route?.params?.exam_id_Data
     console.log("mocktest1", obj );
 
+    const uniqueId = useSelector((state) => state.header.deviceId);
+
+
+  
+
+    const handleAnalytics = async () => {
+        console.log("hey Um called")
+        try {
+            // Define your params correctly
+            const params = {
+                "student_user_exam_id": obj?.exam_paper_id,
+                "type": 0,
+                "source": 0,
+                "testonic_page_id": 6,
+            };
+    
+            console.log(uniqueId,  "payloaddlscknl");
+    
+            // Create payload
+            const payload = {
+                ...params,
+                ip_address: uniqueId ? uniqueId: "",
+                location: "Hyderabad",
+            };
+    
+            console.log(payload, "payload");
+            const response = await addAnalytics(payload); 
+            console.log("Analytics Response:", response);
+    
+        } catch (error) {
+            // Handle errors gracefully
+            const errorMessage = error.response?.data?.message || error.message;
+            console.error("Error:", errorMessage);
+        }
+    };
+
+    useEffect(() => {
+if(uniqueId) {
+  handleAnalytics()
+}
+    },[uniqueId])
 
       const sanitizeHtml = (text) => {
         if (text.length > 0) {
@@ -215,7 +261,7 @@ export default function Instruction({ navigation,route }) {
                     </View>
                   </View>
                 </View>
-                   <RenderHtml
+                   {/* <RenderHtml
                                   source={sanitizeHtml(
                                     obj.instructions || "<p>No instructions provided.</p>"
                                   )}
@@ -223,8 +269,14 @@ export default function Instruction({ navigation,route }) {
                                   baseStyle={baseStyle}
                                   // {...DEFAULT_PROPS}
                                   contentWidth={windowWidth}
-                                />
-               
+                                /> */}
+                 <HtmlComponent 
+                            style={{...AppStyles.oddMRegular,color:COLORS.BLACK,fontSize:15,lineHeight:23}} 
+                            containerStyle={{ marginBottom:20,marginTop:3}} 
+                            baseFontStyle={18}
+                            text={`${obj.instructions}`}
+                            tintColor={COLORS.BLACK}
+                            />                            
              
               </View>
                             {/* <Svg height="50" width={windowWidth * 0.9}>

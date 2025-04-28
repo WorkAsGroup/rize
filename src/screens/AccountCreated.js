@@ -16,12 +16,13 @@ import Svg, { Path } from "react-native-svg";
 import { darkTheme, lightTheme } from "../theme/theme";
 import { getUpdatedEmail } from "../core/CommonService";
 import Toast from 'react-native-toast-message'; 
+import { ImageBackground } from "react-native";
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
 export default function AccountCreated({ navigation, route }) {
-  console.log(route?.params, "route")
+  // console.log(route?.params, "route")
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   const mobile = route?.params?.mobile;
@@ -68,50 +69,69 @@ export default function AccountCreated({ navigation, route }) {
     return () => clearInterval(interval);
   }, [currentIndex, accessOptions.length]);
 
-console.log(data, "data")
-  const submitEmail = async () => {
-      if(validate()){
-          setLoading(true);
-          try {
-              const data = {
-                  "student_user_id": studentId,
-                  "mobile": mobile,
-                  "email": email
-              };
+// console.log(data, "data")
+const submitEmail = async () => {
+  if(validate()){
+      setLoading(true);
+      try {
+          const data = {
+              "student_user_id": studentId,
+              "mobile": mobile,
+              "email": email
+          };
 
-              const response = await getUpdatedEmail(data);
-              console.log("Response:",data, response);
-              if (response.statusCode === 200) {
-                navigation.navigate("OTPScreen", { 
-                    mobile:  response.data?.mobile, 
-                    email: response.data?.email,
-                    studentId: response?.data?.student_user_id,
-                    from: "verification", 
-                });
-              }
-              setLoading(false);
+          const response = await getUpdatedEmail(data);
+          console.log("Response:", response);
 
-              if (response.statusCode === 200) {
-                const tkn = data?.token;
-                route.params.onChangeAuth(tkn);
-                  showToast("Email updated successfully!", "success");
-                  setTimeout(() => {
-                    navigation.navigate("DashboardContent");
-                },1000)
-              } else {
-                  let errorMessage = "Failed to update email. Please try again.";
-                  if (response.data && response.data.message) {
-                      errorMessage = response.data.message;
-                  }
-                  showToast(errorMessage, "error");
-              }
-          } catch (error) {
-              console.error("Error updating email:", error);
-              setLoading(false);
-              showToast("An error occurred while updating email. Please check your internet connection and try again.", "error");
+          if (parseInt(response?.statusCode) == 409) { 
+            showToast(response?.message || "something went wrong !")
+            setLoading(false);
+            return;
           }
+          if (response.statusCode == 200) {
+            navigation.navigate("OTPScreen", { 
+                mobile:  response.data?.mobile, 
+                email: response.data?.email,
+                studentId: response?.data?.student_user_id,
+                from: "verification", 
+            });
+          }
+          setLoading(false);
+
+          if (response.statusCode === 200) {
+            const tkn = data?.token;
+            route.params.onChangeAuth(tkn);
+              showToast("Email updated successfully!", "success");
+              setTimeout(() => {
+                navigation.navigate("DashboardContent");
+            },1000)
+          } else {
+              let errorMessage = "Failed to update email. Please try again.";
+              if (response.data && response.data.message) {
+                  errorMessage = response.data.message;
+              }
+              showToast(errorMessage, "error");
+          }
+      } catch (error) {
+          console.error("Error updating email:", error);
+          setLoading(false);
+          showToast("An error occurred while updating email. Please check your internet connection and try again.", "error");
       }
-  };
+  }
+};
+
+const showToast = (message, type = "info") => {
+  Toast.show({
+      type: type,
+      text1: type === "success" ? "Success" : type === "error" ? "Error" : "Info",
+      text2: message,
+      position: 'top',
+      visibilityTime: 4000,
+      autoHide: true,
+      topOffset: 30,
+      bottomOffset: 40,
+  });
+};
 
   const skipEmail = () => {
     const tkn = data?.token;
@@ -125,53 +145,43 @@ console.log(data, "data")
      
   };
 
-    const showToast = (message, type = "default") => {
-        Toast.show({
-            type: type,
-            text1: type === "success" ? "Success" : "Error",
-            text2: message,
-            position: 'top',
-            visibilityTime: 4000,
-            autoHide: true,
-            topOffset: 30,
-            bottomOffset: 40,
-        });
-    };
+  
 
   return (
-    <LinearGradient
-      colors={theme.background}
-      style={styles.container}
-      start={{ x: 0, y: 1 }}
-      end={{ x: 1, y: 1 }}
-    >
+       <ImageBackground
+              source={require("../images/commonBack.jpg")}  // Or a URI: { uri: 'https://...' }
+              style={{ width: '100%', height: '100%',}}
+              // imageStyle={{ }}  // optional: for rounded corners
+            >
       <View contentContainerStyle={styles.scrollContainer}>
         <View style={styles.header}>
-          <Image
-            style={[styles.logo, { tintColor: theme.textColor1 }]}
-            source={require("../images/title.png")}
-          />
-          <Text style={[styles.tagline, { color: theme.textColor1 }]}>
-            Your path to success starts here!
-          </Text>
+                             
+                  <Image
+                                                          style={[styles.logo,]}
+                                                          source={require("../images/logo.png")}
+                                                      />
+                                                     <Text style={[styles.tagline, { color: "#ffffff" }]}>
+                                    <Text style={{ fontWeight: 'bold',fontSize: 25, color: '#e614e1' }}>Unlock</Text> the Gateway to{" "}
+                                    
+                                  </Text>
+                                  <Text style={[styles.tagline, { color: "#e614e1", marginLeft: 120, marginTop: 5 }]}>
+                                                       Better Learning !{" "}
+                                                      </Text>    
+
         </View>
 
-        <Svg height="180" width="100%" viewBox="145 140 320 320">
-          <Path fill={theme.path} d="M 80 300 c 150 -180 690 -180 830 0" />
-        </Svg>
+
 
         <View
           style={[
             styles.formContainer,
-            { backgroundColor: theme.path },
+            { backgroundColor: "transparent" },
           ]}
         >
-          <View style={{ top: -180, padding: 20 }}>
-            <Text style={[styles.welcomeText, { color: theme.black }]}>
-              Account created!
-            </Text>
+          <View style={{ top: 40, padding: 20 }}>
+        
             <View style={{ justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
-              <Text style={{ color: theme.textColor, textAlign: 'center',paddingStart:20,paddingEnd:20 }}>
+              <Text style={{ color: "#ffffff", textAlign: 'center',paddingStart:20,paddingEnd:20 }}>
                 Please provide your email ID to recover your
                 account in case you lose access to your phone
                 number and to receive results over email.
@@ -182,13 +192,13 @@ console.log(data, "data")
               style={[
                 styles.input,
                 {
-                  borderColor: errors.email ? theme.red : theme.inputBorder,
-                  backgroundColor: "#fff",
-                  color:theme.black
+                  borderColor: errors.email ? theme.red : '#e614e1',
+                  backgroundColor: "transparent",
+                  color:"#ffffff"
                 },
               ]}
               placeholder="Email ID"
-              placeholderTextColor={theme.gray}
+              placeholderTextColor="#ffffff"
               keyboardType="email-address"
               value={email}
               onChangeText={(text) => {
@@ -202,28 +212,36 @@ console.log(data, "data")
 
 
             <TouchableOpacity
-              style={[
-                styles.loginButton,
-                { backgroundColor: theme.buttonBackground },
-              ]}
+             
               onPress={submitEmail}
               disabled={loading}
             >
+                    <LinearGradient
+               style={[
+                styles.loginButton,
+               
+              ]}
+                     
+              
+              colors={["#e614e1", "#8b51fe"]}
+
+              >
               <Text
                 style={[
                   styles.loginButtonText,
-                  { color: theme.buttonText },
+                  { color: "#ffffff" },
                 ]}
               >
                 {loading ? "Submitting..." : "Submit"}
               </Text>
+              </LinearGradient>
             </TouchableOpacity>
 
 
             {/* Footer Section */}
             <View style={styles.footer}>
             
-                     <View style={{justifyContent:'center',alignItems:'center',marginBottom:120,marginTop:30}}>
+                     <View style={{justifyContent:'center',alignItems:'center',marginBottom:10,marginTop:30}}>
                      <TouchableOpacity style={{flexDirection:'row'}} onPress={skipEmail}>
                      <Text style={[styles.skipText, { color: theme.white,textDecorationLine: "underline",fontSize:18,top:-3,left:-3 }]}>
                             Skip
@@ -238,15 +256,16 @@ console.log(data, "data")
                 style={[
                   styles.accessText,
                   {
-                    color: theme.textColor,
+                    color: "#ffffff",
                     alignSelf: "flex-start",
                     marginLeft: 20,
+                  
                   },
                 ]}
               >
-                Login to access:
+                Login to access:{" "}
               </Text>
-              <View style={{ justifyContent: 'flex-end', height: 50 }}>
+              <View style={{ justifyContent: 'flex-end', height: 50,  }}>
                 <ScrollView
                   ref={scrollRef}
                   horizontal
@@ -276,7 +295,7 @@ console.log(data, "data")
         </View>
       </View>
       <Toast ref={(ref) => Toast.setRef(ref)} />
-    </LinearGradient>
+      </ImageBackground>
   );
 }
 
@@ -294,7 +313,7 @@ const styles = StyleSheet.create({
   },
   logo: {
     width: 250,
-    height: 50,
+    height: 150,
     resizeMode: "contain",
   },
   tagline: {
@@ -372,6 +391,7 @@ const styles = StyleSheet.create({
   accessOptions: {
     flexDirection: "row",
     marginTop: 10,
+    
   },
   accessOption: {
     backgroundColor: "transparent",

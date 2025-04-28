@@ -10,7 +10,6 @@ import {
   Alert,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import { useExam } from "../ExamContext";
 import { getSubjects, getChapters, createCustomExams } from "../core/CommonService";
 import Svg, { Path } from "react-native-svg";
 
@@ -29,7 +28,6 @@ const CustomExamCreation = ({ id,fetchData,selectedOption, onClose }) => {
   const [selectedSubjectId, setSelectedSubjectId] = useState("");
   const [selectedSubjects, setSelectedSubjects] = useState([]);
   const [selectedChapters, setSelectedChapters] = useState({});
-        const { selectedExam, setSelectedExam } = useExam();
   const [loading, setLoading] = useState(false); // Loader state
 console.log(selectedChapters, "wijdoiqedjoiqw")
   useEffect(() => {
@@ -47,42 +45,33 @@ console.log(selectedChapters, "wijdoiqedjoiqw")
     setFilteredChapters(response.data);
   };
 
-  const handleSubjectClick = (id) => {
-
-    console.log(id, selectedSubjects, "epofwpef", selectedSubjectId)
-    const isCheckedSubject = selectedSubjects?.filter((item) => parseInt(item) == id);
-    console.log()
-
-//    if(id== selectedSubjectId) {
-// setSelectedSubjects(selectedSubjects.filter((item) => parseInt(item.id) !== id));
-// // setSelectedChapters((prev) => {
-// //   const newChapters = { ...prev }; // Create a shallow copy
-// //   delete newChapters[id]; // Remove the key corresponding to `id`
-// //   return newChapters; // Update state with modified object
-// // });
-//    } else {
-    setSelectedSubjects((prev) => {
-      // Check if the ID already exists
-      if (!prev.some((subject) => subject.id === id)) {
-        return [...prev, { id }]; // Create a new array with the new subject
-      }
-      return prev; // Return the previous state unchanged if ID already exists
+  const handleSubjectClick = (subjectId) => {
+    const isCheckedSubject = selectedSubjects?.filter((item) => item.checked === true);
+  
+    setSelectedSubjects((prevSubjects) => {
+      const alreadySelected = prevSubjects.some((s) => s.id === subjectId);
+      const updatedSubjects = alreadySelected
+        ? prevSubjects.filter((s) => s.id !== subjectId)
+        : [...prevSubjects, { id: subjectId }];
+      return updatedSubjects;
     });
-  //  }
-    if(selectedSubjectId !== id) {
-      setSelectedSubjectId(id);
-      setSelectedId(id);
-      getChaptersNames(id);
-    } else {
-      setSelectedSubjectId(selectedSubjectId == id ? '': id);
-      setSelectedId(selectedSubjectId == id ? '': id);
-      getChaptersNames(selectedSubjectId == id ? '': id);
+  
+    const isUnselect = selectedSubjectId === subjectId && isCheckedSubject?.length === 0;
+  
+    setSelectedSubjectId(isUnselect ? null : subjectId);
+    setSelectedId(isUnselect ? null : subjectId);
+    setSearchValue(isUnselect ? searchValue : ""); // Optional: reset search if toggling
+  
+    // Only fetch chapters if selecting a new subject (not unselecting)
+    if (selectedSubjectId !== subjectId) {
+      getChaptersNames(subjectId);
     }
-    if(['9', '10', '11'].includes(selectedOption?.value?.toString())) {
-      setSelectedChapters({})
+  
+    if (['9', '10', '11'].includes(selectedOption?.value?.toString())) {
+      setSelectedChapters({});
     }
-
   };
+  
 
   const handleSearch = (text) => {
     setSearchValue(text);
@@ -116,7 +105,7 @@ console.log(selectedChapters, "wijdoiqedjoiqw")
     setLoading(true);
     try {
       const response = await createCustomExams({ student_user_exam_id: id, syllabus });
-
+// console.log(response, "wepojfpweijfweijfwie")
       setLoading(false);
       if (response?.data?.exam_session_id) {
         Alert.alert("Success", "Exam created successfully!", [{ text: "OK", onPress: () => {fetchData() ;onClose(false)} }]);

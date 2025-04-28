@@ -41,7 +41,7 @@ const lightTheme = {
     bg2:"#e614e1",
     tx1:"#8b51fB",
     tx2:"#e614e1",
-    textColor: "#D6D6D6",
+    textColor: "#FFFFFF",
     textColor1: "#000",
     formBackground: "#333",
     inputBorder: "#555",

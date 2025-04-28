@@ -51,9 +51,9 @@ const OTPTextInput = ({ length, onOTPEntered, theme ,ref}) => {
                     style={[
                         styles.input,
                         {
-                            color: "#000",
-                            backgroundColor: theme.white,
-                            borderColor: theme.wb,
+                            color: "#ffffff",
+                            backgroundColor: "transparent",
+                            borderColor: '#e614e1',
                         },
                     ]}
                     keyboardType="number-pad"

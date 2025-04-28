@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import decodeUriComponent from 'decode-uri-component';
 import COLORS from './Colors';
-
+import { RadioButton } from 'react-native-paper';
 import HtmlComponent from './HtmlComponent';
 import AppStyles from './AppStyles';
 import { theme } from '../core/theme';
@@ -48,8 +48,8 @@ const OptionCard = ({ option, optionText, value, disabled = false, double = fals
                                                             styles.select,
                                                             {
                                                               borderColor: theme.textColor,
-                                                              backgroundColor: isSelected
-                                                                ? "#000"
+                                                              backgroundColor: value!==null
+                                                                ? "#28a745"
                                                                 : "transparent",
                                                             },
                                                           ]}

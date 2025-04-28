@@ -39,9 +39,47 @@ export const endPoint = {
 	addAutoSaveData: '/api/v1/exams/addAutoSaveData',
     getAutoSaveData: '/api/v1/exams/autoSaveData',
 	autoSaveTime: '/api/v1/exams/auto-save-time',
+	reloadQuestion: "/api/v1/exams/reload-question",
+	addAanalytics: "/api/v1/general/addAnalytics"
   };
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+export const addAnalytics = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.addAanalytics, "with data: Analytics", fields);
+	
+	return await axios
+	  .post(apiurl + endPoint.addAanalytics, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in submit exam:", error.response?.data || error.message);
+		return error;
+	  }); 
+  }; 
+
+export const reloadQuestion = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.reloadQuestion, "with data:", fields?.exam_paper_id, fields?.student_user_exam_id);
+	
+	return await axios
+	  .post(apiurl + endPoint.reloadQuestion, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in submit exam:", error.response?.data || error.message);
+		return error;
+	  }); 
+  }; 
 
 export const getAutoSaveTime = async (fields) => {
 	const headers = {
@@ -108,7 +146,7 @@ export const getSubmitExamResults = async (fields) => {
 	
 	return await axios
 	  .post(apiurl + endPoint.submitExam, fields, { headers: headers })
-	  .then((res) => res.data)
+	  .then((res) => res)
 	  .catch((error) => {
 		console.error("Error in submit exam:", error.response?.data || error.message);
 		return error;
@@ -175,11 +213,11 @@ export const getPreviousPapers = async (fields) => {
 	  "X-Content-Type-Options": "nosniff",
 	  "X-Frame-Options": "SAMEORIGIN",
 	};
-	console.error("PatternSelection:", apiurl + endPoint.pattern, fields, { headers: headers });
+	console.log("PatternSelection:", apiurl + endPoint.pattern, fields, { headers: headers });
 
 	return await axios
 	  .post(apiurl + endPoint.pattern, fields, { headers: headers })
-	  .then((res) => res.data)
+	  .then((res) => res)
 	  .catch((error) => {
 		console.error("Error in PatternSelection:", error.response?.data || error.message);
 		return error;
@@ -318,13 +356,13 @@ export const getYearsData = async (fields) => {
 	  "X-Frame-Options": "SAMEORIGIN",
 	};
   
-	console.log("Making request to:", apiurl + endPoint.customExams, "with data:", fields);
+	console.log("Making request to:customeExams", apiurl + endPoint.customExams, "with data:", fields);
 	
 	return await axios
 	  .post(apiurl + endPoint.customExams, fields, { headers: headers })
 	  .then((res) => res.data)
 	  .catch((error) => {
-		console.error("Error in mock exam:", error.response?.data || error.message);
+		console.error("Error in custome Exams:", error.response?.data || error.message);
 		return error;
 	  }); 
   };
@@ -471,7 +509,7 @@ export const getPreExamdata = async (fields) => {
 	return await axios
 		.post(apiurl +  endPoint.startExam, fields, { headers: headers })
 		.then((res) => {
-			return res.data;
+			return res;
 		})
 		.catch((error) => {
 			return error;

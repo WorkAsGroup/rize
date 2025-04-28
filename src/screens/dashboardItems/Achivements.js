@@ -6,15 +6,17 @@ import LinearGradient from "react-native-linear-gradient";
 import Header from "../../common/Header";
 import AchievementsModal from "../models/AchivementsModel";
 import LeaderBoard from "./LeaderBoard";
-import { getAchievements } from "../../core/CommonService";
-import { useExam } from "../../ExamContext";
+import { addAnalytics, getAchievements } from "../../core/CommonService";
+
+import AnimationWithImperativeApi from "../../common/LoadingComponent";
+import { useSelector } from "react-redux";
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
 const Achivements = () => {
          const colorScheme = useColorScheme();
-             const { selectedExam, setSelectedExam } = useExam();
+         const selectedExam = useSelector((state) => state.header.selectedExam);
          const [loading, setLoading] = useState(false); // ✅ Added state for loading indicator
          const [studentExamId, setStudentExamId] = useState(null); // ✅ Added state for student exam id
          const [ach, setAch] = useState([]); // ✅ Added state for achievements
@@ -22,12 +24,55 @@ const Achivements = () => {
         // const theme = colorScheme === "dark" ? darkTheme : lightTheme;
           const theme =  darkTheme;
           const [refreshing, setRefreshing] = useState(false);
-    
-console.log(studentExamId, "eldoeiwlndoweinfweoj")
+      const uniqueId = useSelector((state) => state.header.deviceId);
+      
+      
+        useEffect(() => {
+          if(uniqueId) {
+            handleAnalytics();
+          }
+        }, [])
+      
+          const handleAnalytics = async () => {
+              console.log("hey Um called")
+              try {
+                  // Define your params correctly
+                  const params = {
+                      "student_user_exam_id": 0,
+                      "type": 0,
+                      "source": 0,
+                      "testonic_page_id": 43,
+                  };
+          
+                  console.log(uniqueId,  "payloaddlscknl");
+          
+                  // Create payload
+                  const payload = {
+                      ...params,
+                      ip_address: uniqueId ? uniqueId: "",
+                      location: "Hyderabad", // Ensure location is correctly handled (but you should pass the location data properly here)
+                  };
+          
+                  console.log(payload, "payload");
+          
+                  // Send analytics request
+                  const response = await addAnalytics(payload); // Assuming addAnalytics is an API call function
+                  console.log("Analytics Response:", response);
+          
+              } catch (error) {
+                  // Handle errors gracefully
+                  const errorMessage = error.response?.data?.message || error.message;
+                
+                  console.error("Error:", errorMessage);
+              }
+          };
+
           const getAchieve = async () => {
             const data = {
-              student_user_exam_id: studentExamId,
+              student_user_exam_id: selectedExam,
             };
+    
+            console.log(selectedExam, data,"eldoeiwlndoweinfweoj")
             setLoading(true); // ✅ Loading indicator is shown when fetching data
             try {
               const response = await getAchievements(data);
@@ -48,10 +93,10 @@ console.log(studentExamId, "eldoeiwlndoweinfweoj")
           };
 
           useEffect(() => { 
-          if(studentExamId) {
+          if(studentExamId||selectedExam) {
             getAchieve();  
           }
- },[studentExamId] )
+ },[studentExamId, selectedExam] )
     useEffect(() => {
     setStudentExamId(selectedExam);
     }, [selectedExam]);
@@ -82,8 +127,7 @@ console.log(studentExamId, "eldoeiwlndoweinfweoj")
           {loading ? 
                      (
                       <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#6A5ACD" />
-                        <Text style={styles.loadingText}>Loading...</Text>
+                       <AnimationWithImperativeApi/>
                       </View>
                     ): ( 
                     
@@ -103,12 +147,12 @@ console.log(studentExamId, "eldoeiwlndoweinfweoj")
     flexGrow: 1,
     gap: 10,
   }}
-  refreshControl={
-    <RefreshControl
-      refreshing={refreshing}
-      onRefresh={onRefresh}
-      tintColor={theme.textColor}
-    />}
+  // refreshControl={
+  //   <RefreshControl
+  //     refreshing={refreshing}
+  //     onRefresh={onRefresh}
+  //     tintColor={theme.textColor}
+  //   />}
   showsVerticalScrollIndicator={false} 
 >
           {ach!==undefined&&ach.length > 0 ? (
@@ -138,7 +182,7 @@ console.log(studentExamId, "eldoeiwlndoweinfweoj")
           
         </ScrollView>
 
-<LeaderBoard studentExamId={studentExamId} /> {/* Passing studentExamId */}
+<LeaderBoard studentExamId={selectedExam} /> {/* Passing studentExamId */}
 </View>
                     )};
      

@@ -3,6 +3,7 @@
     "C:\\Users\\worki\\Desktop\\rize\\node_modules\\@react-native-async-storage\\async-storage\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
     "C:\\Users\\worki\\Desktop\\rize\\node_modules\\@react-native-google-signin\\google-signin\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
     "C:\\Users\\worki\\Desktop\\rize\\node_modules\\@react-native-picker\\picker\\android\\src\\main\\jni\\CMakeLists.txt",
+    "C:\\Users\\worki\\Desktop\\rize\\node_modules\\lottie-react-native\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
     "C:\\Users\\worki\\Desktop\\rize\\node_modules\\react-native-gesture-handler\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
     "C:\\Users\\worki\\Desktop\\rize\\node_modules\\react-native-reanimated\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
     "C:\\Users\\worki\\Desktop\\rize\\node_modules\\react-native-safe-area-context\\android\\src\\main\\jni\\CMakeLists.txt",
@@ -80,6 +81,11 @@
         "C:\\Users\\worki\\.gradle\\caches\\8.10.2\\transforms\\ffea390e40bce9ede11ecb704e97298f\\transformed\\react-android-0.76.6-debug\\prefab\\modules\\jsi\\libs\\android.arm64-v8a\\libjsi.so",
         "C:\\Users\\worki\\.gradle\\caches\\8.10.2\\transforms\\ffea390e40bce9ede11ecb704e97298f\\transformed\\react-android-0.76.6-debug\\prefab\\modules\\reactnative\\libs\\android.arm64-v8a\\libreactnative.so"
       ]
+    },
+    "react_codegen_lottiereactnative::@0fa4dc904d7e359a99fb": {
+      "artifactName": "react_codegen_lottiereactnative",
+      "abi": "arm64-v8a",
+      "runtimeFiles": []
     },
     "react_codegen_rnsvg::@4f40eb209d0c0b4a3b65": {
       "artifactName": "react_codegen_rnsvg",

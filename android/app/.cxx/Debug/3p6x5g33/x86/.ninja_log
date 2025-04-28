@@ -1,9 +1,9 @@
 # ninja log v5
 79321	90256	7659097761391744	rnscreens_autolinked_build/CMakeFiles/react_codegen_rnscreens.dir/1f877dc32b501fc2a3d6a55264388ea9/source/codegen/jni/react/renderer/components/rnscreens/rnscreensJSI-generated.cpp.o	de50758f724260bb
 16994	36097	7659097219144072	rnpicker_autolinked_build/CMakeFiles/react_codegen_rnpicker.dir/9df41fe498f35332b458c6a8fcf7e87f/source/codegen/jni/react/renderer/components/rnpicker/ComponentDescriptors.cpp.o	52dae81957b1be00
-2	33	0	C:/Users/worki/Desktop/rize/android/app/.cxx/Debug/3p6x5g33/x86/CMakeFiles/cmake.verify_globs	a3e147618fedd774
+1	37	0	C:/Users/worki/Desktop/rize/android/app/.cxx/Debug/3p6x5g33/x86/CMakeFiles/cmake.verify_globs	a3e147618fedd774
 57	6242	7659096921694008	rnasyncstorage_autolinked_build/CMakeFiles/react_codegen_rnasyncstorage.dir/react/renderer/components/rnasyncstorage/States.cpp.o	f3bf802d12310b73
-33	32949	7659111107692564	CMakeFiles/appmodules.dir/C_/Users/worki/Desktop/rize/android/app/build/generated/autolinking/src/main/jni/autolinking.cpp.o	32c405a5c5be27aa
+33	41132	7660063860129657	CMakeFiles/appmodules.dir/C_/Users/worki/Desktop/rize/android/app/build/generated/autolinking/src/main/jni/autolinking.cpp.o	7b26f6befda8b0aa
 36272	52487	7659097383810718	rngesturehandler_codegen_autolinked_build/CMakeFiles/react_codegen_rngesturehandler_codegen.dir/react/renderer/components/rngesturehandler_codegen/ComponentDescriptors.cpp.o	82a6e6a845c575cc
 53	6838	7659096927369616	rnasyncstorage_autolinked_build/CMakeFiles/react_codegen_rnasyncstorage.dir/react/renderer/components/rnasyncstorage/EventEmitters.cpp.o	41571deaacd9a82
 34215	47355	7659097332534633	rngesturehandler_codegen_autolinked_build/CMakeFiles/react_codegen_rngesturehandler_codegen.dir/rngesturehandler_codegen-generated.cpp.o	3e00e492c0103a5b
@@ -15,7 +15,7 @@
 47	10468	7659096962987808	rnasyncstorage_autolinked_build/CMakeFiles/react_codegen_rnasyncstorage.dir/react/renderer/components/rnasyncstorage/ComponentDescriptors.cpp.o	eec049acb228f16c
 66	10200	7659096961349919	rnasyncstorage_autolinked_build/CMakeFiles/react_codegen_rnasyncstorage.dir/react/renderer/components/rnasyncstorage/Props.cpp.o	e1b10e2bf3a0c9a0
 27047	35727	7659097216456565	rnpicker_autolinked_build/CMakeFiles/react_codegen_rnpicker.dir/a832da72ed25999909c3269746172f1c/build/generated/source/codegen/jni/react/renderer/components/rnpicker/States.cpp.o	852e48320947a378
-39	3930	7659110819990339	CMakeFiles/appmodules.dir/OnLoad.cpp.o	c5fde41d500b1e37
+36	14065	7660063588590229	CMakeFiles/appmodules.dir/OnLoad.cpp.o	415657bad0cafe83
 99713	113940	7659097998532497	RNCWebViewSpec_autolinked_build/CMakeFiles/react_codegen_RNCWebViewSpec.dir/react/renderer/components/RNCWebViewSpec/EventEmitters.cpp.o	efc3a8117947c311
 9506	16993	7659097029337534	RNGoogleSignInCGen_autolinked_build/CMakeFiles/react_codegen_RNGoogleSignInCGen.dir/react/renderer/components/RNGoogleSignInCGen/States.cpp.o	4f6a5de3b10e4c23
 81704	91561	7659097774943927	rnsvg_autolinked_build/CMakeFiles/react_codegen_rnsvg.dir/C_/Users/worki/Desktop/rize/node_modules/react-native-svg/common/cpp/react/renderer/components/rnsvg/RNSVGImageState.cpp.o	f55ed1422cd763e3
@@ -30,10 +30,12 @@
 70306	87930	7659097737947752	rnscreens_autolinked_build/CMakeFiles/react_codegen_rnscreens.dir/2c66f8db70486fb8807fed3b1f7ec9fb/build/generated/source/codegen/jni/react/renderer/components/rnscreens/Props.cpp.o	2708429c915bf159
 78954	86886	7659097728140889	rnscreens_autolinked_build/CMakeFiles/react_codegen_rnscreens.dir/2c66f8db70486fb8807fed3b1f7ec9fb/build/generated/source/codegen/jni/react/renderer/components/rnscreens/States.cpp.o	ce348f236b4c84b8
 19157	34215	7659097199298282	rnpicker_autolinked_build/CMakeFiles/react_codegen_rnpicker.dir/RNCAndroidDialogPickerState.cpp.o	aac4021b1572c593
+48	10240	7660063552597134	lottiereactnative_autolinked_build/CMakeFiles/react_codegen_lottiereactnative.dir/react/renderer/components/lottiereactnative/EventEmitters.cpp.o	2baa43c8a536baed
 13006	29494	7659097153273121	rnpicker_autolinked_build/CMakeFiles/react_codegen_rnpicker.dir/RNCAndroidDropdownPickerMeasurementsManager.cpp.o	384d2956c5bd1f39
 66885	79775	7659097656854545	rnscreens_autolinked_build/CMakeFiles/react_codegen_rnscreens.dir/f7f571d64333e75424836e7a07d98512/common/cpp/react/renderer/components/rnscreens/RNSScreenStackHeaderSubviewState.cpp.o	1fccea281f643e35
 10592	21893	7659097077913796	rnpicker_autolinked_build/CMakeFiles/react_codegen_rnpicker.dir/RNCAndroidDropdownPickerState.cpp.o	fc1eb937d38f7c66
 20395	33575	7659097194678624	rnpicker_autolinked_build/CMakeFiles/react_codegen_rnpicker.dir/5c32b3a987759ff344d2af98c3d29c5c/generated/source/codegen/jni/react/renderer/components/rnpicker/EventEmitters.cpp.o	41c4d39daa045f24
+40	10609	7660063556572791	lottiereactnative_autolinked_build/CMakeFiles/react_codegen_lottiereactnative.dir/lottiereactnative-generated.cpp.o	ed69476c10fc7ee1
 63561	79319	7659097652270400	rnscreens_autolinked_build/CMakeFiles/react_codegen_rnscreens.dir/2a77130688378796c52b29a89f8c8ee2/cpp/react/renderer/components/rnscreens/RNSScreenStackHeaderSubviewShadowNode.cpp.o	7531096d31f3c5cc
 20262	38106	7659097239807906	rnpicker_autolinked_build/CMakeFiles/react_codegen_rnpicker.dir/RNCAndroidDropdownPickerShadowNode.cpp.o	4f5f7c46f6a00a73
 28086	40531	7659097264151602	rngesturehandler_codegen_autolinked_build/CMakeFiles/react_codegen_rngesturehandler_codegen.dir/bac033cd950586cef66695376748dd33/rngesturehandler_codegenJSI-generated.cpp.o	176b32e3a27d0829
@@ -96,12 +98,13 @@
 103189	121770	7659098076581400	RNCWebViewSpec_autolinked_build/CMakeFiles/react_codegen_RNCWebViewSpec.dir/react/renderer/components/RNCWebViewSpec/ComponentDescriptors.cpp.o	69c5844105c75abe
 107318	124779	7659098106597618	RNCWebViewSpec_autolinked_build/CMakeFiles/react_codegen_RNCWebViewSpec.dir/react/renderer/components/RNCWebViewSpec/Props.cpp.o	17d95d8cdda99bf7
 120887	129248	7659098151996822	RNCWebViewSpec_autolinked_build/CMakeFiles/react_codegen_RNCWebViewSpec.dir/react/renderer/components/RNCWebViewSpec/ShadowNodes.cpp.o	d9581d04bd31ff18
-32950	33633	7659111116304974	C:/Users/worki/Desktop/rize/android/app/build/intermediates/cxx/Debug/3p6x5g33/obj/x86/libappmodules.so	f2817dcf4eaff6f3
+41134	42391	7660063873742723	C:/Users/worki/Desktop/rize/android/app/build/intermediates/cxx/Debug/3p6x5g33/obj/x86/libappmodules.so	4d469945f5001e31
 0	32	0	clean	c538f99c98c2bc89
-34	699	7659112965430728	build.ninja	32de35a3be24ac11
-2	55	0	C:/Users/worki/Desktop/rize/android/app/.cxx/Debug/3p6x5g33/x86/CMakeFiles/cmake.verify_globs	a3e147618fedd774
-1	30	0	C:/Users/worki/Desktop/rize/android/app/.cxx/Debug/3p6x5g33/x86/CMakeFiles/cmake.verify_globs	a3e147618fedd774
-2	30	0	C:/Users/worki/Desktop/rize/android/app/.cxx/Debug/3p6x5g33/x86/CMakeFiles/cmake.verify_globs	a3e147618fedd774
-1	26	0	C:/Users/worki/Desktop/rize/android/app/.cxx/Debug/3p6x5g33/x86/CMakeFiles/cmake.verify_globs	a3e147618fedd774
-3	40	0	C:/Users/worki/Desktop/rize/android/app/.cxx/Debug/3p6x5g33/x86/CMakeFiles/cmake.verify_globs	a3e147618fedd774
-2	47	0	C:/Users/worki/Desktop/rize/android/app/.cxx/Debug/3p6x5g33/x86/CMakeFiles/cmake.verify_globs	a3e147618fedd774
+122	1363	7660125829569270	build.ninja	32de35a3be24ac11
+57	8231	7660063532605187	lottiereactnative_autolinked_build/CMakeFiles/react_codegen_lottiereactnative.dir/react/renderer/components/lottiereactnative/States.cpp.o	3c8428e153c5afaf
+62	9195	7660063542104004	lottiereactnative_autolinked_build/CMakeFiles/react_codegen_lottiereactnative.dir/react/renderer/components/lottiereactnative/lottiereactnativeJSI-generated.cpp.o	df8110c51060f7c0
+67	14283	7660063593008555	lottiereactnative_autolinked_build/CMakeFiles/react_codegen_lottiereactnative.dir/react/renderer/components/lottiereactnative/ShadowNodes.cpp.o	fee3431128b5e8f5
+44	17064	7660063621151571	lottiereactnative_autolinked_build/CMakeFiles/react_codegen_lottiereactnative.dir/react/renderer/components/lottiereactnative/ComponentDescriptors.cpp.o	619c247f14031cf3
+52	17525	7660063625769799	lottiereactnative_autolinked_build/CMakeFiles/react_codegen_lottiereactnative.dir/react/renderer/components/lottiereactnative/Props.cpp.o	fe4e62aa5f57ee1b
+3	69	0	C:/Users/worki/Desktop/rize/android/app/.cxx/Debug/3p6x5g33/x86/CMakeFiles/cmake.verify_globs	a3e147618fedd774
+3	41	0	C:/Users/worki/Desktop/rize/android/app/.cxx/Debug/3p6x5g33/x86/CMakeFiles/cmake.verify_globs	a3e147618fedd774

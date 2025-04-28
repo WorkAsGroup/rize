@@ -261,7 +261,7 @@ if(data&&type) {
   chartData={filteredDatasets.map(ds => ds.data)}
   labels={chartData.labels}
   colors={filteredDatasets.map(ds => ds.color())}
-  yAxisFormatter={(val) => `${val}%`}
+  yAxisFormatter={(val) => `${val}`}
   labelFormatter={(val) => `${val}`}
   width={chartData.labels.length * 60}
   yMin={0}           // 👈 Force Y-axis min
@@ -487,7 +487,7 @@ if(data&&type) {
     .map((chapter, index) => (
       <View key={index} style={[styles.chapterBox, { backgroundColor: chapter.color_code }]}>
         <Text style={styles.chapterText}>
-          {chapter.chapter_name.length > 20 ? `${chapter.chapter_name.slice(0, 15)}...` : chapter.chapter_name}
+          {chapter.chapter_name}
         </Text>
       </View>
     ))}
@@ -519,7 +519,7 @@ const styles = StyleSheet.create({
     subjectScore: { fontSize: 16, fontWeight: '600' },
     chapterGrid: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 15 },
     chapterBox: { width: '45%', height: 75, justifyContent: 'center', alignItems: 'center', margin: 5 },
-    chapterText: { fontSize: 12, fontWeight: '500', color: '#fff' },
+    chapterText: { fontSize: 12, fontWeight: '500', color: '#000',flexWrap: 'wrap'  },
     noDataText: { textAlign: 'center', fontSize: 16 }
 });
 export default PerformanceStatusGraph;

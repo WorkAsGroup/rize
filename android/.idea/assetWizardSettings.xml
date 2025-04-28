@@ -24,7 +24,7 @@
                                             <option name="values">
                                               <map>
                                                 <entry key="color" value="000000" />
-                                                <entry key="imagePath" value="/private/var/folders/29/x9l10lb97t721ght4jfmj2l40000gn/T/ic_android_black_24dp.xml" />
+                                                <entry key="imagePath" value="C:\Users\worki\AppData\Local\Temp\ic_android_black_24dp.xml" />
                                               </map>
                                             </option>
                                           </PersistentState>
@@ -67,7 +67,7 @@
                                           <PersistentState>
                                             <option name="values">
                                               <map>
-                                                <entry key="imagePath" value="/private/var/folders/29/x9l10lb97t721ght4jfmj2l40000gn/T/ic_android_black_24dp.xml" />
+                                                <entry key="imagePath" value="C:\Users\worki\AppData\Local\Temp\ic_android_black_24dp.xml" />
                                               </map>
                                             </option>
                                           </PersistentState>
@@ -79,8 +79,9 @@
                                             <option name="values">
                                               <map>
                                                 <entry key="color" value="000000" />
-                                                <entry key="imagePath" value="$USER_HOME$/Downloads/ic_launcher-playstore.png.png" />
+                                                <entry key="imagePath" value="C:\Users\worki\Downloads\Untitled design.png" />
                                                 <entry key="scalingPercent" value="55" />
+                                                <entry key="trimmed" value="true" />
                                               </map>
                                             </option>
                                           </PersistentState>
@@ -114,6 +115,7 @@
                                     <map>
                                       <entry key="backgroundAssetType" value="COLOR" />
                                       <entry key="backgroundColor" value="ffffff" />
+                                      <entry key="showGrid" value="true" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -130,7 +132,7 @@
                                             <option name="values">
                                               <map>
                                                 <entry key="color" value="000000" />
-                                                <entry key="imagePath" value="/private/var/folders/29/x9l10lb97t721ght4jfmj2l40000gn/T/ic_android_black_24dp.xml" />
+                                                <entry key="imagePath" value="C:\Users\worki\AppData\Local\Temp\ic_android_black_24dp.xml" />
                                               </map>
                                             </option>
                                           </PersistentState>
@@ -174,7 +176,7 @@
                                             <option name="values">
                                               <map>
                                                 <entry key="color" value="000000" />
-                                                <entry key="imagePath" value="/private/var/folders/29/x9l10lb97t721ght4jfmj2l40000gn/T/ic_android_black_24dp.xml" />
+                                                <entry key="imagePath" value="C:\Users\worki\AppData\Local\Temp\ic_android_black_24dp.xml" />
                                               </map>
                                             </option>
                                           </PersistentState>
@@ -238,7 +240,7 @@
                                           <PersistentState>
                                             <option name="values">
                                               <map>
-                                                <entry key="imagePath" value="/private/var/folders/29/x9l10lb97t721ght4jfmj2l40000gn/T/ic_android_black_24dp.xml" />
+                                                <entry key="imagePath" value="C:\Users\worki\AppData\Local\Temp\ic_android_black_24dp.xml" />
                                               </map>
                                             </option>
                                           </PersistentState>
@@ -277,6 +279,11 @@
                                           </PersistentState>
                                         </value>
                                       </entry>
+                                    </map>
+                                  </option>
+                                  <option name="values">
+                                    <map>
+                                      <entry key="showGrid" value="true" />
                                     </map>
                                   </option>
                                 </PersistentState>

@@ -9,6 +9,7 @@ import {
     useColorScheme,
     Dimensions,
     Image,
+    ImageBackground,
 } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import Svg, { Path } from "react-native-svg";
@@ -137,34 +138,34 @@ export default function ResetPassword({ navigation }) {
 
 
     return (
-        <LinearGradient
-            colors={theme.background}
-            style={styles.container}
-            start={{ x: 0, y: 1 }}
-            end={{ x: 1, y: 1 }}
-        >
+           <ImageBackground
+            source={require("../images/commonBack.jpg")}  // Or a URI: { uri: 'https://...' }
+            style={{ width: '100%', height: '100%',}}
+            // imageStyle={{ }}  // optional: for rounded corners
+          >
             <View contentContainerStyle={styles.scrollContainer}>
                 <View style={styles.header}>
                     <Image
-                        style={[styles.logo, { tintColor: theme.textColor1 }]}
-                        source={require("../images/title.png")}
+                        style={[styles.logo,]}
+                        source={require("../images/logo.png")}
                     />
-                    <Text style={[styles.tagline, { color: theme.textColor1 }]}>
-                        Your path to success starts here!
-                    </Text>
+                   <Text style={[styles.tagline, { color: "#ffffff" }]}>
+                  <Text style={{ fontWeight: 'bold',fontSize: 25, color: '#e614e1' }}>Unlock</Text> the Gateway to{" "}
+                  
+                </Text>
+                <Text style={[styles.tagline, { color: "#e614e1", marginLeft: 120, marginTop: 5 }]}>
+                                     Better Learning !{" "}
+                                    </Text>
                 </View>
 
-                <Svg height="180" width="100%" viewBox="145 140 320 320">
-                    <Path fill={theme.path} d="M 80 300 c 150 -180 690 -180 830 0" />
-                </Svg>
 
                 <View
                     style={[
                         styles.formContainer,
-                        { backgroundColor: theme.path },
+                        { backgroundColor: 'transparent',  },
                     ]}
                 >
-                    <View style={{ top: -200, padding: 20 }}>
+                    <View style={{ top: 10, padding: 20 }}>
                         <Text style={[styles.welcomeText, { color: theme.white }]}>
                             Reset Password
                         </Text>
@@ -172,22 +173,27 @@ export default function ResetPassword({ navigation }) {
                         <TextInput
                             style={[
                                 styles.input,
-                                { backgroundColor: "#fff", color: theme.black ,marginTop:20},
+                                { color: "#ffffff" ,marginTop:20},
                             ]}
                             placeholder="Email / Phone Number"
-                            placeholderTextColor={theme.black}
+                            placeholderTextColor="#ffffff"
                             value={inputText}
                             onChangeText={text => setInputText(text)}
                             keyboardType="email-address" 
+                            borderColor ="#e614e1"
 
                         />
 
                         <TouchableOpacity
-                            style={[
-                                styles.loginButton,
-                                { backgroundColor: theme.buttonBackground },
-                            ]}
+                            
                             onPress={Reset}
+                        >
+                                 <LinearGradient
+                         colors={["#e614e1", "#8b51fe"]}
+                        style={[
+                            styles.loginButton,
+                          
+                        ]}
                         >
                             <Text
                                 style={[
@@ -197,15 +203,16 @@ export default function ResetPassword({ navigation }) {
                             >
                                 Reset Password
                             </Text>
+                            </LinearGradient>
                         </TouchableOpacity>
-
+                    
                         {/* Footer Section */}
                         <View style={styles.footer}>
                             <View style={{ flexDirection: 'row' }}>
                                 <Text
                                     style={[styles.newHereText, { color: theme.white }]}
                                 >
-                                    New here?
+                                    New User ? {" "}
                                 </Text>
                                 <TouchableOpacity onPress={() => {
                                     navigation.navigate("Signup")
@@ -231,7 +238,7 @@ export default function ResetPassword({ navigation }) {
                                     },
                                 ]}
                             >
-                                Login to access:
+                                Login to access:{" "}
                             </Text>
                             <View style={{ justifyContent: 'flex-end', height: 50 }}>
                                 <ScrollView
@@ -263,7 +270,7 @@ export default function ResetPassword({ navigation }) {
                 <Toast  />
             </View>
            
-        </LinearGradient>
+            </ImageBackground>
     );
 }
 
@@ -281,7 +288,7 @@ const styles = StyleSheet.create({
     },
     logo: {
         width: 250,
-        height: 50,
+        height: 150,
         resizeMode: "contain",
     },
     tagline: {

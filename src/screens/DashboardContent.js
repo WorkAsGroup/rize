@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useLayoutEffect } from "react";
 import {
   View,
   Text,
@@ -14,7 +14,9 @@ import {
   Alert,
   Modal,
   Pressable,
+  DeviceEventEmitter,
 } from "react-native";
+import {setAutoSaveId, setExamDuration, setExamSessionId} from "../store/slices/examSlice"
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 // import { LineChart } from 'react-native-svg-charts';
 import { useNavigation } from "@react-navigation/native";
@@ -32,36 +34,32 @@ import {
   getDashboardExamResult,
   getSubmitExamResults,
   getPreviousPapRes,
+  addAnalytics,
 } from "../core/CommonService";
 import { darkTheme, lightTheme } from "../theme/theme";
 import CustomExamCreation from "./CustomExamCreation";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useExam } from "../ExamContext";
-import ExamModalComponent from "./ExamModalComponent";
-import AchivementsModel from "./models/AchivementsModel";
 import { useRef } from "react";
 import MockTests from "./dashboardItems/MockTests";
-import Achivements from "./dashboardItems/Achivements";
-import LeaderBoard from "./dashboardItems/LeaderBoard";
 import Header from "../common/Header";
+import AnimationWithImperativeApi from "../common/LoadingComponent";
+import { useDispatch, useSelector } from "react-redux";
+import { getDeviceId, getUniqueId } from  "react-native-device-info";
+import { setDeviceId } from "../store/slices/headerSlice";
 
 const COMPLETED_EXAMS_KEY = "completedExams";
 const COMPLETED_MOCK_TESTS_KEY = "completedMockTests";
-
-const Tab = createBottomTabNavigator();
-
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
 const DashboardContent = ({ route, navigation, onChangeAuth }) => {
-  // const navigation = useNavigation();
-    const { selectedExam, setSelectedExam } = useExam();
-  const [studentUserId, setStudentUserId] = useState(null);
-  // const { onChangeAuth } = route.params;
+
+
+  const dispatch = useDispatch();
+  const selectedExam = useSelector((state) => state.header.selectedExam);
   const [completedExams, setCompletedExams] = useState([]);
   const [completedMockTests, setCompletedMockTests] = useState([]);
   const colorScheme = useColorScheme();
-  // const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   const theme = darkTheme;
   const [addExam, setAddExam] = useState(false);
   const [examResults, setExamResults] = useState([]);
@@ -78,6 +76,8 @@ const DashboardContent = ({ route, navigation, onChangeAuth }) => {
   const [mock, setMock] = useState([]);
   const [examsData, setExamsData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selecteditem, setSelectedItem] = useState(null)
+  const [examLoading, setExamLoading] = useState(false);
   const [ach, setAch] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [totalExamCount, setTotalExamCount] = useState(0);
@@ -93,8 +93,46 @@ const DashboardContent = ({ route, navigation, onChangeAuth }) => {
   const hasSubmitted = useRef(false);
 
   const [items, setItems] = useState([]);
+   const uniqueId = useSelector((state) => state.header.deviceId);
+  
+  
+    
+  
+      const handleAnalytics = async (id) => {
+          console.log("hey Um called")
+          try {
+              // Define your params correctly
+              const params = {
+                  "student_user_exam_id": 0,
+                  "type": 0,
+                  "source": 0,
+                  "testonic_page_id": id,
+              };
+      
+              console.log(uniqueId,  "payloaddlscknl");
+      
+              // Create payload
+              const payload = {
+                  ...params,
+                  ip_address: uniqueId ? uniqueId: "",
+                  location: "Hyderabad", // Ensure location is correctly handled (but you should pass the location data properly here)
+              };
+      
+              console.log(payload, "payload");
+      
+              // Send analytics request
+              const response = await addAnalytics(payload); // Assuming addAnalytics is an API call function
+              console.log("Analytics Response:", response);
+              setExamLoading(false);
+          } catch (error) {
+              // Handle errors gracefully
+              const errorMessage = error.response?.data?.message || error.message;
+            
+              console.error("Error:", errorMessage);      setExamLoading(false);
+          }
+      };
 
-console.log(selectedExam, studentExamId,"selectedExam");
+
   const retrieveExam = async () => {
     try {
       const examData = await AsyncStorage.getItem("exam");
@@ -107,7 +145,18 @@ console.log(selectedExam, studentExamId,"selectedExam");
       console.error("Error retrieving exam from AsyncStorage:", error);
     }
   };
+  const getData = async () => {
+        const uniqueId = await getUniqueId();
+       dispatch(setDeviceId(uniqueId));
+        // Log the uniqueId and current route information
+        console.log(uniqueId,  "payloaddlscknl");
+        await handleAnalytics(41);
+    };
 
+  useEffect(() => {
+
+    getData();
+  },[])
 
 useEffect(() => {
 setStudentExamId(selectedExam);
@@ -175,30 +224,11 @@ console.log(validMockTests, "ValidMocks")
     console.log(examsData)
   getEx();
   },[])
-//   const fetchData = useCallback(async () => {
-//     setLoading(true);
-//     try {
-  
-//       if (selectedExam) {
-//         await getCustomeExam();
-//         await getYears();
-//         await getMock();  
-//         await getPrevious();
-//       }
-//     } catch (error) {
-//       console.error("Error fetching data in useEffect:", error);
-//       Alert.alert(
-//         "Error",
-//         "Failed to refresh data. Please check your connection and try again."
-//       ); // More user-friendly error handling
-//     } finally {
-//       setLoading(false);
-//     }
-//   }, [studentExamId]);
-// console.log(studentExamId, "studentExamId");
+
   useEffect(() => {
     fetchData();
-  }, [studentExamId]);
+  }, [selectedExam, navigation]);
+
 
   useEffect(() => {
     setMock(mocklist);
@@ -208,12 +238,14 @@ console.log(validMockTests, "ValidMocks")
     getUser();
   }, []);
 
-  const getCustomeExam = async () => {
+  const getCustomeExam = async (id) => {
     const data = {
-      student_user_exam_id: studentExamId,
+      student_user_exam_id: id,
     };
     const response = await getCustomExams(data);
-    setCustomExams(response.data);
+   if(response?.data) {
+    setCustomExams(response?.data);
+   }
     console.log(response, "custom");
   };
 
@@ -221,7 +253,7 @@ console.log(validMockTests, "ValidMocks")
 
   const getPrevious = async () => {
     const data = {
-      student_user_exam_id: studentExamId,
+      student_user_exam_id: selectedExam,
     };
     try {
       const res = await getPreviousPapers(data);
@@ -253,7 +285,7 @@ console.log(validMockTests, "ValidMocks")
 
   const getMock = async () => {
     const data = {
-      student_user_exam_id: studentExamId,
+      student_user_exam_id: selectedExam,
     };
     try {
       const response = await getMockExams(data);
@@ -270,44 +302,76 @@ console.log(validMockTests, "ValidMocks")
   };
 
 
-  const handleStartTest = async (item) => {
-    const previousExam = pre.find((p) => p.exam_name === item.exam_name);
-  
-    let previousPaperId = null;
-    if (previousExam) {
-      previousPaperId = previousExam.previous_paper_id;
-    } else {
-      console.log("No previous exam found for:", item.exam_name);
-    }
-  
-    let sessionId = null; // Move outside so it’s accessible later
-  
+  const handleStartTest = async (item, type) => {
     try {
-      if (selectedType === "Previous") {
+      setExamLoading(true);
+      setSelectedItem(item);
+      console.log(item, "uieurgirqbwkqef")
+      const previousExam = pre.find((p) => p.exam_name === item.exam_name);
+      let previousPaperId = previousExam ? previousExam.previous_paper_id : null;
+      let sessionId = null;
+  
+      // Case 1: Previous exam with no session
+      if (
+        selectedType === "previous" &&
+        item.exam_session_id == 0 &&
+        type !== "replay" &&
+        item?.previous_session_id == 0
+      ) {
         const dat = {
           previous_exam_paper_id: previousPaperId,
-          student_user_exam_id: studentExamId,
+          student_user_exam_id: selectedExam,
         };
   
         const response = await getPreviousPapRes(dat);
+        console.log(response, selectedType, item, "prev Response");
   
-        if (response && response.data && response.data.exam_session_id) {
+        if (response?.data?.exam_session_id) {
           sessionId = response.data.exam_session_id;
         } else {
           console.warn("⚠️ No session ID returned in response");
+          return; // Exit early if sessionId is invalid
         }
+      }
+  
+      // Set session ID from appropriate source
+      if (Number(item?.previous_session_id) > 0) {
+        await handleAnalytics(45);
+        sessionId = item.previous_session_id;
+      } else if (Number(item?.custom_exam_id) > 0) {
+        await handleAnalytics(46);
+        sessionId = item.custom_exam_id;
+      } else if (sessionId) {
+        await handleAnalytics(44);
+      } else {
+        await handleAnalytics(44);
+        sessionId = item.exam_session_id;
+      }
+  
+      console.log("✅ Final Session ID:", sessionId);
+  
+      dispatch(setExamSessionId(sessionId));
+      dispatch(setAutoSaveId(item?.auto_save_id || 0));
+  
+      if (!item?.auto_save_id) {
+        dispatch(setExamDuration(item?.exam_duration));
       }
   
       navigation.navigate("InstructionAuth", {
         obj: item,
-        studentExamId: studentExamId,
-        examtype: selectedType,
-        session_id: sessionId ? sessionId : item.custom_exam_id, // Fallback
+        studentExamId: selectedExam,
+        examtype: "schedule_exam",
+        type: selectedType,
+        session_id:
+          sessionId || item.previous_session_id || item.custom_exam_id || 0,
       });
     } catch (error) {
-      console.error("Error in handleStartTest:", error);
+      console.error("❌ Error in handleStartTest:", error);
+    } finally {
+      setExamLoading(false); // ✅ Always called, no matter what happens
     }
   };
+  
   
 
   const handlePrv = async (item) => {
@@ -318,7 +382,7 @@ console.log(validMockTests, "ValidMocks")
 
     const dat = {
       previous_exam_paper_id: previous_id,
-      student_user_exam_id: studentExamId,
+      student_user_exam_id: selectedExam,
     };
     // console.log("getLeader Boards handlePrv", dat , item);
 
@@ -329,13 +393,44 @@ console.log(validMockTests, "ValidMocks")
     }
   };
 
-  const handleCheckResults = (data, type) => {
+  const handleCheckResults = async (data, type) => {
     const examObject = {
       ...data,
       type: type,
-      studentExamUID: studentExamId,
+      studentExamUID: selectedExam ,
     };
     // dispatch(setExamSessionId(data.exam_session_id));
+    try {
+      // Define your params correctly
+      const params = {
+          "student_user_exam_id": 0,
+          "type": 0,
+          "source": 0,
+          "testonic_page_id": selectedType=="previous" ? 54:  selectedType=="mock" ? 50 : 59,
+      };
+
+      console.log(uniqueId,  "payloaddlscknl");
+
+      // Create payload
+      const payload = {
+          ...params,
+          ip_address: uniqueId ? uniqueId: "",
+          location: "Hyderabad", // Ensure location is correctly handled (but you should pass the location data properly here)
+      };
+
+      console.log(payload, "payload");
+
+      // Send analytics request
+      const response = await addAnalytics(payload); // Assuming addAnalytics is an API call function
+      console.log("Analytics Response:", response);
+
+  } catch (error) {
+      // Handle errors gracefully
+      const errorMessage = error.response?.data?.message || error.message;
+    
+      console.error("Error:", errorMessage);
+  }
+
     navigation.navigate("resultsPage", { state: examObject });
   };
  
@@ -434,7 +529,7 @@ console.log(validMockTests, "ValidMocks")
 
       setName(name);
       setStudentId(student_user_id);
-      setStudentUserId(student_user_id);
+      // setStudentUserId(student_user_id);
 
       if (!(examsData?.length)) {
         setAddExam(true); // No exam data, prompt user to add an exam
@@ -600,6 +695,7 @@ console.log(validMockTests, "ValidMocks")
         console.log("defaultItem",defaultItem);
         
         await fetchData(defaultItem.student_user_exam_id);
+        DeviceEventEmitter.emit('allExamsSubmitted');
         console.log("🧹 All stored mock tests have been removed from AsyncStorage.");
       } catch (error) {
         console.error("❌ Error clearing stored mock tests:", error);
@@ -652,11 +748,10 @@ console.log(validMockTests, "ValidMocks")
 
 
 const memoizedContent = useMemo(() => {
-  if (loading) {
+  if (loading||!mocklist?.length>0) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6A5ACD" />
-        <Text style={styles.loadingText}>Loading...</Text>
+       <AnimationWithImperativeApi />
       </View>
     );
   }
@@ -673,10 +768,12 @@ const memoizedContent = useMemo(() => {
         setShowCustom={setShowCustom}
         handleCheckResults={handleCheckResults}
         handleStartTest={handleStartTest}
+        loading={examLoading}
+        selecteditem={selecteditem}
       />
     </>
   );
-}, [selectedType, mocklist, pre, customExams]);
+}, [loading, examLoading,selecteditem,selectedType, mocklist, pre, customExams]);
 
 
 
@@ -725,7 +822,7 @@ const memoizedContent = useMemo(() => {
 
               {/* Modal Content */}
 
-              <CustomExamCreation id={studentExamId} selectedOption={selectedOption} fetchData={fetchData} onClose={setShowCustom} />
+              <CustomExamCreation id={selectedExam} selectedOption={selectedOption} fetchData={fetchData} onClose={setShowCustom} />
             </View>
           </Modal>
     
@@ -792,10 +889,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loadingContainer: {
+    marginTop: 250,
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    height: 500,
+    height: windowHeight,
     justifyContent: "center",
   },
   startButtonGradient: {

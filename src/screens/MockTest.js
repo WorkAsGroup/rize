@@ -28,6 +28,7 @@ import Svg, {
   Text as SvgText,
 } from "react-native-svg";
 import {
+  addAnalytics,
   getPatternSelection,
   getPreExam,
   getPreExamdata,
@@ -38,6 +39,8 @@ import { useFocusEffect } from "@react-navigation/native";
 var striptags = require("striptags");
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LoadQuestion from "../common/LoadQuestion";
+import AnimationWithImperativeApi from "../common/LoadingComponent";
+import { useSelector } from "react-redux";
 
 const TEST_INTERRUPTED_KEY = "testInterrupted";
 const windowWidth = Dimensions.get("window").width;
@@ -78,43 +81,7 @@ const removeHtmlTags = (html) => {
   return cleanedHtml;
 };
 
-const extractImages = (html) => {
-  const imageRegex = /<img[^>]+src="([^">]+)"/g;
-  let images = [];
-  let match;
-  while ((match = imageRegex.exec(html)) !== null) {
-    images.push(match[1]);
-  }
-  return images;
-};
-const extractContent = (html) => {
-  const imageRegex = /<img[^>]+src="([^">]+)"/g;
-  let contentArray = [];
-  let lastIndex = 0;
-  let match;
 
-  html = html
-    .replace(/<\/?p[^>]*>/g, "")
-    .replace(/\/>?>/g, ">")
-    .replace(/ /g, " ")
-    .trim();
-  while ((match = imageRegex.exec(html)) !== null) {
-    const textBeforeImage = html.slice(lastIndex, match.index).trim();
-    if (textBeforeImage) {
-      contentArray.push({ type: "text", content: textBeforeImage });
-    }
-    contentArray.push({ type: "image", content: match[1] });
-
-    lastIndex = match.index + match[0].length;
-  }
-
-  const remainingText = html.slice(lastIndex).trim();
-  if (remainingText) {
-    contentArray.push({ type: "text", content: remainingText });
-  }
-
-  return contentArray;
-};
 
 const sanitizeHtml = (text) => {
   // console.log(text, "sanitizeHtml");
@@ -211,11 +178,55 @@ const MockTest = ({ navigation, route }) => {
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
   const [wasTestInterrupted, setWasTestInterrupted] = useState(false);
   // console.log(obj, "objobjobj")
+  const attempt_answer = selectedAnswers[selectedNumber] || "";
+  // console.log(attempt_answer, selectedAnswers, selectedNumber,"attemptedAnswers")
+
+  const uniqueId = useSelector((state) => state.header.deviceId);
+
+
+  
+
+  const handleAnalytics = async (id) => {
+      console.log("hey Um called")
+      try {
+          // Define your params correctly
+          const params = {
+              "student_user_exam_id": obj?.exam_paper_id,
+              "type": 0,
+              "source": 0,
+              "testonic_page_id": id,
+          };
+  
+          console.log(uniqueId,  "payloaddlscknl");
+  
+          // Create payload
+          const payload = {
+              ...params,
+              ip_address: uniqueId ? uniqueId: "",
+              location: "Hyderabad",
+          };
+  
+          console.log(payload, "payload");
+          const response = await addAnalytics(payload); 
+          console.log("Analytics Response:", response);
+  
+      } catch (error) {
+          // Handle errors gracefully
+          const errorMessage = error.response?.data?.message || error.message;
+          console.error("Error:", errorMessage);
+      }
+  };
 
   useEffect(() => {
     getExam();
     getExamPattern();
   }, []);
+
+  useEffect(() => {
+if(uniqueId) {
+  handleAnalytics(7)
+}
+  },[uniqueId])
 
   useEffect(() => {
     const loadCompletedMockTests = async () => {
@@ -444,22 +455,32 @@ const MockTest = ({ navigation, route }) => {
           return;
         }
 
-        const durationString = timeToSet; // Example: "0 hours 05 minutes"
+        const durationString = timeToSet; // e.g., "0 hours 05 minutes" OR "180 minutes"
 
-        // Extract hours and minutes using regex
-        const match = durationString.match(/(\d+)\s*hours?\s*(\d+)\s*minutes?/);
-
-        if (!match) {
-          console.error("❌ Invalid duration format:", durationString);
-          return;
+        let hours = 0;
+        let minutes = 0;
+        
+        // Match for "hours and minutes"
+        const fullMatch = durationString.match(/(\d+)\s*hours?\s*(\d+)\s*minutes?/);
+        
+        if (fullMatch) {
+          hours = parseInt(fullMatch[1], 10) || 0;
+          minutes = parseInt(fullMatch[2], 10) || 0;
+        } else {
+          // Match for "minutes only"
+          const minutesOnlyMatch = durationString.match(/(\d+)\s*minutes?/);
+          if (minutesOnlyMatch) {
+            minutes = parseInt(minutesOnlyMatch[1], 10) || 0;
+          } else {
+            console.error("❌ Invalid duration format:", durationString);
+            return;
+          }
         }
-
-        const hours = parseInt(match[1], 10) || 0;
-        const minutes = parseInt(match[2], 10) || 0;
+        
         const totalSeconds = hours * 3600 + minutes * 60;
-
         console.log("⏳ Timer initialized with:", totalSeconds, "seconds");
         setRemainingTime(totalSeconds);
+        
       } catch (error) {
         console.error("Error loading stored data:", error);
       }
@@ -469,6 +490,8 @@ const MockTest = ({ navigation, route }) => {
   }, []);
 
   const handleTextInputChange = (text, questionId) => {
+    const regex = /^\d{0,15}(\.\d{0,50})?$/;
+    console.log(text, questionId, "inputs", textInputValues)
     setTextInputValues((prevValues) => ({ ...prevValues, [questionId]: text }));
   };
 
@@ -588,13 +611,13 @@ const MockTest = ({ navigation, route }) => {
     };
     try {
       const examPattern = await getPatternSelection(data);
-      // console.log("examPatternexamPattern", examPattern);
-      setPattern(examPattern.data);
+      console.log("examPatternexamPattern", data, examPattern);
+      setPattern(examPattern.data.data);
 
-      if (examPattern.data && examPattern.data.length > 0) {
-        setSelectedSubjectId(examPattern.data[0].id);
-        setSelectedSubject(examPattern.data[0]);
-        setSelectedNumber(examPattern.data[0].starting_no);
+      if (examPattern.data.data && examPattern.data.data.length > 0) {
+        setSelectedSubjectId(examPattern.data.data[0].id);
+        setSelectedSubject(examPattern.data.data[0]);
+        setSelectedNumber(examPattern.data.data[0].starting_no);
       }
       // const sub = [];
       // for (let i = start; i <= end && i <= examPattern.data.length; i++) {
@@ -843,7 +866,7 @@ const MockTest = ({ navigation, route }) => {
         console.error("Question doesn't belong to any subject in the pattern.");
         return;
       }
-
+console.log(option, "aslfnlfknewljn")
       let answerToStore = option;
       if (exams[selectedNumber - 1]?.qtype === 8) {
         // answerToStore = textInputAnswer;
@@ -1055,6 +1078,7 @@ const MockTest = ({ navigation, route }) => {
         student_user_exam_id: 0,
         questions: [],
       };
+
       console.log(data, "dataupdated");
       for (let i = 1; i <= exams.length; i++) {
         const questionId = exams[i - 1].id;
@@ -1151,7 +1175,8 @@ const MockTest = ({ navigation, route }) => {
         COMPLETED_EXAMS_KEY,
         JSON.stringify(completedExams)
       );
-
+      // await handleAnalytics(8);
+      console.log("completedExams", completedExams, completedMockTests)
       navigation.navigate("Login", { exam: data });
 
       setRemainingTime(0);
@@ -1217,23 +1242,9 @@ const MockTest = ({ navigation, route }) => {
     }
   };
 
-  // const handleTagQuestion = async () => {
-  //   try {
-  //     const updatedTags = { ...taggedQuestions };
-  //     if (updatedTags[selectedNumber]) {
-  //       delete updatedTags[selectedNumber];
-  //     } else {
-  //       updatedTags[selectedNumber] = true;
-  //     }
-  //     setTaggedQuestions(updatedTags);
-  //     await AsyncStorage.setItem(
-  //       TAGGED_QUESTIONS_KEY,
-  //       JSON.stringify(updatedTags)
-  //     );
-  //   } catch (error) {
-  //     console.error("Error tagging question:", error);
-  //   }
-  // };
+
+
+
 
   return (
     <LinearGradient
@@ -1250,11 +1261,15 @@ const MockTest = ({ navigation, route }) => {
         finishTest={finishTest}
         isTimeUp={false}
       />
-      {questionsLoading && exams.length == 0 && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={theme.textColor} />
+{( questionsLoading || 
+    exams.length === 0 || 
+    pattern?.length === 0) ? (
+      <View style={styles.loadingOverlay}>
+        <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+          <AnimationWithImperativeApi />
         </View>
-      )}
+      </View>
+    ) :
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: "row", marginTop: 10 }}>
           <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>
@@ -1657,14 +1672,14 @@ const MockTest = ({ navigation, route }) => {
                   </Text>
                 </View>
               </View>
-              {exams[selectedNumber - 1]?.compquestion.length > 0 ||
-              exams[selectedNumber - 1]?.question.length > 0 ? (
+           
                 <View>
              
             <LoadQuestion
         
                   type="exam"
                   item={exams[selectedNumber- 1]} 
+                  attempted={attempt_answer}
                   selectedAnswers={selectedAnswers}
                   selectedNumber={selectedNumber}
                   currentQuestionIndex={exams[selectedNumber- 1]}
@@ -1693,13 +1708,12 @@ const MockTest = ({ navigation, route }) => {
                   handleSelectAndNext={handleSelectAndNext}
                   handleAnswerSelect={handleAnswerSelect}
                   textInputValues={textInputValues}
+                  attempt_answer={attempt_answer}
                    />
 
 
                 </View>
-              ) : (
-                <ActivityIndicator size="large" color={theme.textColor} />
-              )}
+             
               <View
                 style={{
                   marginTop: 10,
@@ -1863,7 +1877,7 @@ const MockTest = ({ navigation, route }) => {
                     </View> */}
         </View>
       </View>
-
+}
       {/* Submit Test Modal */}
       <Modal
         animationType="slide"

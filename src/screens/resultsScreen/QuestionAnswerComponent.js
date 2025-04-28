@@ -10,12 +10,16 @@ import {
   Modal,
   Switch,
   Image,
+  Dimensions,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import HTML from "react-native-render-html";
 import RenderHtml from 'react-native-render-html';
+import HtmlComponent from "../../common/HtmlComponent";
 import { Picker } from "@react-native-picker/picker";
 import { useWindowDimensions } from "react-native";
+import AppStyles from "../../common/AppStyles";
+import COLORS from "../../common/Colors";
 var striptags = require('striptags');
 
 const QuestionAndAnswerComponent = ({ questionAndAnwerData }) => {
@@ -145,7 +149,7 @@ const QuestionAndAnswerComponent = ({ questionAndAnwerData }) => {
   };
 
   const renderQuestionItem = ({ item, index }) => {
-// console.log(item, "searchomgforooption")
+console.log(item, item.question?.qtype,"searchomgforooption")
 const sanitizeHtml = (text) =>{
   if (text.length > 0) {
       text = text.replace("&nbsp;", " ");
@@ -199,17 +203,19 @@ const renderersProps = {
       </TouchableOpacity>
       {state.isAccordianExpand === index && (
         <View style={styles.accordionContent}>
-          {/* <HTML source={{ html: item?.question }} contentWidth={width} /> */}
-          <RenderHtml
-            source={sanitizeHtml(item?.question || "<p>No question provided.</p>",)}
-            renderersProps={renderersProps}
-            // baseFontStyle={baseFontStyle}
-            // {...DEFAULT_PROPS}
-            contentWidth={width}
-            />
+
+            
+<HtmlComponent 
+                            style={{...AppStyles.oddMRegular,color:COLORS.BLACK,fontSize:15,lineHeight:23}} 
+                            containerStyle={{ marginBottom:20,marginTop:3}} 
+                            baseFontStyle={18}
+                            text={`${item?.question}`}
+                            tintColor={COLORS.BLACK}
+                            />   
+
           {/* Add more content rendering here */}
           {/* <Text>{item.question}</Text> */}
-          {item?.question?.qtype !== 8 ? (
+          {item?.qtype !== 8 ? (
           <View style={styles.container2}>
           {['A', 'B', 'C', 'D'].map((option, i) => {
             const isCorrect = item?.answer.includes(`${option},`);
@@ -232,11 +238,18 @@ const renderersProps = {
                           <Text style={styles.optionSpacer}> . </Text>
                         </Text>
                         {item?.question && (
-                          <RenderHtml
-                            source={sanitizeHtml(item?.[`option${i + 1}`] || "<p>No option provided.</p>")}
-                            renderersProps={renderersProps}
-                            contentWidth={width}
-                          />
+                          // <RenderHtml
+                          //   source={sanitizeHtml(item?.[`option${i + 1}`] || "<p>No option provided.</p>")}
+                          //   renderersProps={renderersProps}
+                          //   contentWidth={width}
+                          // />
+                          <HtmlComponent 
+                            style={{...AppStyles.oddMRegular,color:COLORS.BLACK,fontSize:15,lineHeight:23}} 
+                            containerStyle={{ marginBottom:20,marginTop:3}} 
+                            baseFontStyle={18}
+                            text={item?.[`option${i + 1}`]}
+                            tintColor={COLORS.BLACK}
+                            />  
                         )}
                       </View>
             
@@ -263,19 +276,22 @@ const renderersProps = {
           })}
         </View>
           ):<View>
-             {item?.question?.status === 2 ? (
+             {item?.status === 2 ? (
                   <View
                   style={[
                     styles.statusContainer,
                     { width: '100%', backgroundColor: '#1ABE171A', borderColor: '#1ABE1733' },
                   ]}
                 >
-                  <Text style={styles.statusText}>{question?.attempt_answer}</Text>
+                  <Text style={styles.statusText}>{item?.attempt_answer}</Text>
                   <View style={styles.iconContainer}>
-                    <Icon name="check-circle" size={18} color="#00c596" />
-                  </View>
+                <Image
+                          source={require("../../images/check.png")}
+                          style={{ height: 19, width: 19 }}
+                        />
                 </View>
-             ) : (<View>{item?.question?.status === 2 ? (
+                </View>
+             ) : (<View>{item?.status === 2 ? (
                 <View style={styles.rowContainer}>
           <View
             style={[
@@ -283,7 +299,7 @@ const renderersProps = {
               { width: '100%', backgroundColor: '#E500041A', borderColor: '#E5000433' },
             ]}
           >
-            <Text style={styles.statusText}>{question?.attempt_answer}</Text>
+            <Text style={styles.statusText}>{item?.attempt_answer}</Text>
             <View style={styles.iconContainer}>
               <Icon name="cancel" size={18} color="#c52e00" />
             </View>
@@ -294,23 +310,49 @@ const renderersProps = {
               { width: '48%', backgroundColor: '#1ABE171A', borderColor: '#1ABE1733' },
             ]}
           >
-            <Text style={styles.statusText}>{question?.answer}</Text>
+            <Text style={styles.statusText}>{item?.answer}</Text>
             <View style={styles.iconContainer}>
-              <Icon name="check-circle" size={18} color="#00c596" />
-            </View>
+                <Image
+                          source={require("../../images/check.png")}
+                          style={{ height: 19, width: 19 }}
+                        />
+                </View>
           </View>
         </View>
-             ) : ( <View
+             ) : ( 
+             <View style={{display: "flex", flexDirection: "row", gap: 15}}>
+              <View
+            style={[
+              styles.statusContainer,
+              { width: '40%', backgroundColor: '#E500041A', borderColor: '#E5000433' },
+            ]}
+          >
+            <Text style={styles.statusText}>{item?.attempt_answer}</Text>
+            <View style={styles.iconContainer}>
+            <Image
+                          source={require("../../images/delete2.png")}
+                          style={{ height: 19, width: 19 }}
+                        />
+            </View>
+          </View>
+ <View
                 style={[
                   styles.statusContainer,
                   { width:'48%', backgroundColor: '#1ABE171A', borderColor: '#1ABE1733' },
                 ]}
               >
-                <Text style={styles.statusText}>{question?.answer}</Text>
+                <Text style={styles.statusText}>{item?.answer}</Text>
                 <View style={styles.iconContainer}>
-                  <Icon name="check-circle" size={18} color="#00c596" />
+                <Image
+                          source={require("../../images/check.png")}
+                          style={{ height: 19, width: 19 }}
+                        />
                 </View>
-              </View>)}</View>)}
+                
+              </View>
+
+             </View>
+            )}</View>)}
             </View>}
           <View
             style={{
@@ -325,19 +367,16 @@ const renderersProps = {
             <Text style={{ fontWeight: "600", fontSize: 16, marginBottom: 5 }}>
               Explanation:
             </Text>
-            <RenderHtml
-            source={sanitizeHtml(item?.explanation || "<p>No explanation provided.</p>",)}
-            renderersProps={renderersProps}
-            // baseFontStyle={baseFontStyle}
-            // {...DEFAULT_PROPS}
-            contentWidth={width}
-            />
-            {/* <HTML
-              contentWidth={width}
-              source={{
-                html: item?.explanation || "<p>No explanation provided.</p>",
-              }}
-            /> */}
+
+          
+
+<HtmlComponent 
+                            style={{...AppStyles.oddMRegular,color:COLORS.BLACK,fontSize:15,lineHeight:23}} 
+                            containerStyle={{ marginBottom:20,marginTop:3}} 
+                            baseFontStyle={18}
+                            text={`${item?.explanation}`}
+                            tintColor={COLORS.BLACK}
+                            />   
           </View>
         </View>
       )}
@@ -460,11 +499,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 16,
+    color: "#000"
   },
   picker: {
     width: "48%",
     height: 50,
     borderRadius: 9,
+    color: "#000",
   },
   analysisContainer: {
     marginBottom: 16,
@@ -494,6 +535,7 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     borderWidth: 1,
     borderColor: "#ddd",
+    width: Dimensions.get("screen").width*.81
   },
   accordionHeader: {
     flexDirection: "row",

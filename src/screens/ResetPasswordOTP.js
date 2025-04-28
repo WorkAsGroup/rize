@@ -16,6 +16,7 @@ import { darkTheme, lightTheme } from "../theme/theme";
 import { getLoginDetails,reSendOTP,  getOTPSubmittedDetails, getResetPasswordConfirmation } from "../core/CommonService";
 import Toast from 'react-native-toast-message';
 import OTPTextInput from './OTPTextInput'; 
+import { ImageBackground } from "react-native";
 
 
 const windowWidth = Dimensions.get("window").width;
@@ -234,35 +235,36 @@ const handleSubmitOTP = async () => {
         setOtp("");
     }
 
-    return (
-        <LinearGradient
-            colors={theme.background}
-            style={styles.container}
-            start={{ x: 0, y: 1 }}
-            end={{ x: 1, y: 1 }}
-        >
+    return (  <ImageBackground
+                source={require("../images/commonBack.jpg")}  // Or a URI: { uri: 'https://...' }
+                style={{ width: '100%', height: '100%',}}
+                // imageStyle={{ }}  // optional: for rounded corners
+              >
+   
             <View contentContainerStyle={styles.scrollContainer}>
                 <View style={styles.header}>
-                    <Image
-                        style={[styles.logo, { tintColor: theme.textColor1 }]}
-                        source={require("../images/title.png")}
-                    />
-                    <Text style={[styles.tagline, { color: theme.textColor1 }]}>
-                        Your path to success starts here!
-                    </Text>
+                     <Image
+                                           style={[styles.logo,]}
+                                           source={require("../images/logo.png")}
+                                       />
+                                      <Text style={[styles.tagline, { color: "#ffffff" }]}>
+                                     <Text style={{ fontWeight: 'bold',fontSize: 25, color: '#e614e1' }}>Unlock</Text> the Gateway to{" "}
+                                     
+                                   </Text>
+                                   <Text style={[styles.tagline, { color: "#e614e1", marginLeft: 120, marginTop: 5 }]}>
+                                                        Better Learning !{" "}
+                                                       </Text>
                 </View>
 
-                <Svg height="180" width="100%" viewBox="145 140 320 320">
-                    <Path fill={theme.path} d="M 80 300 c 150 -180 690 -180 830 0" />
-                </Svg>
+           
 
                 <View
                     style={[
                         styles.formContainer,
-                        { backgroundColor: theme.path },
+                        { backgroundColor: "transparent" },
                     ]}
                 >
-                    <View style={{ top: -200, padding: 20,width:windowWidth*0.9 }}>
+                    <View style={{ top: 10, padding: 20,width:windowWidth*0.9 }}>
                         <Text style={[styles.welcomeText, { color: theme.wb }]}>
                             Reset Password !
                         </Text>
@@ -270,16 +272,16 @@ const handleSubmitOTP = async () => {
 
                      
 
-                        <View style={[styles.passwordContainer, { borderColor: errors.password ? theme.red : theme.inputBorder }]}>
+                        <View style={[styles.passwordContainer, { borderColor: errors.password ? theme.red : "#e614e1" }]}>
                             <TextInput
                                 style={[
                                     styles.passwordInput,
                                     {
-                                        color: "#000",
+                                        color: "#ffffff",
                                     },
                                 ]}
                                 placeholder="Password"
-                                placeholderTextColor={theme.gray}
+                                placeholderTextColor="#ffffff"
                                 secureTextEntry={!passwordVisible}  
                                 value={password}
                                 onChangeText={(text) => {
@@ -293,22 +295,22 @@ const handleSubmitOTP = async () => {
                                 <Image
                                     source={passwordVisible ? require('../images/eye_open.png') : require('../images/eye_close.png')}
                                     style={styles.eyeIcon}
-                                    tintColor={theme.gray}  
+                                    tintColor="#ffffff"
                                 />
                             </TouchableOpacity>
                         </View>
                         {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
                         
-                        <View style={[styles.passwordContainer, { borderColor: errors.password1 ? theme.red : theme.inputBorder }]}>
+                        <View style={[styles.passwordContainer, { borderColor: errors.password1 ? theme.red : "#e614e1" }]}>
                             <TextInput
                                 style={[
                                     styles.passwordInput,
                                     {
-                                        color: "#000",
+                                        color: "#ffffff",
                                     },
                                 ]}
                                 placeholder="Password"
-                                placeholderTextColor={theme.gray}
+                                placeholderTextColor="#ffffff"
                                 secureTextEntry={!passwordVisible1} 
                                 value={password1}
                                 onChangeText={(text) => {
@@ -322,34 +324,40 @@ const handleSubmitOTP = async () => {
                                 <Image
                                     source={passwordVisible1 ? require('../images/eye_open.png') : require('../images/eye_close.png')}
                                     style={styles.eyeIcon}
-                                    tintColor={theme.gray}  
+                                    tintColor="#ffffff"  
                                 />
                             </TouchableOpacity>
                         </View>
                         {errors.password1 ? <Text style={styles.errorText}>{errors.password1}</Text> : null}
                         {/* Submit Button */}
                         <TouchableOpacity
-                            style={[
-                                styles.submitButton,
-                                { backgroundColor: theme.buttonBackground },
-                            ]}
+                          
                             onPress={handleSubmitOTP}
                             disabled={loading}
                         >
+                                <LinearGradient
+                                                                             colors={["#e614e1", "#8b51fe"]}
+                                                                            style={[
+                                                                                styles.submitButton,
+                                                                            
+                                                                            ]}
+                                                                           
+                                                                            >
                             <Text
                                 style={[
                                     styles.submitButtonText,
-                                    { color: theme.textColor1 },
+                                    { color: "#ffffff" },
                                 ]}
                             >
                                 Reset
                             </Text>
+                            </LinearGradient>
                         </TouchableOpacity>
 
                         <View style={styles.footer}>
                             <View style={{ flexDirection: "row" }}>
                                 <Text style={[styles.newHereText, { color: theme.wb }]}>
-                                    Already have an account?
+                                    Already have an account?{" "}
                                 </Text>
                                 <TouchableOpacity onPress={() => navigation.navigate("Login")}>
                                     <Text style={[styles.signUpText, { color: theme.accentText }]}>
@@ -364,7 +372,7 @@ const handleSubmitOTP = async () => {
                                     { color: theme.wb, alignSelf: "flex-start", marginLeft: 20 },
                                 ]}
                             >
-                                Login to access:
+                                Login to access:{" "}
                             </Text>
                             <View style={{ justifyContent: "flex-end", height: 50 }}>
                                 <ScrollView
@@ -391,7 +399,7 @@ const handleSubmitOTP = async () => {
                 </View>
             </View>
             <Toast ref={(ref) => Toast.setRef(ref)} />
-        </LinearGradient>
+            </ImageBackground>
     );
 }
 
@@ -409,7 +417,7 @@ const styles = StyleSheet.create({
     },
     logo: {
         width: 250,
-        height: 50,
+        height: 150,
         resizeMode: "contain",
     },
     tagline: {
@@ -448,6 +456,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 10,
         marginTop:20,
         height: 40,
+        color: "#ffffff",
     },
     resendButton: {
         borderRadius: 30,
@@ -483,7 +492,7 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         marginHorizontal: 10,
         marginVertical: 8,
-        backgroundColor: '#fff',
+        backgroundColor: 'transparent',
         paddingRight: 10,
         borderColor: '#8e8e8e', 
     },

@@ -13,13 +13,15 @@ import {
     Image,
     Alert,
     BackHandler,
+    ImageBackground,
     ActivityIndicator
 } from "react-native";
 import Toast from 'react-native-toast-message'; 
+import { getUniqueId } from 'react-native-device-info';
 import LinearGradient from "react-native-linear-gradient";
 import Svg, { Path } from "react-native-svg";
 import { darkTheme, lightTheme } from "../theme/theme";
-import { getLoginDetails } from "../core/CommonService";
+import { addAnalytics, getLoginDetails } from "../core/CommonService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Modal from 'react-native-modal';
@@ -30,6 +32,9 @@ const windowHeight = Dimensions.get("window").height;
 
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import axios from "axios";
+import { globalAnalyticsThunk } from "../store/thunks/questionsThunk";
+import { useDispatch, useSelector } from "react-redux";
+
 
 GoogleSignin.configure({
     webClientId: '657776415952-0upum9rpsfnslfmfuldlnr6r208e92fu.apps.googleusercontent.com', // must match the "web" client ID in Firebase
@@ -40,12 +45,13 @@ GoogleSignin.configure({
 
 
 export default function Login({ route }) {
+    const dispatch = useDispatch();
 	const [error, setError] = useState('');
 	const [loading, setLoading] = useState(false);
     const colorScheme = useColorScheme();
-    const [check, setCheck] = useState(false);
+    const [check, setCheck] = useState(true);
     const theme = colorScheme === "dark" ? darkTheme : lightTheme;
-
+    
     const scrollRef = useRef(null);
     const [currentIndex, setCurrentIndex] = useState(0);
     const navigation = useNavigation();
@@ -104,7 +110,45 @@ export default function Login({ route }) {
     const [password, setPassword] = useState("");
     const [errors, setErrors] = useState({ email: "", password: "" });
     const [passwordVisible, setPasswordVisible] = useState(false);
-   
+   const uniqueId = useSelector((state) => state.header.deviceId);
+
+
+  
+
+    const handleAnalytics = async () => {
+        console.log("hey Um called")
+        try {
+            // Define your params correctly
+            const params = {
+                "student_user_exam_id": 0,
+                "type": 0,
+                "source": 0,
+                "testonic_page_id": 2,
+            };
+    
+            console.log(uniqueId,  "payloaddlscknl");
+    
+            // Create payload
+            const payload = {
+                ...params,
+                ip_address: uniqueId ? uniqueId: "",
+                location: "Hyderabad", // Ensure location is correctly handled (but you should pass the location data properly here)
+            };
+    
+            console.log(payload, "payload");
+    
+            // Send analytics request
+            const response = await addAnalytics(payload); // Assuming addAnalytics is an API call function
+            console.log("Analytics Response:", response);
+    
+        } catch (error) {
+            // Handle errors gracefully
+            const errorMessage = error.response?.data?.message || error.message;
+            dispatch(setError(errorMessage)); // Assuming setError is a Redux action
+            console.error("Error:", errorMessage);
+        }
+    };
+
 
     const togglePasswordVisibility = () => {
         setPasswordVisible(!passwordVisible);
@@ -138,9 +182,10 @@ export default function Login({ route }) {
 
         return valid;
     };
-
+  
+   
     const handleLogin = async () => {
-        
+     
         const data = {
             [validateEmailOrPhone(email) ? "email" : "mobile"]: email,
             password: password
@@ -157,17 +202,23 @@ export default function Login({ route }) {
                 showToast("Please agree to the privacy policy and terms of service.")
                 return;
             }
+            setLoading(true);
             const response = await getLoginDetails(data);
             console.log("Response", response);
+          
 
             if(response.statusCode == 200||response.statusCode == 403){
+             
                 if(response.data.email_verified == 1){
+                    await handleAnalytics();
                     const tkn = response.data.token;
+                    setLoading(false);
                     route.params.onChangeAuth(tkn);
                     navigation.navigate("DashboardContent"); 
                 } else {
                    if(response?.data?.token) {
-                    
+                    await handleAnalytics();
+                    setLoading(false);
                 navigation.navigate("AccountCreated", {
                     token: response.data.token,
                     onChangeAuth: route.params.onChangeAuth,
@@ -176,6 +227,7 @@ export default function Login({ route }) {
                     studentId: response.data.student_user_id
                 });
                    } else {
+                    setLoading(false);
                     navigation.navigate("OTPScreen", { 
                         mobile:email, 
                         studentId: response?.data?.student_user_id,
@@ -184,11 +236,14 @@ export default function Login({ route }) {
                    }
             }
             } else if(response.statusCode == 404){
+                setLoading(false);
                 showToastError("User not found.");
             }else if(response.statusCode == 401){
+                setLoading(false);
                 showToastError(response.message);
             } else {
                 // showToast("Uh Oh! No account found with the email / phone number.")
+                setLoading(false);
                 showToastError("Uh Oh! No account found.");
                 toggleModal();
                 // showToastError("Login failed. Please check your credentials.");
@@ -247,12 +302,11 @@ export default function Login({ route }) {
     }, [currentIndex, accessOptions.length]);
 
     return (
-        <LinearGradient
-            colors={theme.background}
-            style={styles.container}
-            start={{ x: 0, y: 1 }}
-            end={{ x: 1, y: 1 }}
-        >
+        <ImageBackground
+        source={require("../images/commonBack.jpg")}  // Or a URI: { uri: 'https://...' }
+        style={{ width: '100%', height: '100%',}}
+        // imageStyle={{ }}  // optional: for rounded corners
+      >
             <View contentContainerStyle={styles.scrollContainer}>
             <TouchableOpacity onPress={() => { navigation.navigate("Intro") }}>
                                             <Image
@@ -284,41 +338,42 @@ export default function Login({ route }) {
                 <View style={styles.header}>
                     
                     <Image
-                        style={[styles.logo, { tintColor: theme.textColor1 }]}
-                        source={require("../images/title.png")}
+                        style={[styles.logo,]}
+                        source={require("../images/logo.png")}
                     />
-                    <Text style={[styles.tagline, { color: theme.textColor1 }]}>
-                        Your path to success starts here!
+                   <Text style={[styles.tagline, { color: "#ffffff" }]}>
+  <Text style={{ fontWeight: 'bold',fontSize: 25, color: '#e614e1' }}>Unlock</Text> the Gateway to{" "}
+  
+</Text>
+<Text style={[styles.tagline, { color: "#e614e1", marginLeft: 120, marginTop: 5 }]}>
+                     Better Learning !{" "}
                     </Text>
+
+                    
                 </View>
 
-                <Svg height="180" width="100%" viewBox="145 140 320 320">
-                    <Path fill={theme.path} d="M 80 300 c 150 -180 690 -180 830 0" />
-                </Svg>
-
+           
                 <View
                     style={[
                         styles.formContainer,
-                        { backgroundColor: theme.path },
+                        { backgroundColor: "transparent", top: 100 },
                     ]}
                 >
                     <View style={{ top: -180, padding: 20 }}>
-                        <Text style={[styles.welcomeText, { color: theme.wb }]}>
-                            Welcome back!
-                        </Text>
+                       
 
                         <TextInput
                             style={[
                                 styles.input,
                                 {
-                                    borderColor: errors.email ? theme.red : theme.inputBorder,
-                                    backgroundColor: "#fff",
-                                    borderWidth: errors.email ? 1 : 0,
-                                    color: "#000",
+                                    borderColor: "#e614e1",
+                                    backgroundColor: "transparent",
+                                    borderWidth: errors.email ? 1 : 1,
+                                    color: "#ffffff",
                                 },
                             ]}
                             placeholder="Email / Phone Number"
-                            placeholderTextColor={theme.gray}
+                            placeholderTextColor="#ffffff"
                             value={email}
                             onChangeText={(text) => {
                                 setEmail(text);
@@ -329,16 +384,16 @@ export default function Login({ route }) {
                         />
                         {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
 
-                        <View style={[styles.passwordContainer, { borderColor: errors.password ? theme.red : theme.inputBorder }]}>
+                        <View style={[styles.passwordContainer, { borderColor: errors.password ? theme.red : "#e614e1" }]}>
                             <TextInput
                                 style={[
                                     styles.passwordInput,
                                     {
-                                        color: "#000",
+                                        color: "#ffffff", 
                                     },
                                 ]}
                                 placeholder="Password"
-                                placeholderTextColor={theme.gray}
+                               placeholderTextColor="#ffffff"
                                 secureTextEntry={!passwordVisible}  // Toggle secureTextEntry
                                 value={password}
                                 onChangeText={(text) => {
@@ -352,7 +407,7 @@ export default function Login({ route }) {
                                 <Image
                                     source={passwordVisible ? require('../images/eye_open.png') : require('../images/eye_close.png')}
                                     style={styles.eyeIcon}
-                                    tintColor={theme.gray}  // Option if you want to tint the image
+                                    tintColor="#ffffff"  // Option if you want to tint the image
                                 />
                             </TouchableOpacity>
                         </View>
@@ -376,18 +431,23 @@ export default function Login({ route }) {
                                 />
                             </TouchableOpacity>
 
-                            <Text style={[styles.checkboxText, { color: theme.wb }]}>
-                                I have read and agree to the privacy policy, terms of service
+                            <Text style={[styles.checkboxText, { color: "#ffffff"}]}>
+                                I have read and agree to the privacy policy, terms and service {" "}
                             </Text>
                         </View>
 
                         {/* Login Button */}
+      
                         <TouchableOpacity
-                            style={[
-                                styles.loginButton,
-                                { backgroundColor: theme.buttonBackground },
-                            ]}
-                            onPress={handleLogin}
+                           
+                            onPress={!loading&&handleLogin}
+                        >
+                               <LinearGradient
+                         colors={["#e614e1", "#8b51fe"]}
+                        style={[
+                            styles.loginButton,
+                          
+                        ]}
                         >
                             <Text
                                style={[
@@ -395,10 +455,18 @@ export default function Login({ route }) {
                                     { color: theme.textColor1 },
                                 ]}
                             >
-                                Login
+                                {loading ? <View style={{display:"flex", flexDirection: "row", alignItems: "center"}}>
+                                    <Text  style={[
+                                   
+                                    { color: theme.textColor1 },
+                                ]}>Login...</Text>
+                                 <ActivityIndicator size="small" color={theme.textColor1} /> 
+                                </View>: "Login "}
                             </Text>
+                         
+                            </LinearGradient>
                         </TouchableOpacity>
-
+                      
                         {/* Forgot Password Link */}
                         <TouchableOpacity onPress={() => {
                             navigation.navigate("ResetPassword")
@@ -406,13 +474,13 @@ export default function Login({ route }) {
                             <Text
                                 style={[
                                     styles.forgotPasswordText,
-                                    { color: theme.accentText },
+                                    { color: "#ffffff" },
                                 ]}
                             >
                                 Forgot password?
                             </Text>
                         </TouchableOpacity>
-                        <View style={{justifyContent:'center',alignItems:'center'}}>
+                        {/* <View style={{justifyContent:'center',alignItems:'center'}}>
                         <TouchableOpacity onPress={handleGoogleLogin} disabled={loading}>
                                 {loading ? (
                                     <ActivityIndicator size="small" color={theme.textColor1} /> 
@@ -423,7 +491,7 @@ export default function Login({ route }) {
                                     />
                                 )}
                             </TouchableOpacity>
-                        </View>
+                        </View> */}
 
                       
 
@@ -432,9 +500,9 @@ export default function Login({ route }) {
                             <View style={{ flexDirection: 'row' }}>
                              
                                 <Text
-                                    style={[styles.newHereText, { color: theme.wb }]}
+                                    style={[styles.newHereText, {  color: "#ffffff"  }]}
                                 >
-                                    New here?{" "}
+                                    New user ?{"    "}
                                 </Text>
                                 <TouchableOpacity onPress={() => {
                                     navigation.navigate("Signup")
@@ -492,7 +560,7 @@ export default function Login({ route }) {
                 </View>
                 <Toast ref={(ref) => Toast.setRef(ref)} />
 
-        </LinearGradient>
+            </ImageBackground>
     );
 }
 
@@ -510,7 +578,7 @@ const styles = StyleSheet.create({
     },
     logo: {
         width: 250,
-        height: 50,
+        height: 150,
         resizeMode: "contain",
     },
     tagline: {
@@ -549,7 +617,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 10,
     },
     checkboxText: {
-        fontSize: 12,
+        fontSize: 11,
     },
     loginButton: {
         borderRadius: 30,
@@ -609,7 +677,7 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         marginHorizontal: 10,
         marginVertical: 8,
-        backgroundColor: '#fff',
+        backgroundColor: 'transparent',
         paddingRight: 10,
         borderColor: '#8e8e8e', 
     },

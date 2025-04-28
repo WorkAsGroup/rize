@@ -63,12 +63,9 @@ export default function CreateAccount() {
                     </Text>
                 </View>
 
-                <Svg height="180" width="100%" viewBox="145 140 320 320">
-                    <Path fill={theme.path} d="M 80 300 c 150 -180 690 -180 830 0" />
-                </Svg>
 
-                <View style={[styles.formContainer, { backgroundColor: theme.path }]}>
-                    <View style={{ top: -180, padding: 20 }}>
+                <View style={[styles.formContainer, { backgroundColor: "transparent"  }]}>
+                    <View style={{ top: 80, padding: 20 }}>
                         <Text style={[styles.welcomeText, { color: theme.textColor }]}>
                             Uh Oh! No account found with the
                         </Text>
@@ -124,7 +121,7 @@ export default function CreateAccount() {
                     </Text>
                 </Text>
                 <Text style={[styles.accessText, { color: theme.textColor }]}>
-                    Login to access:
+                    Login to access:{" "}
                 </Text>
                 <ScrollView
                     ref={scrollRef}

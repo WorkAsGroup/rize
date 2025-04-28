@@ -5,6 +5,7 @@ import { Picker } from "@react-native-picker/picker";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import SubmitTestModal from "./resultsScreen/SubmitTestModal";
 import ReportComponent from "./resultsScreen/ReportComponent";
+import { Dropdown } from 'react-native-element-dropdown';
 import QuestionAndAnswerComponent from "./resultsScreen/QuestionAnswerComponent";
 
 const ResultMainComponent = () => {
@@ -125,15 +126,19 @@ const ResultMainComponent = () => {
                   <Text style={styles.subHeading}>Test Results</Text>
                   <Text style={styles.heading}>{exam_name}</Text>
                 </View>
-                <Picker
-                  selectedValue={state.attemptId}
-                  onValueChange={(value) => setState((prev) => ({ ...prev, attemptId: value }))}
-                  style={styles.picker}
-                >
-                  {attemptsData&&attemptsData.map((item) => (
-                    <Picker.Item key={item.id} label={item.name} value={item.id} />
-                  ))}
-                </Picker>
+                <Dropdown
+  data={attemptsData?.map(item => ({ label: item.name, value: item.id }))}
+  labelField="label"
+  valueField="value"
+  value={state.attemptId}
+  onChange={item => setState(prev => ({ ...prev, attemptId: item.value }))}
+  style={{ backgroundColor: '#fff', width: 150, borderWidth: 1, padding: 5,borderColor: '#ccc', borderRadius: 5 }}
+  placeholderStyle={{ color: '#000' }}
+  selectedTextStyle={{ color: '#000' }}
+  itemTextStyle={{ color: '#000' }}
+  containerStyle={{ backgroundColor: '#fff' }}
+/>
+
               </View>
 
               <View style={{ flexDirection: "row", marginBottom: 10 }}>
