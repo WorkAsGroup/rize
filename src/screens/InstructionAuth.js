@@ -31,6 +31,7 @@ export default function InstructionAuth({ navigation, route }) {
   const theme =  lightTheme;
   const obj = route?.params?.obj;
   const studentExamId = route?.params?.studentExamId;
+   const selectedExam = useSelector((state) => state.header.selectedExam);
   const examtype = route?.params?.examtype;
   const uniqueId = useSelector((state) => state.header.deviceId);
   
@@ -42,8 +43,8 @@ export default function InstructionAuth({ navigation, route }) {
       try {
           // Define your params correctly
           const params = { 
-              "student_user_exam_id": 0,
-              "type": 0,
+              "student_user_exam_id": selectedExam,
+              "type": 1,
               "source": 0,
               "testonic_page_id": route?.params?.type == "mock" ? 47 : route?.params?.type == "previous" ? 51 : 56,
           };

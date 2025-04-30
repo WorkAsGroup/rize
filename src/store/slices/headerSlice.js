@@ -2,6 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
   selectedExam: null,
+  examData:[],
   examLabel: null,
   deviceId: null,
 };
@@ -13,6 +14,9 @@ const heaserSlice = createSlice({
     setSelectedExam: (state, action) => {
       state.selectedExam = action.payload;
     },
+    setExamData: (state, action) => {
+      state.examData = action.payload;
+    },
     setExamLabel: (state, action) => {
       state.examLabel = action.payload;
     },
@@ -22,5 +26,5 @@ const heaserSlice = createSlice({
   },
 });
 
-export const { setSelectedExam, setExamLabel, setDeviceId } = heaserSlice.actions;
+export const { setSelectedExam, setExamLabel, setDeviceId, setExamData } = heaserSlice.actions;
 export default heaserSlice.reducer;

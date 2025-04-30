@@ -106,7 +106,8 @@ const ResultMainComponent = () => {
 
   console.log(questionAndAnswerData, 'skfweknf')
   
-  const handleResultBack = () => navigation.navigate("DashboardContent");
+  const handleResultBack = () => navigation.replace("DashboardContent");
+
 
   return (
     <View>

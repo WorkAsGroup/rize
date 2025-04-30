@@ -38,8 +38,8 @@ const Achivements = () => {
               try {
                   // Define your params correctly
                   const params = {
-                      "student_user_exam_id": 0,
-                      "type": 0,
+                      "student_user_exam_id": selectedExam,
+                      "type": 1,
                       "source": 0,
                       "testonic_page_id": 43,
                   };

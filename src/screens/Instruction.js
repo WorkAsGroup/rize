@@ -40,10 +40,12 @@ export default function Instruction({ navigation,route }) {
         try {
             // Define your params correctly
             const params = {
-                "student_user_exam_id": obj?.exam_paper_id,
+                "student_user_exam_id": "",
                 "type": 0,
                 "source": 0,
                 "testonic_page_id": 6,
+                "exam_id": obj?.exam_paper_id,
+
             };
     
             console.log(uniqueId,  "payloaddlscknl");

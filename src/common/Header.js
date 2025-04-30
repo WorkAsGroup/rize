@@ -6,7 +6,7 @@ import { theme } from "../core/theme";
 import { getAutoLogin, getExamType } from "../core/CommonService";
 import ExamModalComponent from "../screens/ExamModalComponent";
 import { useSelector, useDispatch } from 'react-redux';
-import { setSelectedExam, setExamLabel } from '../store/slices/headerSlice';
+import { setSelectedExam, setExamLabel, setExamData } from '../store/slices/headerSlice';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
@@ -16,13 +16,16 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const Header = ({ route, setId }) => {
   const navigation = useNavigation();
 
-  const [items, setItems] = useState([]);
+
   const [selectedOption, setSelectedOption] = useState(null);
   const [ addExam, setAddExam] = useState(false);
   const [examsData, setExamsData] = useState([]);
   const [studentId, setStudentId] = useState("")
 const selectedExam = useSelector((state) => state.header.selectedExam);
+const examData = useSelector((state) => state.header.examData)
 const examLabel = useSelector((state) => state.header.examLabel);
+const [items, setItems] = useState(examData? examData: []);
+const [hasFetched, setHasFetched] = useState(false);
 const dispatch = useDispatch();
 
   const getUser = async () => {
@@ -80,7 +83,7 @@ const dispatch = useDispatch();
         ];
 
         setItems(dropdownItems);
-
+        dispatch(setExamData(dropdownItems))
         const defaultItem = dropdownItems.find((item) => item.isDefault === 1);
         setSelectedOption(defaultItem || dropdownItems[0]);
         setId(defaultItem?.stUserExamId || dropdownItems[0]?.stUserExamId)
@@ -103,6 +106,13 @@ dispatch(setExamLabel(defaultItem?.label||dropdownItems[0]?.label));
               stUserExamId: examsData[0].student_user_exam_id,
             },
           ]);
+          dispatch(setExamData([
+            {
+              label: examsData[0].exam_type || "Default Exam", //Provide a default label
+              value: examsData[0].exam_id,
+              stUserExamId: examsData[0].student_user_exam_id,
+            },
+          ]))
           setSelectedOption(items[0]);
           setId(items[0]?.stUserExamId);
           console.log(defaultItem, "default")
@@ -129,8 +139,14 @@ dispatch(setExamLabel(items[0]?.exam_type));
   };
 
   useEffect(() => {
-    getUser();
-  }, []);
+    console.log("selectedExam in useEffect:", selectedExam);
+    if (!selectedExam) {
+      getUser();
+    }
+  }, [selectedExam]);
+  
+  
+
   useEffect(() => {
     if (items.length == 0) {
       setItems([{ label: "➕ Add", value: "add" }]);
@@ -248,8 +264,8 @@ dispatch(setExamLabel(items[0]?.exam_type));
     </View>
   );
 };
+export default React.memo(Header);
 
-export default Header;
 
 const styles = StyleSheet.create({
   header: {

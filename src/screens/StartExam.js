@@ -137,8 +137,8 @@ const isComponentMounted = useRef(true);
             try {
                 // Define your params correctly
                 const params = {
-                    "student_user_exam_id": 0,
-                    "type": 0,
+                    "student_user_exam_id": studentExamId,
+                    "type": 1,
                     "source": 0,
                     "testonic_page_id":  route?.params?.type == "mock" ? 48 : route?.params?.type == "previous" ? 52 : 57,
                 };

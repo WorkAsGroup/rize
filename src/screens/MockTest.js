@@ -191,10 +191,11 @@ const MockTest = ({ navigation, route }) => {
       try {
           // Define your params correctly
           const params = {
-              "student_user_exam_id": obj?.exam_paper_id,
+              "student_user_exam_id": "",
               "type": 0,
               "source": 0,
               "testonic_page_id": id,
+              "exam_id": obj?.exam_paper_id,
           };
   
           console.log(uniqueId,  "payloaddlscknl");
@@ -1175,7 +1176,7 @@ console.log(option, "aslfnlfknewljn")
         COMPLETED_EXAMS_KEY,
         JSON.stringify(completedExams)
       );
-      // await handleAnalytics(8);
+      await handleAnalytics(8);
       console.log("completedExams", completedExams, completedMockTests)
       navigation.navigate("Login", { exam: data });
 

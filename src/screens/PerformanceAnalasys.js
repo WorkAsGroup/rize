@@ -69,8 +69,8 @@ const PerformanceAnalasys = ({ route }) => {
           try {
               // Define your params correctly
               const params = {
-                  "student_user_exam_id": 0,
-                  "type": 0,
+                  "student_user_exam_id": selectedExam,
+                  "type": 1,
                   "source": 0,
                   "testonic_page_id": 42,
               };
@@ -202,28 +202,28 @@ const PerformanceAnalasys = ({ route }) => {
   };
   useEffect(() => {
     console.log(selectedExam, studentExamId, selectedValue, "aidiydqwyidqiwyd")
-    if (studentExamId && selectedValue) {
+    if (studentExamId || selectedValue) {
       getExamResults();
     }
   }, [selectedExam, studentExamId, selectedValue]);
 console.log(selectedValue, "selectedValue")
-const getUser = async () => {
-  setLoading(true);
-  try {
-    const response = await getAutoLogin();
-    if (response.data) {
-      const examId = response.data.examsData[0].student_user_exam_id;
-      setToken(response.data.token);
-      setStudentExamId(examId); // trigger the effects
-      setLoading(false);
-    } else {
-      setLoading(false);
-    }
-  } catch (error) {
-    setLoading(false);
-    console.error("Error fetching user data:", error);
-  }
-};
+// const getUser = async () => {
+//   setLoading(true);
+//   try {
+//     const response = await getAutoLogin();
+//     if (response.data) {
+//       const examId = response.data.examsData[0].student_user_exam_id;
+//       setToken(response.data.token);
+//       setStudentExamId(examId); // trigger the effects
+//       setLoading(false);
+//     } else {
+//       setLoading(false);
+//     }
+//   } catch (error) {
+//     setLoading(false);
+//     console.error("Error fetching user data:", error);
+//   }
+// };
 
 
   const getAvgScoreTime = async (id) => {
@@ -298,12 +298,11 @@ console.log(data, "peojwiejowiej")
   const memoizedWeeklyPerformance = useMemo(() => {
     return (
       <View>
-
-{(loading||examResults?.length<1)&& 
-    <View style={styles.loadingContainer}>
-    <AnimationWithImperativeApi />
-   </View>}
-        {examResults && examResults.length > 0 ? (
+        {loading === true ? (
+          <View style={styles.loadingContainer}>
+            <AnimationWithImperativeApi />
+          </View>
+        ) : examResults && examResults.length > 0 ? (
           <WeeklyPerformance
             examResults={examResults}
             performanceSubOptions={performanceSubOptions}
@@ -317,8 +316,15 @@ console.log(data, "peojwiejowiej")
           />
         ) : (
           <View>
-                              <Image source={require("../images/2.jpg")} style={{ width: windowWidth * 0.85, height: windowHeight * 0.20, resizeMode: "contain" }} />
-                          </View>
+            <Image
+              source={require("../images/2.jpg")}
+              style={{
+                width: windowWidth * 0.85,
+                height: windowHeight * 0.2,
+                resizeMode: "contain",
+              }}
+            />
+          </View>
         )}
       </View>
     );
@@ -330,8 +336,9 @@ console.log(data, "peojwiejowiej")
     dateRange,
     totalExamCount,
     selectedValue,
-    options
+    options,
   ]);
+  
   
   if(loading||examResults?.length<1) {
     <View style={styles.loadingContainer}>
@@ -348,7 +355,7 @@ console.log(data, "peojwiejowiej")
         <Text
           style={[
             styles.performanceTitle,
-            { color: theme.textColor, marginBottom: 10 },
+            { color: theme.textColor, marginBottom: 10, marginTop: 10 },
           ]}
         >
           Performance Analasys
@@ -356,7 +363,7 @@ console.log(data, "peojwiejowiej")
      
       
            {memoizedWeeklyPerformance}
-            <WeeklyPerformancess />
+           {examResults.length > 0&&!loading&& <WeeklyPerformancess />}
            
        
       </ScrollView>

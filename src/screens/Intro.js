@@ -49,15 +49,16 @@ export default function Intro({ navigation }) {
   uniqueIdRef.current = uniqueId;
  },[uniqueId])
 
-  const handleAnalytics = async (id) => {
+  const handleAnalytics = async (id, uniqeId) => {
       // console.log("hey Um called")
       try {
           // Define your params correctly
           const params = {
-              "student_user_exam_id": selectedOption?.value,
+              "student_user_exam_id": "",
               "type": 0,
               "source": 0,
               "testonic_page_id": id,
+              "exam_id": selectedOption?.value
           };
   
           console.log(uniqueId,  "payloaddlscknl");
@@ -65,7 +66,7 @@ export default function Intro({ navigation }) {
           // Create payload
           const payload = {
               ...params,
-              ip_address: uniqueIdRef.current ? uniqueIdRef.current: "",
+              ip_address: uniqeId? uniqeId: uniqueIdRef.current ? uniqueIdRef.current: "",
               location: "Hyderabad",
           };
   
@@ -89,13 +90,10 @@ export default function Intro({ navigation }) {
 
    const getData = async () => {
         const uniqueId = await getUniqueId(); // Get the unique device ID
-       dispatch( setDeviceId(uniqueId))
-        // Get the current route using navigation.getCurrentRoute()
-        // const currentRoute = navigation.getCurrentRoute(); 
-        
-        // Log the uniqueId and current route information
+       dispatch(setDeviceId(uniqueId))
+
       if(uniqueId) {
-        await handleAnalytics(4);
+        await handleAnalytics(4, uniqueId);
       }
     };
 
@@ -159,7 +157,7 @@ export default function Intro({ navigation }) {
     setSelectedOption(option);
     setIsOpen(false);
     setIsLoading(false);
-    await handleAnalytics(5);
+    await handleAnalytics(5, uniqueId);
   };
 
   const closeDropdown = () => {

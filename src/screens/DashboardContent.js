@@ -14,6 +14,7 @@ import {
   Alert,
   Modal,
   Pressable,
+  ToastAndroid,
   DeviceEventEmitter,
 } from "react-native";
 import {setAutoSaveId, setExamDuration, setExamSessionId} from "../store/slices/examSlice"
@@ -103,8 +104,8 @@ const DashboardContent = ({ route, navigation, onChangeAuth }) => {
           try {
               // Define your params correctly
               const params = {
-                  "student_user_exam_id": 0,
-                  "type": 0,
+                  "student_user_exam_id": selectedExam,
+                  "type": 1,
                   "source": 0,
                   "testonic_page_id": id,
               };
@@ -234,72 +235,92 @@ console.log(validMockTests, "ValidMocks")
     setMock(mocklist);
   }, [mocklist, pre]);
 
-  useEffect(() => {
-    getUser();
-  }, []);
+  // useEffect(() => {
+  //   getUser();
+  // }, []);
 
   const getCustomeExam = async (id) => {
     const data = {
       student_user_exam_id: id,
     };
-    const response = await getCustomExams(data);
-   if(response?.data) {
-    setCustomExams(response?.data);
-   }
-    console.log(response, "custom");
+    try {
+      const response = await getCustomExams(data);
+      if (response?.data) {
+        setCustomExams(response.data);
+      } else {
+        ToastAndroid.show("No custom exams found.", ToastAndroid.SHORT);
+      }
+      console.log(response, "custom");
+    } catch (error) {
+      console.error("Error fetching custom exams:", error);
+      Alert.alert(
+        "Error",
+        "Failed to fetch custom exams. Please check your connection and try again."
+      );
+    }
   };
-
- 
-
-  const getPrevious = async () => {
+  
+  const getPrevious = async (id) => {
     const data = {
-      student_user_exam_id: selectedExam,
+      student_user_exam_id: id,
     };
     try {
       const res = await getPreviousPapers(data);
-      console.log("Previouspao", res);
       const tyu = res?.data;
-      setPre(tyu);
+      if (tyu) {
+        setPre(tyu);
+      } else {
+        ToastAndroid.show("No previous papers found.", ToastAndroid.SHORT);
+      }
+      console.log("Previous papers", res);
     } catch (error) {
-      console.error("Error fetching Previouspaper data:", error);
-      // Alert.alert("Error", "Failed to get previous papers. Please check your connection and try again.");
+      console.error("Error fetching Previous paper data:", error);
+      Alert.alert(
+        "Error",
+        "Failed to fetch previous papers. Please check your connection and try again."
+      );
     }
   };
-
+  
   const getYears = async () => {
     try {
       const response = await getYearsData();
-      console.log("years", response);
+      if (response?.data?.length) {
+        console.log("Years data:", response.data);
+      } else {
+        ToastAndroid.show("No years data available.", ToastAndroid.SHORT);
+      }
     } catch (error) {
       console.error("Error fetching years data:", error);
       Alert.alert(
         "Error",
-        "Failed to get years data. Please check your connection and try again."
+        "Failed to fetch years data. Please check your connection and try again."
       );
     }
   };
-
-
-
-
-
-  const getMock = async () => {
+  
+  const getMock = async (id) => {
     const data = {
-      student_user_exam_id: selectedExam,
+      student_user_exam_id: id,
     };
     try {
       const response = await getMockExams(data);
-      console.log("mock exam", response.data);
       const tyu = response?.data;
-      setMocklist(tyu);
+      if (tyu) {
+        setMocklist(tyu);
+      } else {
+        ToastAndroid.show("No mock exams found.", ToastAndroid.SHORT);
+      }
+      console.log("Mock exams", response.data);
     } catch (error) {
       console.error("Error fetching mock exams:", error);
-      // Alert.alert(
-      //   "Error",
-      //   "Failed to get mock exams. Please check your connection and try again."
-      // );
+      Alert.alert(
+        "Error",
+        "Failed to fetch mock exams. Please check your connection and try again."
+      );
     }
   };
+  
 
 
   const handleStartTest = async (item, type) => {
@@ -491,57 +512,57 @@ console.log(validMockTests, "ValidMocks")
     setIsOpen(true);
   };
 
- const getUser = async () => {
+//  const getUser = async () => {
 
-    try {
-      const response = await getAutoLogin();
+//     try {
+//       const response = await getAutoLogin();
 
-      if (!response?.data) {
-        console.warn("No user data received from API");
-        return;
-      }
+//       if (!response?.data) {
+//         console.warn("No user data received from API");
+//         return;
+//       }
 
-      const { name, student_user_id, examsData } = response.data;
+//       const { name, student_user_id, examsData } = response.data;
 
-      let comData = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
-      let parsedData = comData ? JSON.parse(comData) : null;
+//       let comData = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
+//       let parsedData = comData ? JSON.parse(comData) : null;
 
-      if (parsedData && Array.isArray(parsedData) && parsedData.length > 0) {
-        console.log("parse",parsedData);
+//       if (parsedData && Array.isArray(parsedData) && parsedData.length > 0) {
+//         console.log("parse",parsedData);
 
-        const uniqueExams = parsedData.filter(
-          (exam, index, self) =>
-            index === self.findIndex((e) => e.exam_id === exam.exam_id)
-        );
+//         const uniqueExams = parsedData.filter(
+//           (exam, index, self) =>
+//             index === self.findIndex((e) => e.exam_id === exam.exam_id)
+//         );
         
-        const updatedExamsData = await createExamIds(uniqueExams, student_user_id);
-        if (updatedExamsData) {
-          setExamsData(updatedExamsData);
-          addDropDownValues(updatedExamsData);
+//         const updatedExamsData = await createExamIds(uniqueExams, student_user_id);
+//         if (updatedExamsData) {
+//           setExamsData(updatedExamsData);
+//           addDropDownValues(updatedExamsData);
 
-          await submitAllStoredResults()
-        }
-        return
+//           await submitAllStoredResults()
+//         }
+//         return
 
-      }
+//       }
 
-      console.log("Fetched user data:", response.data);
+//       console.log("Fetched user data:", response.data);
 
-      setName(name);
-      setStudentId(student_user_id);
-      // setStudentUserId(student_user_id);
+//       setName(name);
+//       setStudentId(student_user_id);
+//       // setStudentUserId(student_user_id);
 
-      if (!(examsData?.length)) {
-        setAddExam(true); // No exam data, prompt user to add an exam
-      } else {
-        setExamsData(examsData);
-        addDropDownValues(examsData);
-      }
+//       if (!(examsData?.length)) {
+//         setAddExam(true); // No exam data, prompt user to add an exam
+//       } else {
+//         setExamsData(examsData);
+//         addDropDownValues(examsData);
+//       }
 
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-  };
+//     } catch (error) {
+//       console.error("Error fetching user data:", error);
+//     }
+//   };
 
 
 
@@ -575,46 +596,46 @@ console.log(validMockTests, "ValidMocks")
 
 
 
-  const addDropDownValues = async (existingExams) => {
-    console.log("dropdownavlaues");
+  // const addDropDownValues = async (existingExams) => {
+  //   console.log("dropdownavlaues");
 
-    const exams = await getExamType();
+  //   const exams = await getExamType();
 
-    const examsDataMap = new Map(
-      existingExams.map((exam) => [exam.exam_id, exam])
-    );
+  //   const examsDataMap = new Map(
+  //     existingExams.map((exam) => [exam.exam_id, exam])
+  //   );
 
-    const mergedExamsData = exams.data.map((exam) => {
-      const existingExamData = examsDataMap.get(exam.exam_id);
-      return { ...exam, ...(existingExamData || {}) };
-    });
-    const filteredMergedData = mergedExamsData.filter((exam) =>
-      exam.hasOwnProperty("is_default")
-    );
-
-
-    const dropdownItems = [
-      ...filteredMergedData.map((option) => ({
-        label: option.exam_type,
-        value: option.exam_id,
-        isDefault: option.is_default,
-        stUserExamId: option.student_user_exam_id,
-      })),
-      { label: "➕ Add", value: "add", custom: true },
-    ];
+  //   const mergedExamsData = exams.data.map((exam) => {
+  //     const existingExamData = examsDataMap.get(exam.exam_id);
+  //     return { ...exam, ...(existingExamData || {}) };
+  //   });
+  //   const filteredMergedData = mergedExamsData.filter((exam) =>
+  //     exam.hasOwnProperty("is_default")
+  //   );
 
 
+  //   const dropdownItems = [
+  //     ...filteredMergedData.map((option) => ({
+  //       label: option.exam_type,
+  //       value: option.exam_id,
+  //       isDefault: option.is_default,
+  //       stUserExamId: option.student_user_exam_id,
+  //     })),
+  //     { label: "➕ Add", value: "add", custom: true },
+  //   ];
 
 
-    setItems(dropdownItems);
-    const defaultItem = dropdownItems.find((item) => item.isDefault === 1);
-    let examID = (defaultItem || dropdownItems[0]).stUserExamId
-    setSelectedOption(defaultItem || dropdownItems[0]);
-    setStudentExamId(examID);
 
-    await fetchData(examID);
 
-  };
+  //   setItems(dropdownItems);
+  //   const defaultItem = dropdownItems.find((item) => item.isDefault === 1);
+  //   let examID = (defaultItem || dropdownItems[0]).stUserExamId
+  //   setSelectedOption(defaultItem || dropdownItems[0]);
+  //   setStudentExamId(examID);
+
+  //   await fetchData(examID);
+
+  // };
 
 
 
@@ -726,21 +747,28 @@ console.log(validMockTests, "ValidMocks")
 
 
 
-  const fetchData = useCallback(async (examID) => {
-    setLoading(true);
+const fetchData = useCallback(async (examID) => {
+  setLoading(true);
 
-    try {
-      await Promise.all([getYears(), getMock(examID|| selectedExam), getPrevious(examID|| selectedExam)]);
-      if (examID|| selectedExam) {
-        await Promise.all([getExamResults(examID|| selectedExam), getCustomeExam(examID|| selectedExam)]);
-      }
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      // Alert.alert("Error", "Failed to refresh data. Please check your connection and try again.");
-    } finally {
-      setLoading(false);
-    }
-  });
+  const examIdToUse = examID || selectedExam;
+
+if(examIdToUse&&examIdToUse !==null) {
+  try {
+    await Promise.all([
+      getYears(),
+      getMock(examIdToUse),
+      getPrevious(examIdToUse),
+      getExamResults(examIdToUse),
+      getCustomeExam(examIdToUse),
+    ]);
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    Alert.alert("Error", "Failed to refresh data. Please check your connection and try again.");
+  } finally {
+    setLoading(false);
+  }
+}
+}, [selectedExam]);
 
 
   // console.log(items, "itemsvaluses")

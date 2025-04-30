@@ -152,39 +152,41 @@ const LeaderBoard = ({studentExamId}) => {
             <Text style={[styles.subText, { marginBottom: 10 }]}>Checkout your leaderboard score</Text>
           </View>
           <View style={{ zIndex: 1000 }}>
+    
+                    
             <Dropdown
-              style={{
-                backgroundColor: theme.background,
-                borderColor: theme.tx1,
-                borderWidth: 1,
-                minHeight: 35,
-                width: 100,
-                paddingHorizontal: 10,
-                borderRadius: 10,
-              }}
-              containerStyle={{
-                backgroundColor: theme.textColor1,
-                borderColor: theme.brad,
-                maxHeight: 150,
-              }}
-              placeholderStyle={{
-                color: theme.textColor,
-                fontSize: 12,
-              }}
-              selectedTextStyle={{
-                color: theme.textColor,
-                fontSize: 12,
-              }}
-              itemTextStyle={{
-                fontSize: 11,
-                color: theme.textColor,
-              }}
-              data={options}
-              labelField="label"
-              valueField="value"
-              value={leaderBoardValue}
+                         style={{
+                          backgroundColor: "#000",
+                          borderColor: "#E614E1",
+                          borderWidth: 1,
+                          minHeight: 35,
+                          width: 100,
+                          paddingHorizontal: 10,
+                          borderRadius: 10,
+                        }}
+                        containerStyle={{
+                          backgroundColor: "#000",
+                          borderColor: theme.brad,
+                          maxHeight: 150,
+                        }}
+                        placeholderStyle={{
+                          color: "#E614E1",
+                          fontSize: 12, // Smaller font size for placeholder
+                        }}
+                        selectedTextStyle={{
+                          color: "#E614E1",
+                          fontSize: 12, // Smaller font size for selected value
+                        }}
+                        itemTextStyle={{
+                          fontSize: 11, // ✅ Decreased font size for dropdown items
+                          color: "#E614E1",
+                        }}
+                        data={options}
+                        labelField="label"
+                        valueField="value"
+                        value={leaderBoardValue}
               onChange={(item) => handleChangeFormat(item)}
-              placeholder="Select"
+                        placeholder="Select"
             />
           </View>
         </View>
