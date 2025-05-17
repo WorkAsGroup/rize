@@ -124,7 +124,11 @@ const isComponentMounted = useRef(true);
   const previousTimeRef = useRef(timer);
 
 
-
+useEffect(() => {
+if(questionDetails) {
+  setAnsweredQuestions(questionDetails.filter((item) => item.attempt_answer!==""))
+}
+},[questionDetails])
 
   const [restrictionMessage, setRestrictionMessage] = useState("");
      const uniqueId = useSelector((state) => state.header.deviceId);
@@ -451,6 +455,7 @@ useEffect(() => {
     
     if (["schedule_exam", "previous_exam", "custom_exam"].includes(examtype)) {
       dispatch(submitExamThunk({ params, isTimeUp: true }));
+      attemptedQuestionsRef.current=[];
     }
      resultAnalytics();
     setHasSubmitted(true);
@@ -463,7 +468,7 @@ useEffect(() => {
     setTimer(questionInitialTime);
 }, [selectedQuestion, questionDetails, activeQuestionIndex]);
 
-
+console.log(attemptedQuestionsRef.current, "attemptedQuestionsRef.current")
 useEffect(() => {
     const timerInterval = setInterval(() => {
         setTimer((prevTime) => {
@@ -526,27 +531,47 @@ useEffect(() => {
 
 
   const disabledQuestions = (updatedQuestionDetails) => {
-
-    let patternData = examPatternData&&examPatternData.find(
-      (item) => (+item.starting_no <= (activeQuestionIndex + 1)) && (+item.ending_no >= (activeQuestionIndex + 1)));
-
-    let answeredCount = updatedQuestionDetails.filter((item) => item.slno >= patternData.starting_no && item.slno <= patternData.ending_no && item.status === '2');
-
+    const currentSlno = activeQuestionIndex + 1;
+  
+    let patternData = examPatternData?.find(
+      (item) =>
+        +item.starting_no <= currentSlno && +item.ending_no >= currentSlno
+    );
+  
+    if (!patternData) return updatedQuestionDetails;
+  
+    let answeredCount = updatedQuestionDetails.filter(
+      (item) =>
+        item.slno >= patternData.starting_no &&
+        item.slno <= patternData.ending_no &&
+        item.status === "2"
+    );
+  
     if (answeredCount.length >= patternData.no_of_qus_answer) {
-      setRestrictionMessage(`*You can only answer ${patternData.no_of_qus_answer} questions`);
+      setRestrictionMessage(
+        `*You can only answer ${patternData.no_of_qus_answer} questions`
+      );
       return updatedQuestionDetails.map((item) => ({
         ...item,
         is_disabled:
           item.slno >= patternData.starting_no &&
-            item.slno <= patternData.ending_no
-            ? answeredCount.some((ans) => ans.slno === item.slno)
-              ? false
-              : true
+          item.slno <= patternData.ending_no
+            ? !answeredCount.some((ans) => ans.slno === item.slno) // only allow already-answered
             : item.is_disabled,
       }));
-    };
-    return updatedQuestionDetails
+    }
+  
+    // Reset all to enabled within range
+    return updatedQuestionDetails.map((item) => ({
+      ...item,
+      is_disabled:
+        item.slno >= patternData.starting_no &&
+        item.slno <= patternData.ending_no
+          ? false
+          : item.is_disabled,
+    }));
   };
+  
 
   // const handleOptionChange = (event) => {
   //     const updatedQuestionDetails = questionDetails.map((item) =>
@@ -606,43 +631,58 @@ console.log(option, "oprtion")
   };
 
 
-
   const handleInputChange = (value) => {
-    // const { value } = e.target;
     const regex = /^\d{0,15}(\.\d{0,50})?$/;
-
-    if (regex.test(value) || value === "") {
-      const updatedQuestionDetails = questionDetails.map((item) =>
-        item.slno === activeQuestionIndex + 1
-          ? {
+  
+    if (!regex.test(value) && value !== "") return;
+  
+    const currentSlno = activeQuestionIndex + 1;
+  
+    let patternData = examPatternData.find(
+      (item) => +item.starting_no <= currentSlno && +item.ending_no >= currentSlno
+    );
+  
+    let answeredCount = questionDetails.filter(
+      (item) =>
+        item.slno >= patternData.starting_no &&
+        item.slno <= patternData.ending_no &&
+        item.status === "2"
+    );
+  
+    const isCurrentAlreadyAnswered = questionDetails.find(
+      (item) => item.slno === currentSlno
+    )?.status === "2";
+  
+    const isTryingToAnswerNew =
+      !isCurrentAlreadyAnswered && value !== ""; // new answer being typed
+  
+    if (
+      isTryingToAnswerNew &&
+      answeredCount.length >= patternData.no_of_qus_answer
+    ) {
+      setRestrictionMessage(`*You can only answer ${patternData.no_of_qus_answer} questions in this section.`)
+      // Toast.show({
+      //   type: "error",
+      //   text1: `*You can only answer ${patternData.no_of_qus_answer} questions in this section.`,
+      // });
+      return;
+    }
+  
+    const updatedQuestionDetails = questionDetails.map((item) =>
+      item.slno === currentSlno
+        ? {
             ...item,
             attempt_answer: value,
             status: value === "" ? "1" : "2",
           }
-          : item
-      );
-
-      let patternData = examPatternData.find(
-        (item) =>
-          +item.starting_no <= activeQuestionIndex + 1 &&
-          +item.ending_no >= activeQuestionIndex + 1
-      );
-
-      if (value === "" && patternData) {
-        const resetDisabledState = updatedQuestionDetails.map((item) => ({
-          ...item,
-          is_disabled:
-            item.slno >= patternData.starting_no &&
-              item.slno <= patternData.ending_no
-              ? false
-              : item.is_disabled,
-        }));
-        dispatch(updateQuestionDetail(resetDisabledState));
-      } else {
-        dispatch(updateQuestionDetail(disabledQuestions(updatedQuestionDetails)));
-      }
-    }
+        : item
+    );
+  
+    // Apply updated disabling logic
+    dispatch(updateQuestionDetail(disabledQuestions(updatedQuestionDetails)));
   };
+  
+  
 
 
   const handleClearOptions = () => {
@@ -689,15 +729,18 @@ console.log(option, "oprtion")
     dispatch(updateQuestionDetail(updatedQuestionDetails));
   };
 
+  // const isOptionDisabled = () => {
+  //   const currentQuestionNo = activeQuestionIndex + 1;
+  //   const disabled = questionDetails.some((item) => {
+  //     return item.slno === currentQuestionNo && item.is_disabled
+  //   });
+
+  //   return disabled;
+  // };
   const isOptionDisabled = () => {
-    const currentQuestionNo = activeQuestionIndex + 1;
-    const disabled = questionDetails.some((item) => {
-      return item.slno === currentQuestionNo && item.is_disabled
-    });
-
-    return disabled;
+    return questionDetails.find((q) => q.slno === activeQuestionIndex + 1)?.is_disabled;
   };
-
+  
 
   const reloadQuestion = (id) => {
     // const params = { 'question_id': id }
@@ -943,14 +986,15 @@ console.log(option, "oprtion")
       />
 
       <View style={{ flex: 1 }}>
-        <View style={{ flexDirection: "row", marginTop: 10 }}>
+        <View style={{ flexDirection: "row", marginTop: 10 , justifyContent: "space-between"}}>
           <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>
             {obj.exam_name}
           </Text>
-          <Text
+      <View>
+      <Text
             style={[
               styles.mockSubtitle,
-              { color: theme.textColor, marginLeft: 40 },
+              { color: theme.textColor, marginRight: 10},
             ]}
           >
             Remaining Time
@@ -958,7 +1002,9 @@ console.log(option, "oprtion")
           <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>
             {formatTime(timeLeft)}
           </Text>
+      </View>
         </View>
+        
         <ScrollView>
           <View style={{ paddingHorizontal: 20 }}>
             <View
@@ -1254,12 +1300,12 @@ console.log(option, "oprtion")
                     {state.skip}
                   </Text>
                 </View>
-                <View style={{ alignItems: "center" }}>
+                {/* <View style={{ alignItems: "center" }}>
                   <Text style={[styles.res, { color: "#36A1F5" }]}>Review</Text>
                   <Text style={[styles.res, { color: "#36A1F5" }]}>
                     {state.answerAndMarkedView}
                   </Text>
-                </View>
+                </View> */}
               </View>
 
               <TouchableOpacity
@@ -1353,7 +1399,7 @@ console.log(option, "oprtion")
                       selectedNumber={activeQuestionIndex}
                       currentQuestionIndex={examQuestions[activeQuestionIndex]}
                       questionLength={examQuestions.length}
-                      onChangeValue={(value) => handleOptionChange(activeQuestionIndex, value)}
+                      onChangeValue={!isOptionDisabled() ? (value) => handleOptionChange(activeQuestionIndex, value):undefined}
                       onSkip={() => {
                         handleSkip();
                         // setSelectedOption(null);
@@ -1371,10 +1417,11 @@ console.log(option, "oprtion")
                         // Remove this line as it's redundant with textInputValues
                         // setTextInputAnswer(""); 
                       }}
+                      isOptionDisabled={isOptionDisabled}
                       attempt_answer={attempt_answer}
                       onReviewLater={() => handleMarkedReview()}
                       onSubmit={() => handleSubmitTest()}
-                      handleTextInputChange={(text) => handleInputChange(text, activeQuestionIndex)}
+                      handleTextInputChange={!isOptionDisabled() ?(text) => handleInputChange(text, activeQuestionIndex):undefined}
                       handleSelectAndNext={handleNextQuestion}
                       handleAnswerSelect={(text) => handleInputChange(text, activeQuestionIndex)}
                     // textInputValue={textInputValues[activeQuestionIndex] || ""} // Pass current value
@@ -1392,6 +1439,9 @@ console.log(option, "oprtion")
                   }
                   </View>
                 )}
+                   {isOptionDisabled() && <Text style={{
+                    color: 'red'
+                   }} >{restrictionMessage}</Text>}
               <View
                 style={{
                   marginTop: 10,
@@ -1401,12 +1451,12 @@ console.log(option, "oprtion")
               >
                 <View style={{ flexDirection: "row" }}>
 
-                  <TouchableOpacity onPress={handleMarkedReview} style={[styles.ins, { backgroundColor: theme.textColor1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]}>
+                  {/* <TouchableOpacity onPress={handleMarkedReview} style={[styles.ins, { backgroundColor: theme.textColor1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]}>
                     <Image
                       style={{ height: 20, width: 20, resizeMode: 'contain', tintColor: theme.textColor }}
                       source={require("../images/tag.png")}
                     />
-                  </TouchableOpacity>
+                  </TouchableOpacity> */}
 
 
                   <TouchableOpacity
@@ -1499,7 +1549,9 @@ console.log(option, "oprtion")
                 Save & Next
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleSubmitTest}>
+            {answeredQuestions.length>0&& <TouchableOpacity 
+              onPress={handleSubmitTest}
+          >
               <LinearGradient
                 colors={theme.background}
                 style={{
@@ -1521,7 +1573,8 @@ console.log(option, "oprtion")
                   Submit Test
                 </Text>
               </LinearGradient>
-            </TouchableOpacity>
+            </TouchableOpacity>}
+           
           </View>
 
         </View>

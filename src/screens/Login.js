@@ -150,6 +150,10 @@ export default function Login({ route }) {
     };
 
 
+    useEffect(() => {
+        handleAnalytics();
+    },[])
+
     const togglePasswordVisibility = () => {
         setPasswordVisible(!passwordVisible);
     };
@@ -210,14 +214,14 @@ export default function Login({ route }) {
             if(response.statusCode == 200||response.statusCode == 403){
              
                 if(response.data.email_verified == 1){
-                    await handleAnalytics();
+                    // await handleAnalytics();
                     const tkn = response.data.token;
                     setLoading(false);
                     route.params.onChangeAuth(tkn);
                     navigation.navigate("DashboardContent"); 
                 } else {
                    if(response?.data?.token) {
-                    await handleAnalytics();
+                    // await handleAnalytics();
                     setLoading(false);
                 navigation.navigate("AccountCreated", {
                     token: response.data.token,

@@ -17,7 +17,7 @@ import {
   ToastAndroid,
   DeviceEventEmitter,
 } from "react-native";
-import {setAutoSaveId, setExamDuration, setExamSessionId} from "../store/slices/examSlice"
+import {resetState, setActiveQuestionIndex, setActiveSubjectId, setAutoSaveId, setExamDuration, setExamQuestions, setExamSessionId, setQuestionDetails} from "../store/slices/examSlice"
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 // import { LineChart } from 'react-native-svg-charts';
 import { useNavigation } from "@react-navigation/native";
@@ -326,6 +326,7 @@ console.log(validMockTests, "ValidMocks")
 
 
   const handleStartTest = async (item, type) => {
+    dispatch(resetState())
     try {
       setLoading(true);
       setExamLoading(true);
@@ -371,8 +372,13 @@ console.log(validMockTests, "ValidMocks")
         await handleAnalytics(44);
         sessionId = item.exam_session_id;
       }
+       dispatch(setExamQuestions([]));
+                
+                      dispatch(setQuestionDetails([]));
+                      dispatch(setActiveQuestionIndex(0));
+                      dispatch(setActiveSubjectId(null));
+                      // dispatch(setLoading(false));
   
-      console.log("✅ Final Session ID:", sessionId);
   
      if(type== "replay"||selectedType=="previous"||selectedType=="custom") {
       dispatch(setExamSessionId(sessionId));

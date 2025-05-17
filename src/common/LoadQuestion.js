@@ -46,7 +46,7 @@ const LoadQuestion = (props) => {
     // console.log(props, "lsidjceoicoreicoericeoricer")
     const {item,attempted,currentQuestionIndex,questionLength,onChangeValue,onSkip,onPrevious=null,onReviewLater,onReload=null,onNext,onSubmit,type='exam'} = props;  
     let {id,question,option1,option2,option3,option4,qtype,inputquestion='',compquestion,mat_question,list1type,list2type,answer,result,reviewLater,section_name='',section='',explanation,bookmarked,isSubmitted,errorReason} = item;
-    const {selectedAnswers, selectedNumber, globalQuestionTypes,currentTab,questions,  handleTextInputChange,
+    const {selectedAnswers, selectedNumber, globalQuestionTypes,currentTab,questions,  handleTextInputChange,isOptionDisabled,
     handleSelectAndNext,handleAnswerSelect, textInputValues} = props;
 // console.log(attempted, "aeilfjwoeifowencoweubc")
 const studentExamId = useSelector((state) => state.header.selectedExam);
@@ -220,11 +220,18 @@ if(studentExamId!==null) {
 {
     studentExamIdRef.current == null ? (
         <TextInput
-    style={[styles.textInputStyle, { color: theme.textColor }]}
+        style={[
+            styles.textInputStyle,
+            {
+              color: theme.textColor,
+              backgroundColor: isOptionDisabled?.() ? '#eee' : 'transparent',
+            },
+          ]}
     value={textInputValues?textInputValues[selectedNumber] : ""}
-    onChangeText={(text) => {
-        handleTextInputChange(text, selectedNumber);
-    }}
+    onChangeText={!isOptionDisabled() ? (text) => {
+        handleTextInputChange?.(text, selectedNumber); // Safe call
+      }:undefined}
+      editable={!isOptionDisabled?.()}
     placeholder={`Enter answer`}
     keyboardType="numeric"
     placeholderTextColor={theme.textColor}
@@ -241,12 +248,19 @@ if(studentExamId!==null) {
 />
     ) :(
         <TextInput
-    style={[styles.textInputStyle, { color: theme.textColor }]}
+        style={[
+            styles.textInputStyle,
+            {
+              color: theme.textColor,
+              backgroundColor: isOptionDisabled?.() ? '#eee' : 'transparent',
+            },
+          ]}
     value={attempted}
-    onChangeText={(text) => {
-        handleTextInputChange(text, selectedNumber);
-    }}
+    onChangeText={!isOptionDisabled() ? (text) => {
+        handleTextInputChange?.(text, selectedNumber); // Safe call
+      }:undefined}
     placeholder={`Enter answer`}
+    editable={!isOptionDisabled?.()}
     keyboardType="numeric"
     placeholderTextColor={theme.textColor}
     multiline={true}

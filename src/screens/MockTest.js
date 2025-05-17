@@ -315,7 +315,7 @@ if(uniqueId) {
     }),
     []
   );
-
+console.log(answeredQuestions, "answeredQuestions")
   useEffect(() => {
     const checkInterruption = async () => {
       const wasInterrupted = await AsyncStorage.getItem(TEST_INTERRUPTED_KEY);
@@ -853,6 +853,20 @@ if(uniqueId) {
       textInputValues,
     ]
   );
+
+  const isOptionDisabled = () => {
+    const currentSubject = pattern.find(
+      (subject) =>
+        questionId >= subject.starting_no && questionId <= subject.ending_no
+    );
+    const answeredCountForSubject = Object.keys(answeredQuestions).filter(
+      (qId) =>
+        qId >= currentSubject.starting_no && qId <= currentSubject.ending_no
+    ).length;
+   
+    return  answeredCountForSubject >= currentSubject.no_of_qus_answer;
+  };
+  
 
   const handleAnswerSelect = useCallback(
     async (questionId, option) => {
@@ -1689,12 +1703,13 @@ console.log(option, "aslfnlfknewljn")
                   onSkip={()=>{ handleSkipQuestion();
                     setSelectedOption(null);}}
                   // onPrevious={()=>this.previous(currentQuestionIndex)}
+                  isOptionDisabled={isOptionDisabled}
                   onNext={()=>{
                     if (answeredQuestions[selectedNumber]) {
                       moveToNextQuestion();
                       return;
                     }
-    
+                   
                     handleSelectAndNext(selectedNumber);
                     if (exams[selectedNumber - 1]?.qtype !== 8) {
                       handleAnswerSelect(selectedNumber, selectedOption);
@@ -1848,7 +1863,7 @@ console.log(option, "aslfnlfknewljn")
                 Save & Next
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleSubmitTest}>
+            {Object.keys(answeredQuestions || {}).length > 0 &&  <TouchableOpacity onPress={handleSubmitTest}>
               <LinearGradient
                 colors={theme.background}
                 style={{
@@ -1870,7 +1885,8 @@ console.log(option, "aslfnlfknewljn")
                   Submit
                 </Text>
               </LinearGradient>
-            </TouchableOpacity>
+            </TouchableOpacity>}
+          
           </View>
           {/* <View style={{ marginTop: 10, flexDirection: 'row', justifyContent: 'center',marginBottom:5}}>
                   

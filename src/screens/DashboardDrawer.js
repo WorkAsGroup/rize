@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, useColorScheme, Alert } from 'react-native';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import DashboardContent from './DashboardContent';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
 import { darkTheme, lightTheme } from '../theme/theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Intro from './Intro';
@@ -10,6 +11,8 @@ import Achivements from './dashboardItems/Achivements';
 import PerformanceAnalasys from './PerformanceAnalasys';
 import { useDispatch } from 'react-redux';
 import { setSelectedExam } from '../store/slices/headerSlice';
+import DeviceInfo from 'react-native-device-info';
+
 
 const Drawer = createDrawerNavigator();
 
@@ -26,7 +29,8 @@ const CustomDrawerContent = (props) => {
   const navigation = useNavigation();
   const route = useRoute();
   const currentRouteName = route?.name;
-  
+  const activeRoute = props.state.routes[props.state.index].name;
+  // console.log(activeRoute, "currentRouteName")
   const getIconSource = (routeName) => {
     switch (routeName) {
       case 'Dashboard':
@@ -55,16 +59,16 @@ const CustomDrawerContent = (props) => {
         <Image source={require("../images/logo.png")} style={{ height: 100, width: 160,  resizeMode: 'contain', marginLeft: 10 }} />
       </View>
 
-      <TouchableOpacity style={[styles.drawerItem, currentRouteName === 'Dashboard' && styles.selectedDrawerItem]} onPress={() => handleNavigation('Dashboard')}>
+      <TouchableOpacity style={[styles.drawerItem, activeRoute == 'Dashboard'? styles.selectedDrawerItem: ""]} onPress={() => handleNavigation('Dashboard')}>
         <Image source={getIconSource('Dashboard')} style={[styles.drawerIcon, { tintColor: theme.textColor }]} />
         <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Test Zone</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.drawerItem, currentRouteName === 'PerformanceAnalasys' && styles.selectedDrawerItem]} onPress={() => handleNavigation('PerformanceAnalasys')}>
+      <TouchableOpacity style={[styles.drawerItem, activeRoute === 'PerformanceAnalasys' && styles.selectedDrawerItem]} onPress={() => handleNavigation('PerformanceAnalasys')}>
         <Image source={getIconSource('Performance')} style={[styles.drawerIcon, { tintColor: theme.textColor }]} />
         <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Performance Analytics</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.drawerItem, currentRouteName === 'Achivements' && styles.selectedDrawerItem]} onPress={() => handleNavigation('Achivements')}>
+      <TouchableOpacity style={[styles.drawerItem, activeRoute === 'Achivements' && styles.selectedDrawerItem]} onPress={() => handleNavigation('Achivements')}>
         <Image source={getIconSource('Achivements')} style={[styles.drawerIcon, { tintColor: theme.textColor }]} />
         <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Achivements</Text>
       </TouchableOpacity>
@@ -83,8 +87,8 @@ const DashboardDrawer = ({ route }) => {
   const dispatch = useDispatch();
   const colorScheme = useColorScheme();
   const navigation = useNavigation();
-  const theme = colorScheme === "dark" ? darkTheme : lightTheme;
-
+  const theme = darkTheme;
+  const userId = useSelector((state) => state.header.studentUid) 
   // ✅ FIXED LOGOUT FUNCTION
   const handleLogout = async () => {
     try {
@@ -100,6 +104,65 @@ const DashboardDrawer = ({ route }) => {
       Alert.alert("Error", "An error occurred during logout.");
     }
   };
+
+  const isVersionOlder = (current, latest) => {
+    const curr = current.split('.').map(Number);
+    const api = latest.split('.').map(Number);
+    for (let i = 0; i < Math.max(curr.length, api.length); i++) {
+      const a = curr[i] || 0;
+      const b = api[i] || 0;
+      if (a < b) return true;
+      if (a > b) return false;
+    }
+    return false;
+  };
+  
+
+  
+  useEffect(() => {
+    if(userId) {
+      checkAppVersion(userId)
+    }
+    },[navigation, userId])
+  
+    const checkAppVersion = async (userId) => {
+      console.log("call ayyaaaa")
+      try {
+        const response = await fetch('https://mocktestapi.rizee.in/api/v1/general/app-version', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ student_user_id: userId })
+        });
+        const data = await response.json();
+    console.log(data, "dataedwd")
+        const currentVersion = DeviceInfo.getVersion(); // e.g. '1.2'
+        
+        if  (isVersionOlder(currentVersion, data?.[0]?.user_version || "0.0")) {
+          // Prompt user to update
+          Alert.alert(
+            "Update Available",
+            "A new version is available. Please update the app for the best experience.",
+            [
+              { text: "Update Now", onPress: () => Linking.openURL('https://play.google.com/apps/internaltest/4701724673225179262') }
+            ],
+            { cancelable: false }
+          );
+        } else {
+          // Optionally update backend with current version
+          await fetch('https://mocktestapi.rizee.in/api/v1/general/update-app-version', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              student_user_id: userId,
+              app_version: parseFloat(currentVersion),
+            })
+          });
+        }
+      } catch (error) {
+        console.error("Version check failed", error);
+      }
+    };
+  
 
   return (
     <Drawer.Navigator
@@ -155,7 +218,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   selectedDrawerItem: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#BC30ED',
   },
   drawerItemText: {
     fontSize: 16,

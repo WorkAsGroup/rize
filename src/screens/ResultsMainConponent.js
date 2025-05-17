@@ -25,7 +25,7 @@ const ResultMainComponent = () => {
   const [finishTest, setFinishTest] = useState(false);
   
   useEffect(() => {
-    if (attemptsData.length > 0 && exam_session_id && state.attemptId === 0) {
+    if (attemptsData&&attemptsData.length > 0 && exam_session_id && state.attemptId === 0) {
       const attemptId = attemptsData.find((item) => item.id === exam_session_id)?.id;
       if (attemptId) {
         setState((prevState) => ({ ...prevState, attemptId }));

@@ -94,7 +94,9 @@ export default function Signup({ navigation }) {
             setEmail("");
         }
     };
-
+   useEffect(() => {
+        handleAnalytics();
+    },[])
 
     const handleGoogleLogin = async () => {
         setLoading(true);
@@ -206,7 +208,7 @@ export default function Signup({ navigation }) {
             }
             
             if (response.statusCode === 201) {
-                await handleAnalytics();
+              
                 navigation.navigate("OTPScreen", {
                     mobile: mobileValue || emailValue,
                     studentId: response?.data?.student_user_id,
