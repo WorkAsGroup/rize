@@ -5,7 +5,7 @@ import DropDownPicker from "react-native-dropdown-picker";
 import { getExamType, addExams } from "../core/CommonService";
 import { useSelector } from "react-redux";
 
-const ExamModalComponent = ({ show, setShow,studentUserId,  onRefresh, existingExams }) => {
+const ExamModalComponent = ({ show, setShow,  onRefresh, existingExams }) => {
   const [loading, setLoading] = useState(false);
   const [examsData, setExamsData] = useState([]);
 
@@ -14,7 +14,7 @@ const ExamModalComponent = ({ show, setShow,studentUserId,  onRefresh, existingE
   const [selectedExam, setSelectedExam] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
   const [years] = useState([{ label: "2025", value: "2025" }]);
-  // const studentUserId = useSelector((state) => state.header.selectedExam)
+  const studentUserId = useSelector((state) => state.header.studentUid)
   const [errors, setErrors] = useState({ examId: "", yearId: "" });
 console.log(studentUserId, "weifweiufbwi")
   useEffect(() => {

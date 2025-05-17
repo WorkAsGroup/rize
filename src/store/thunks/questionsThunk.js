@@ -96,10 +96,11 @@ export const patternSectionsThunk = (params, type) => async (dispatch, getState)
 
         const response = await getPatternSelection(params);
         const data = response.data.data;
-
+        console.log(data, "filteredSubjects",type)
         if (response.data.statusCode === 200) {
             if (data.length > 0) {
-                if (type === "custom_exam") {
+                if (type === "custom") {
+
                     const uniqueSubjects = data.filter(item => uniqueSubjectsFromExamQuestions.includes(Number(item.subject_id)));
 
                     let currentStartNo = 1;
@@ -114,6 +115,7 @@ export const patternSectionsThunk = (params, type) => async (dispatch, getState)
                         return updatedSubject;
                     });
                     dispatch(setLoading(false));
+                    console.log(filteredSubjects, "filteredSubjects")
                     dispatch(setExamPatternSections(filteredSubjects));
                 } else {
                     dispatch(setExamPatternSections(data));
@@ -179,8 +181,8 @@ console.log(params, "paranfkjenf")
                 "autoSaveId": params.autoSaveId,
                 
             }));
-            // console.log({ "exam_pattern_id": params }, params.type)
-            dispatch(patternSectionsThunk({ "exam_pattern_id": params.exam_pattern_id }, params.exam_type));
+            console.log({ "exam_pattern_id": params }, params.type)
+            dispatch(patternSectionsThunk({ "exam_pattern_id": params.exam_pattern_id }, params.type));
             dispatch(autoSaveTimeThunk());
         } else {
             dispatch(setError("Failed to start exam"));

@@ -110,6 +110,30 @@
         }
       }
     },
+    "react-native-device-info": {
+      "root": "C:\\Users\\worki\\Desktop\\rize\\node_modules\\react-native-device-info",
+      "name": "react-native-device-info",
+      "platforms": {
+        "ios": {
+          "podspecPath": "C:\\Users\\worki\\Desktop\\rize\\node_modules\\react-native-device-info\\RNDeviceInfo.podspec",
+          "version": "14.0.4",
+          "configurations": [],
+          "scriptPhases": []
+        },
+        "android": {
+          "sourceDir": "C:\\Users\\worki\\Desktop\\rize\\node_modules\\react-native-device-info\\android",
+          "packageImportPath": "import com.learnium.RNDeviceInfo.RNDeviceInfo;",
+          "packageInstance": "new RNDeviceInfo()",
+          "buildTypes": [],
+          "componentDescriptors": [],
+          "cmakeListsPath": "C:/Users/worki/Desktop/rize/node_modules/react-native-device-info/android/build/generated/source/codegen/jni/CMakeLists.txt",
+          "cxxModuleCMakeListsModuleName": null,
+          "cxxModuleCMakeListsPath": null,
+          "cxxModuleHeaderName": null,
+          "isPureCxxDependency": false
+        }
+      }
+    },
     "react-native-encrypted-storage": {
       "root": "C:\\Users\\worki\\Desktop\\rize\\node_modules\\react-native-encrypted-storage",
       "name": "react-native-encrypted-storage",
@@ -140,7 +164,7 @@
       "platforms": {
         "ios": {
           "podspecPath": "C:\\Users\\worki\\Desktop\\rize\\node_modules\\react-native-gesture-handler\\RNGestureHandler.podspec",
-          "version": "2.24.0",
+          "version": "2.25.0",
           "configurations": [],
           "scriptPhases": []
         },
@@ -216,7 +240,7 @@
       "platforms": {
         "ios": {
           "podspecPath": "C:\\Users\\worki\\Desktop\\rize\\node_modules\\react-native-reanimated\\RNReanimated.podspec",
-          "version": "3.16.7",
+          "version": "3.17.5",
           "configurations": [],
           "scriptPhases": []
         },
@@ -254,7 +278,7 @@
       "platforms": {
         "ios": {
           "podspecPath": "C:\\Users\\worki\\Desktop\\rize\\node_modules\\react-native-safe-area-context\\react-native-safe-area-context.podspec",
-          "version": "5.2.0",
+          "version": "5.4.0",
           "configurations": [],
           "scriptPhases": []
         },
@@ -282,7 +306,7 @@
       "platforms": {
         "ios": {
           "podspecPath": "C:\\Users\\worki\\Desktop\\rize\\node_modules\\react-native-screens\\RNScreens.podspec",
-          "version": "4.8.0",
+          "version": "4.10.0",
           "configurations": [],
           "scriptPhases": []
         },
@@ -399,7 +423,7 @@
       "platforms": {
         "ios": {
           "podspecPath": "C:\\Users\\worki\\Desktop\\rize\\node_modules\\react-native-webview\\react-native-webview.podspec",
-          "version": "13.13.2",
+          "version": "13.13.5",
           "configurations": [],
           "scriptPhases": []
         },
@@ -870,8 +894,8 @@
     "android": {
       "sourceDir": "C:\\Users\\worki\\Desktop\\rize\\android",
       "appName": "app",
-      "packageName": "com.mocktest",
-      "applicationId": "com.mocktest",
+      "packageName": "com.testonic.ai",
+      "applicationId": "com.testonic.ai",
       "mainActivity": ".MainActivity",
       "assets": []
     }

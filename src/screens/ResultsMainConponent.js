@@ -7,6 +7,7 @@ import SubmitTestModal from "./resultsScreen/SubmitTestModal";
 import ReportComponent from "./resultsScreen/ReportComponent";
 import { Dropdown } from 'react-native-element-dropdown';
 import QuestionAndAnswerComponent from "./resultsScreen/QuestionAnswerComponent";
+import { useSelector } from "react-redux";
 
 const ResultMainComponent = () => {
   const [state, setState] = useState({
@@ -17,8 +18,7 @@ const ResultMainComponent = () => {
   const navigation = useNavigation();
   const route = useRoute();
   console.log(route, "routerer");
-  const { exam_session_id, isTimeUp,studentExamUID,exam_paper_id,type, exam_name } = route.params.state || {};
-
+  const { exam_session_id, isTimeUp,studentExamUID,exam_paper_id,previous_paper_id, type, exam_name, from } = route.params.state || {};
   const [examResult, setExamResults] = useState([]);
   const [attemptsData, setAttemptsData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -38,7 +38,7 @@ const ResultMainComponent = () => {
     setLoading(true);
     try {
       const response = await getExamResult({
-        exam_session_id: state.attemptId ? state.attemptId : exam_session_id,
+        exam_session_id: state.attemptId!==0 ? state.attemptId : exam_session_id,
         student_user_exam_id: studentExamUID,
       });
       const updated = JSON.parse(response.data)
@@ -55,10 +55,12 @@ const ResultMainComponent = () => {
     if (!exam_session_id) return;
     try {
       const response = await getAttempts({
-        exam_paper_id: exam_paper_id,
-        previous_paper_id: 0,
+        exam_paper_id: Number(exam_paper_id),
+        previous_paper_id: previous_paper_id ? Number(previous_paper_id) :0,
         student_user_exam_id: studentExamUID,
       });
+
+      console.log("prevresdata", response.data, previous_paper_id, exam_paper_id)
       setAttemptsData(response.data);
     } catch (error) {
       console.error("Error fetching attempts:", error);
@@ -108,7 +110,7 @@ const ResultMainComponent = () => {
   
   const handleResultBack = () => navigation.replace("DashboardContent");
 
-
+console.log(type, "soiefnweonf")
   return (
     <View>
       {finishTest ? (
@@ -127,7 +129,7 @@ const ResultMainComponent = () => {
                   <Text style={styles.subHeading}>Test Results</Text>
                   <Text style={styles.heading}>{exam_name}</Text>
                 </View>
-                <Dropdown
+               {type &&type !=="custom"&&from!=="finishTest" && <Dropdown
   data={attemptsData?.map(item => ({ label: item.name, value: item.id }))}
   labelField="label"
   valueField="value"
@@ -138,7 +140,7 @@ const ResultMainComponent = () => {
   selectedTextStyle={{ color: '#000' }}
   itemTextStyle={{ color: '#000' }}
   containerStyle={{ backgroundColor: '#fff' }}
-/>
+/>} 
 
               </View>
 

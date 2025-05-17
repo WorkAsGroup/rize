@@ -4,8 +4,11 @@ import decodeUriComponent from 'decode-uri-component';
 import COLORS from './Colors';
 import { RadioButton } from 'react-native-paper';
 import HtmlComponent from './HtmlComponent';
+import Icon from 'react-native-vector-icons/MaterialIcons'; // if not already
+
 import AppStyles from './AppStyles';
 import { theme } from '../core/theme';
+import Checkbox from 'react-native-paper';
 
 const width = Dimensions.get('window').width;
 
@@ -19,7 +22,7 @@ const Card = props => {
     );
   }
 
-const OptionCard = ({ option, optionText, value, disabled = false, double = false, showcheckOption = true, onChangeValue,isSelected }) => {
+const OptionCard = ({ option, optionText,qtype, answer, value, disabled = false, double = false, showcheckOption = true, onChangeValue,isSelected }) => {
     const textPadding = decodeUriComponent(optionText).length < 20 ? 6 : 0;
 
     const borderColor = value === null ? COLORS.ULTRA_LIGHT_GRAY : value ? COLORS.OVERLAY_COLOR : COLORS.LIGHT_RED;
@@ -43,6 +46,18 @@ const OptionCard = ({ option, optionText, value, disabled = false, double = fals
                             text={optionText}
                             tintColor={COLORS.LIGHT_TEXT_COLOR}
                         />
+                        {(qtype == 7 && (answer&&answer.length >= 3 && answer&&answer.includes(','))) ? <View
+  style={[
+    styles.checkboxBox,
+    {
+      borderColor: "gray",
+      backgroundColor: value !== null ? '#28a745' : 'transparent',
+    },
+  ]}
+>
+  {value !== null && <Text style={styles.tick}>✓</Text>}
+</View>
+:
                          <View
                                                           style={[
                                                             styles.select,
@@ -53,7 +68,7 @@ const OptionCard = ({ option, optionText, value, disabled = false, double = fals
                                                                 : "transparent",
                                                             },
                                                           ]}
-                                                        />
+                                                        />}
                     </View>
 
    
@@ -81,6 +96,23 @@ const styles = StyleSheet.create({
         marginRight: 10,
         marginLeft: -10
     },
+    checkboxBox: {
+        width: 20,
+        height: 20,
+        borderWidth: 2,
+        borderRadius: 4,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 8,
+      },
+      tick: {
+        color: 'white',
+        fontSize: 14,
+        fontWeight: 'bold',
+        lineHeight: 16,
+      },
+      
+      
     cardContainer: {
         padding:20,
         marginBottom:20,

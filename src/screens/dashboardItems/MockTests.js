@@ -48,7 +48,7 @@ const MockTests = ({ selectedType,loading, selecteditem,mocklist, handleStartTes
 
 
   const renderItemMock = ({ item }) => {
-    // console.log(item, "exam status")
+    // console.log(item, selecteditem,"exam status")
     return (
       <LinearGradient
   colors={["#e614e1", "#8b51fe"]}
@@ -84,7 +84,7 @@ const MockTests = ({ selectedType,loading, selecteditem,mocklist, handleStartTes
                   colors={["#e614e1", "#8b51fe",]}
                   style={styles.gradientBorder}
                 >{
-                  (loading&&selecteditem?.exam_paper_id==item?.exam_paper_id) ? <View style={styles.innerButton}>
+                  (loading&&(selecteditem?.exam_paper_id==item?.exam_paper_id)&&item?.exam_paper_id!=="0") ? <View style={styles.innerButton}>
                        <ActivityIndicator size="small" color="#ffffff" /> 
                   </View>
               :
@@ -105,7 +105,7 @@ const MockTests = ({ selectedType,loading, selecteditem,mocklist, handleStartTes
                   <Image source={require("../../images/synchronize.png")} style={[styles.icon]} />
                 </TouchableOpacity>}
                 <TouchableOpacity
-                  onPress={() => handleCheckResults(item, "schedule_exam")}
+                  onPress={() => handleCheckResults(item, selectedType)}
                   style={[styles.textExamBtn, styles.resultsButton]}
                 >
                   {/* <Text style={styles.buttonText}>Results</Text> */}
@@ -132,7 +132,7 @@ const MockTests = ({ selectedType,loading, selecteditem,mocklist, handleStartTes
                   
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => handleCheckResults(item, "schedule_exam")}
+                  onPress={() => handleCheckResults(item, selectedType)}
                   style={[styles.textExamBtn, styles.resultsButton]}
                 >
                   {/* <Text style={styles.buttonText}>Results</Text> */}
@@ -190,11 +190,11 @@ const MockTests = ({ selectedType,loading, selecteditem,mocklist, handleStartTes
 
       <Text style={[styles.performanceTitle, { color: theme.textColor }]}>Mock Tests</Text>
       <Text style={styles.subText}>Select your preferred exam and start practicing</Text>
-      <ScrollView
+      {/* <ScrollView
         horizontal={true}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ flexGrow: 1, flexDirection: 'row', paddingHorizontal: -5, height: 60, paddingBottom: 15, }}
-      >
+      > */}
         <View
           style={{
             flexDirection: 'row',
@@ -295,7 +295,7 @@ const MockTests = ({ selectedType,loading, selecteditem,mocklist, handleStartTes
     )}
           </TouchableOpacity>
         </View>
-      </ScrollView>
+      {/* </ScrollView> */}
       {selectedType == "previous" && examLabel == 'JEE' && (
        <View style={{ display: 'flex', flexDirection: "row", alignContent: "center", gap: 10 }}>
        {/* MAINS Button */}
@@ -389,6 +389,7 @@ const styles = StyleSheet.create({
     margin: 1,
     padding: 5,
     borderRadius: 15,
+    alignContent: 'flex-start',
   },
   performanceCard: { padding: 10, borderRadius: 10, elevation: 1 },
   performanceTitle: { fontSize: 18, fontWeight: 'bold' },

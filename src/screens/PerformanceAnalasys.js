@@ -234,7 +234,7 @@ console.log(selectedValue, "selectedValue")
     };
     // console.log("called", fields)
     const result = await avgScoringTime(fields);
-    // console.log(result, "hellooo")
+    console.log(result, "hellooo")
     setAvgTimeResults(result?.data?.data);
   };
 
@@ -285,11 +285,11 @@ console.log(data, "peojwiejowiej")
     }
   };
 
-  console.log(avgTimeResults, "results");
+  console.log(avgTimeResults,performanceSubOptions, "results");
 
   useEffect(() => {
     console.log(studentExamId, selectedExam, token, selectedValue, "valueas")
-    if (studentExamId && selectedExam  && selectedValue) {
+    if (selectedExam  && selectedValue) {
       getAvgScoreTime(selectedExam);
       getWeekAvgScoreTime(selectedExam);
       getChapterAvgScore(selectedExam);
@@ -337,6 +337,7 @@ console.log(data, "peojwiejowiej")
     totalExamCount,
     selectedValue,
     options,
+    performanceSubOptions,
   ]);
   
   

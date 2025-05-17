@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, Dimensions, ScrollView, useColorScheme, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
-import { StackedBarChart, Grid, XAxis, YAxis } from 'react-native-svg-charts';
+import { YAxis } from 'react-native-svg-charts';
 import Svg, { Rect, G, Text as SVGText, Line } from 'react-native-svg';
 import { darkTheme, lightTheme } from "../../theme/theme";
 import { useSelector } from "react-redux";
@@ -14,21 +14,7 @@ const options = [
     { label: '2 Months', value: 2 },
 ];
 
-// Subject-specific colors
-const subjectColors = {
-    overall: 'transparent',
-    physics: '#ffdac1',
-    chemistry: '#C5E6C3',
-    mathematics: '#BFD7EA',
-    biology: '#BFD7EA',
-    botany: '#58b3d3',
-    zoology: '#8ef6e4',
-   
-    // total: '#b888d7',
-};
-
-const WeeklyPerformance = ({ examResults,selectedValue, setSelectedValue,performanceSubOptions, selectedPerformanceType, dateRange, setSelectedPerformanceType, totalExamCount }) => {
-
+const WeeklyPerformance = ({ examResults, selectedValue, setSelectedValue, performanceSubOptions, selectedPerformanceType, dateRange, setSelectedPerformanceType, totalExamCount }) => {
     const [loading, setLoading] = useState(true);
     const selectedExam = useSelector((state) => state.header.selectedExam);
     const [chartData, setChartData] = useState([]);
@@ -36,10 +22,42 @@ const WeeklyPerformance = ({ examResults,selectedValue, setSelectedValue,perform
     const colorScheme = useColorScheme();
     const theme = darkTheme;
     const [selectedSubject, setSelectedSubject] = useState("all");
-    const [yMax, setYMax] = useState(100);
+    const [yMax, setYMax] = useState(550);
     const [yMin, setYMin] = useState(0);
-    
-
+    const [subjectColors, setSubjectColors] = useState({});
+    const subjectColorss = [
+       { overall: 'transparent'},
+       { physics: '#ffdac1'},
+       { chemistry: '#C5E6C3'},
+       { mathematics: '#BFD7EA'},
+       { biology: '#BFD7EA'},
+       { botany: '#58b3d3'},
+       { zoology: '#8ef6e4'},
+       
+        // total: '#b888d7',
+    ]
+    // Generate colors dynamically based on subjects
+    const generateSubjectColors = (subjects) => {
+        const subjectColors = {
+          overall: 'transparent',
+          physics: '#ffdac1',
+          chemistry: '#C5E6C3',
+          mathematics: '#BFD7EA',
+          biology: '#BFD7EA',
+          botany: '#58b3d3',
+          zoology: '#8ef6e4',
+        };
+      
+        const colors = {};
+      
+        subjects.forEach((subject) => {
+          const key = subject.label.toLowerCase();
+          colors[key] = subjectColors[key] || 'gray'; // fallback if subject is unknown
+        });
+      
+        return colors;
+      };
+      
     useEffect(() => {
         setLoading(true);
 
@@ -48,99 +66,61 @@ const WeeklyPerformance = ({ examResults,selectedValue, setSelectedValue,perform
             return;
         }
 
+        // Generate colors based on available subjects
+        const colors = generateSubjectColors(performanceSubOptions);
+        setSubjectColors(colors);
+
+        // Process dynamic data
         const formattedChartData = examResults.map((entry) => {
             const dataItem = { date: entry.date };
         
-            // Initialize subject keys, excluding 'overall'
             performanceSubOptions
-                .filter((item) => item.label.toLowerCase() !== 'overall')  // Filter out 'overall'
+                .filter((item) => item.label.toLowerCase() !== 'overall')
                 .forEach((subject) => {
-                    const subjectKey = subject.label.toLowerCase();  // Assuming `subject.label` contains the name
-                    dataItem[subjectKey] = 0;  // Initialize each subject with 0
+                    const subjectKey = subject.label.toLowerCase();
+                    dataItem[subjectKey] = 0;
                 });
         
-            // Assign values to subject keys, excluding "overall"
             entry.subjects?.forEach((subject) => {
                 const subjectName = subject.subject_name?.toLowerCase();
                 const value = selectedPerformanceType === "score"
                     ? Number(subject.marks) || 0
                     : Number(subject.average_time_spent) || 0;
         
-                // Fill the data item for subjects excluding "overall"
                 if (subjectName !== "overall" && (selectedSubject === "all" || selectedSubject.toLowerCase() === subjectName)) {
                     dataItem[subjectName] = value;
                 }
             });
         
-            return dataItem;  // Return dataItem without "overall"
+            return dataItem;
         });
-        
-        
-        
-console.log(formattedChartData, "chartData")        
 
-        const allValues = formattedChartData.flatMap(item => {
-            const { overall, ...rest } = item;
+        // Calculate Y-axis range
+        const allValues = formattedChartData.flatMap(item => 
+            Object.values(item).filter(val => typeof val === 'number')
+        );
         
-            return [
-                ...Object.values(rest).filter(val => typeof val === 'number'),
-                ...(typeof overall === 'number' ? [overall] : [])
-            ];
-        });
-        console.log(allValues, "ajndekjfwekjbf")
+        const maxValue = Math.max(...allValues, 0);
+        const minValue = Math.min(...allValues, 0);
         
-        const maxValue = Math.max(...allValues);
-        const minValue = Math.min(...allValues);
-        
-        const calculateYMax = (maxValue) => {
-            if (maxValue === undefined || maxValue === null) {
-                console.log("Max value is undefined or null, defaulting to 100.");
-                return 100;
-            }
-            
-            // Scale by 15% for better top padding (instead of 10%)
-            const scaledValue = maxValue * 1.15;
-            
-            // Calculate appropriate rounding interval
-            const magnitude = Math.pow(10, Math.floor(Math.log10(scaledValue)));
-            let interval;
-            
-            if (scaledValue / magnitude < 2) {
-                interval = magnitude / 2;
-            } else if (scaledValue / magnitude < 5) {
-                interval = magnitude;
-            } else {
-                interval = magnitude * 2;
-            }
-            
-            return Math.ceil(scaledValue / interval) * interval;
-        };
-        
-        // Calculate Y-axis ticks
-        // const calculateYTicks = (yMax) => {
-        //     const numberOfTicks = 5;
-        //     const tickInterval = yMax / numberOfTicks;
-            
-        //     return Array.from({ length: numberOfTicks + 1 }, (_, i) => 
-        //         Math.round(i * tickInterval * 10) / 10
-        //     );
-        // };
-        
-        // In your useEffect:
-        const stackTotals = formattedChartData.map(item => {
-            const { date, ...rest } = item;
-            return Object.values(rest).reduce((sum, val) => sum + (val || 0), 0);
-        });
-        
-        const maxStackTotal = Math.max(...stackTotals, 1);
-        const yMax = calculateYMax(maxStackTotal);
-        setYMax(yMax);
-        // setYTicks(calculateYTicks(yMax));
+        // Set Y-axis with some padding
+
+        const maxTotal = formattedChartData.reduce((max, item) => {
+            const sum = Object.entries(item)
+              .filter(([key, value]) => typeof value === 'number') // only numeric values
+              .reduce((s, [, value]) => s + value, 0);
           
-
+            return Math.max(max, sum);
+          }, 0);
+          
+          // Set Y-axis max with padding and rounding to nearest 50
+          setYMax(Math.ceil((maxTotal * 1.2) / 50) * 50 || 550);
+          
+        setYMin(Math.floor(minValue * 1.2 / 50) * 50);
+        
         setChartData(formattedChartData);
         setLoading(false);
-    }, [selectedExam, examResults, selectedPerformanceType, selectedSubject, performanceSubOptions]);
+    }, [examResults, selectedExam, selectedPerformanceType, selectedSubject, performanceSubOptions]);
 
     useEffect(() => {
         if (!chartData.length || !performanceSubOptions.length) return;
@@ -160,68 +140,27 @@ console.log(formattedChartData, "chartData")
     const handleChangeSubject = (item) => {
         setSelectedSubject(item === selectedSubject ? "all" : item);
     };
-    const BarLabels = ({ x, y, bandwidth, data }) => {
-        console.log()
-        return (
-            <G>
-                {data.map((item, index) => {
-                    let cumulative = 0;
-                    const segments = [];
-
-    
-                    // Add other subjects next
-                    performanceSubOptions.forEach((subject) => {
-                        const key = subject.label.toLowerCase();
-                        const value = item[key] || 0;
-    
-                        if (Math.abs(value) > 0) {
-                            segments.push({
-                                value,
-                                color: subjectColors[key] || '#CCCCCC',
-                                cumulativeBefore: cumulative,
-                                cumulativeAfter: cumulative + value,
-                            });
-                            cumulative += value;
-                        }
-                    });
-    
-                    // Render segments (labels)
-                    return segments.map((segment, segmentIndex) => {
-                        const middleY = y(segment.cumulativeAfter) + 
-                                        (y(segment.cumulativeBefore) - y(segment.cumulativeAfter)) / 2;
-                        
-                        const showLabel = Math.abs(y(segment.cumulativeAfter) - y(segment.cumulativeBefore)) > 15;
-    
-                        return (
-                            <SVGText
-                                key={`${index}-${segmentIndex}`}
-                                x={x(index) + bandwidth / 2}
-                                y={middleY}
-                                fontSize={10}
-                                fill={segment.value < 0 ? '#FFFFFF' : '#000000'}
-                                alignmentBaseline="middle"
-                                textAnchor="middle"
-                            >
-                                {showLabel ? segment.value : ''}
-                            </SVGText>
-                        );
-                    });
-                })}
-            </G>
-        );
-    };
-    
-
-    const getColorsForChart = () => {
-        return performanceSubOptions.map(subject => 
-            subjectColors[subject.label.toLowerCase()] || '#CCCCCC'
-        );
-    };
 
     const formatDateLabel = (value, index) => {
         console.log(index, "indexes")
         const date = chartData[index]?.date;
         return date?.length > 6 ? date.substring(0, 5) : date || '';
+    };
+
+    const calculateZeroPosition = (chartHeight) => {
+        const totalRange = yMax - yMin;
+        return (yMax / totalRange) * chartHeight;
+    };
+
+    const generateTicks = () => {
+        const ticks = [];
+        const step = Math.ceil((yMax - yMin) / 6);
+        
+        for (let i = yMin; i <= yMax; i += step) {
+            ticks.push(i);
+        }
+        
+        return ticks;
     };
 
     return (
@@ -243,12 +182,13 @@ console.log(formattedChartData, "chartData")
                                 items={options}
                                 value={selectedValue}
                                 style={{ 
-                                    inputAndroid: { color: theme.textColor }, 
+                                    inputAndroid: { color:"#fff" }, 
                                     inputIOS: { color: theme.textColor } 
                                 }}
                             />
                         </View>
                     </View>
+                    
                     <View style={{ flexDirection: "row", marginTop: 10 }}>
                         <TouchableOpacity
                             style={{ 
@@ -274,115 +214,181 @@ console.log(formattedChartData, "chartData")
                     </View>
                     
                     <View style={{ height: 380, marginTop: 10, flexDirection: 'row' }}>
-  {/* Fixed Y-Axis */}
-  <YAxis
-    data={[yMin, yMax / 2, yMax]}
-    style={{ width: 40, height: 270 }}
-    contentInset={{ top: 20, bottom: 20 }}
-    svg={{ fill: theme.textColor, fontSize: 10 }}
-    numberOfTicks={5}
-    formatLabel={(value) => `${value}`}
-    min={yMin}
-    max={yMax}
-  />
+                        {/* Y-Axis */}
+                        <YAxis
+                            style={{ width: 40, height: 270 }}
+                            contentInset={{ top: 20, bottom: 20 }}
+                            svg={{ fill: theme.textColor, fontSize: 10 }}
+                            data={generateTicks()}
+                            formatLabel={(value) => `${value}`}
+                            min={yMin}
+                            max={yMax}
+                        />
 
-  {/* Scrollable Bars + X Axis */}
-  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-    <View style={{ width: Math.max(chartData.length * 50, windowWidth - 50) }}>
-      <Svg height={250} width={Math.max(chartData.length * 50, windowWidth - 50)}>
-        {/* Horizontal Grid Lines */}
-        {Array.from({ length: 5 + 1 }, (_, index) => {
-          const y = (250 / 5) * index;
-          return (
-            <Line
-              key={`grid-line-${index}`}
-              x1={0}
-              x2={Math.max(chartData.length * 50, windowWidth - 50)}
-              y1={y}
-              y2={y}
-              stroke="#555"
-              strokeDasharray="4"
-            />
-          );
-        })}
+                        {/* Scrollable Chart Area */}
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                            <View style={{ width: Math.max(chartData.length * 50, windowWidth - 50) }}>
+                                <Svg height={250} width={Math.max(chartData.length * 50, windowWidth - 50)}>
+                                    {/* Zero line */}
+                                    <Line
+                                        x1={0}
+                                        x2={Math.max(chartData.length * 50, windowWidth - 50)}
+                                        y1={calculateZeroPosition(250)}
+                                        y2={calculateZeroPosition(250)}
+                                        stroke={theme.textColor}
+                                        strokeWidth="1"
+                                    />
 
-        {/* Bars + Labels */}
-        {stackData.map((item, index) => {
-          const total = Object.values(item).reduce((sum, num) => sum + num, 0);
-          let cumulative = 0;
-          const barX = index * 50 + 20;
+                                    {/* Grid lines */}
+                                    {generateTicks().map((value, index) => {
+                                        const yPos = 250 - ((value - yMin) / (yMax - yMin)) * 250;
+                                        return (
+                                            <Line
+                                                key={`grid-${index}`}
+                                                x1={0}
+                                                x2={Math.max(chartData.length * 50, windowWidth - 50)}
+                                                y1={yPos}
+                                                y2={yPos}
+                                                stroke="#888"
+                                                strokeWidth="1"
+                                                strokeDasharray={[3, 3]}
+                                            />
+                                        );
+                                    })}
 
-          return (
-            <G key={index}>
-              {/* Overall Label at the top */}
-              <SVGText
-                x={barX + 15}
-                y={(250 - (total / yMax) * 250) - 5}
-                fill="#b888d7"
-                fontSize="12"
-                fontWeight="bold"
-                textAnchor="middle"
-              >
-                {total}
-              </SVGText>
+                                    {/* Bars */}
+                                    {stackData.map((item, index) => {
+                                        const total = Object.values(item).reduce((sum, num) => sum + num, 0);
+                                        const barX = index * 50 + 20;
+                                        const zeroY = calculateZeroPosition(250);
+                                        
+                                        // Separate positive and negative values
+                                        const positiveValues = performanceSubOptions
+                                            .map(subject => ({
+                                                value: item[subject.label.toLowerCase()] || 0,
+                                                color: subjectColors[subject.label.toLowerCase()] || '#CCCCCC',
+                                                
+                                                label: subject.label
+                                            }))
+                                            .filter(segment => segment.value > 0);
+                                        
+                                        const negativeValues = performanceSubOptions
+                                            .map(subject => ({
+                                                value: item[subject.label.toLowerCase()] || 0,
+                                                color: subjectColors[subject.label.toLowerCase()] || '#CCCCCC',
+                                                label: subject.label
+                                            }))
+                                            .filter(segment => segment.value < 0);
 
-              {performanceSubOptions.map((subject, subjectIndex) => {
-                const value = item[subject.label.toLowerCase()];
-                const barHeight = (value / yMax) * 250;
-                const y = 250 - (cumulative + barHeight);
-                cumulative += barHeight;
+                                        let positiveCumulative = 0;
+                                        let negativeCumulative = 0;
 
-                if (value === 0) return null;
+                                        return (
+                                            <G key={`bar-group-${index}`}>
+                                                {/* Total Label */}
+                                                {total !== 0 && (
+                                                    <SVGText
+                                                        x={barX + 15}
+                                                        y={total > 0 
+                                                            ? zeroY - (Math.abs(total)/(yMax-yMin))*250 - 5 
+                                                            : zeroY + (Math.abs(total)/(yMax-yMin))*250 + 15}
+                                                        fill="#b888d7"
+                                                        fontSize="12"
+                                                        fontWeight="bold"
+                                                        textAnchor="middle"
+                                                    >
+                                                        {Math.round(total)}
+                                                    </SVGText>
+                                                )}
 
-                return (
-                  <G key={`${index}-${subjectIndex}`}>
-                    <Rect
-                      x={barX}
-                      y={y}
-                      width={30}
-                      height={barHeight}
-                      fill={getColorsForChart()[subjectIndex]}
-                    />
-                    <SVGText
-                      x={barX + 15}
-                      y={y + barHeight / 2}
-                      fill="#000"
-                      fontSize="10"
-                      alignmentBaseline="middle"
-                      textAnchor="middle"
-                    >
-                      {value}
-                    </SVGText>
-                  </G>
-                );
-              })}
-            </G>
-          );
-        })}
-      </Svg>
+                                                {/* Positive segments */}
+                                                {positiveValues.map((segment, i) => {
+                                                    const segmentHeight = (segment.value / (yMax - yMin)) * 250;
+                                                    const y = zeroY - positiveCumulative - segmentHeight;
+                                                    positiveCumulative += segmentHeight;
+                                                    
+                                                    return (
+                                                        <G key={`pos-${index}-${i}`}>
+                                                            <Rect
+                                                                x={barX}
+                                                                y={y}
+                                                                width={30}
+                                                                height={segmentHeight}
+                                                                fill={segment.color}
+                                                            />
+                                                            {segmentHeight > 10 && (
+                                                                <SVGText
+                                                                    x={barX + 15}
+                                                                    y={y + segmentHeight/2}
+                                                                    fill="#000"
+                                                                    fontSize="10"
+                                                                    alignmentBaseline="middle"
+                                                                    textAnchor="middle"
+                                                                >
+                                                                    {Math.round(segment.value)}
+                                                                </SVGText>
+                                                            )}
+                                                        </G>
+                                                    );
+                                                })}
 
-      {/* X Axis Labels */}
-      <View style={{ flexDirection: 'row', marginTop: 4 }}>
-        {chartData&&chartData.length>0&&chartData.map((item, index) => (
-          <Text
-            key={index}
-            style={{
-              color: theme.textColor,
-              width: 50,
-              textAlign: 'center',
-              fontSize: 10,
-            }}
-          >
-            {formatDateLabel(item, index)}
-          </Text>
-        ))}
-      </View>
-    </View>
-  </ScrollView>
-</View>
+                                                {/* Negative segments */}
+                                                {negativeValues.map((segment, i) => {
+                                                    const segmentHeight = (Math.abs(segment.value) / (yMax - yMin)) * 250;
+                                                    const y = zeroY + negativeCumulative;
+                                                    negativeCumulative += segmentHeight;
+                                                    
+                                                    return (
+                                                        <G key={`neg-${index}-${i}`}>
+                                                            <Rect
+                                                                x={barX}
+                                                                y={y}
+                                                                width={30}
+                                                                height={segmentHeight}
+                                                                fill={segment.color}
+                                                            />
+                                                            {segmentHeight > 10 && (
+                                                                <SVGText
+                                                                    x={barX + 15}
+                                                                    y={y + segmentHeight/2}
+                                                                    fill="#000"
+                                                                    fontSize="10"
+                                                                    alignmentBaseline="middle"
+                                                                    textAnchor="middle"
+                                                                >
+                                                                    {Math.round(segment.value)}
+                                                                </SVGText>
+                                                            )}
+                                                        </G>
+                                                    );
+                                                })}
+                                            </G>
+                                        );
+                                    })}
+                                </Svg>
 
+                                {/* X Axis Labels */}
+                                <View style={{ flexDirection: 'row', marginTop: 4 }}>
+                                    {chartData.map((item, index) => (
+                                        <Text
+                                            key={index}
+                                            style={{
+                                                color: theme.textColor,
+                                                width: 50,
+                                                textAlign: 'center',
+                                                fontSize: 10,
+                                            }}
+                                        >
+                                            {formatDateLabel(item, index)}
+                                        </Text>
+                                    ))}
+                                </View>
+                           
+                            </View>
+                        </ScrollView>
+                    </View>
 
-
+                    {/* Legend */}
                     <View style={{ flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', marginTop: -90 }}>
                         {performanceSubOptions.slice(1).map((label, index) => {
                             const isSelected = selectedSubject.toLowerCase() === label.label.toLowerCase();

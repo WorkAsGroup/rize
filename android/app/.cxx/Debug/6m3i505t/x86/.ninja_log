@@ -1,5 +1,0 @@
-# ninja log v5
-2	18	0	/Users/akki/Desktop/mocktest/android/app/.cxx/Debug/6m3i505t/x86/CMakeFiles/cmake.verify_globs	803642f436558fa
-1	2233	1737396454370807438	CMakeFiles/appmodules.dir/Users/akki/Desktop/mocktest/android/app/build/generated/autolinking/src/main/jni/autolinking.cpp.o	a34eb8a5f11a1901
-2	2559	1737396454695579177	CMakeFiles/appmodules.dir/OnLoad.cpp.o	c828ca78e6e2e3aa
-2559	2768	1737396454907679520	/Users/akki/Desktop/mocktest/android/app/build/intermediates/cxx/Debug/6m3i505t/obj/x86/libappmodules.so	80c6b8f5c199b70d

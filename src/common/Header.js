@@ -8,7 +8,7 @@ import ExamModalComponent from "../screens/ExamModalComponent";
 import { useSelector, useDispatch } from 'react-redux';
 import { setSelectedExam, setExamLabel, setExamData } from '../store/slices/headerSlice';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import { setStudentUid } from "../store/slices/headerSlice";
 
 
 
@@ -41,6 +41,7 @@ const dispatch = useDispatch();
       const { name: nm, student_user_id: id, examsData } = response.data;
       //   setName(nm);
         setStudentId(id);
+        dispatch(setStudentUid(id))
       //   setStudentUserId(id);
       setExamsData(examsData);
 

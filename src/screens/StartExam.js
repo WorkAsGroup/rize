@@ -396,11 +396,10 @@ useEffect(() => {
       // if (autoTimerRef.current) {
         clearInterval(autoTimerRef.current);
         autoTimerRef.current=null;
-        dispatch(setQuestionDetails([]))
         autoTimerRef.current = null;
       // }
     };
-  }, [autoSaveTime, autoSaveId]);  // ❌ removed activeQuestionIndex
+  }, [autoSaveTime, autoSaveId]);  
 
   
 
@@ -936,7 +935,7 @@ console.log(option, "oprtion")
       end={{ x: 1, y: 1 }}
     >
       <SubmitTestModal
-        studentExamId={activeExamIdRef.current}
+        studentExamId={studentExamId}
         data={finishedData}
         examType={examtype}
         finishTest={finishTest}

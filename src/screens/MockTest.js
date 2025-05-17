@@ -915,13 +915,13 @@ console.log(option, "aslfnlfknewljn")
           qId >= currentSubject.starting_no && qId <= currentSubject.ending_no
       ).length;
 
-      if (answeredCountForSubject >= currentSubject.no_of_qus_answer) {
-        Alert.alert(
-          "Answer Limit Reached",
-          `You have already answered the maximum allowed questions for ${currentSubject.subject}.`
-        );
-        return;
-      }
+      // if (answeredCountForSubject >= currentSubject.no_of_qus_answer) {
+      //   Alert.alert(
+      //     "Answer Limit Reached",
+      //     `You have already answered the maximum allowed questions for ${currentSubject.subject}.`
+      //   );
+      //   return;
+      // }
 
       try {
         const updatedAnswers = {

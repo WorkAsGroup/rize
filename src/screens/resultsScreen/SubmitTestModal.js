@@ -2,19 +2,20 @@ import React, { useState } from "react";
 import { View, Text, Modal, Image, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
-import { setFinishTest } from "../../store/slices/examSlice";
+import { setExamSessionId, setFinishTest } from "../../store/slices/examSlice";
 // import { getInstructions } from "../../examInstructions/instructionsSelectors";
 import congratsLogo from "../../images/congratsLogo.png";
 import timeOverLogo from "../../images/timeOverLogo.png";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 const SubmitTestModal = ({studentExamId,data, finishTest, isTimeUp, examType }) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-// console.log(studentExamId,data, finishTest, isTimeUp, examType, "submit")
+console.log(studentExamId,data, finishTest, isTimeUp, examType, "submit")
  const [loading, setLoading] = useState(false);
   // const examInstructionDetails = useSelector(getInstructions);
-
+  const sessionId = useSelector((state) => state.questions.examSessionId);
+  const finishedData = useSelector((state) => state.questions.finishedData);
   const backToHome = () => {
     // if (examType === "guestMockTest") {
       // navigation.navigate(APP_ROUTES.GUEST_MOCKTEST);
@@ -31,11 +32,13 @@ const SubmitTestModal = ({studentExamId,data, finishTest, isTimeUp, examType }) 
       // navigation.navigate(APP_ROUTES.LOGIN);
     // }
     const examObject = {
-      ...data,
+      ...finishedData,
       type: examType,
       studentExamUID: studentExamId,
+      from:"finishTest"
     }
-    // dispatch(setExamSessionId(data.exam_session_id));
+    dispatch(setExamSessionId(0));
+    console.log(examObject, "paylaod")
     navigation.navigate("resultsPage", { state: examObject });
     dispatch(setFinishTest(false));
   };

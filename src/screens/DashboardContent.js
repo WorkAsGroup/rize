@@ -46,7 +46,7 @@ import Header from "../common/Header";
 import AnimationWithImperativeApi from "../common/LoadingComponent";
 import { useDispatch, useSelector } from "react-redux";
 import { getDeviceId, getUniqueId } from  "react-native-device-info";
-import { setDeviceId } from "../store/slices/headerSlice";
+import { setDeviceId, setStudentUid } from "../store/slices/headerSlice";
 
 const COMPLETED_EXAMS_KEY = "completedExams";
 const COMPLETED_MOCK_TESTS_KEY = "completedMockTests";
@@ -151,13 +151,15 @@ const DashboardContent = ({ route, navigation, onChangeAuth }) => {
        dispatch(setDeviceId(uniqueId));
         // Log the uniqueId and current route information
         console.log(uniqueId,  "payloaddlscknl");
-        await handleAnalytics(41);
+        selectedExam&&await handleAnalytics(41);
     };
 
   useEffect(() => {
 
-    getData();
-  },[])
+ if(selectedExam) {
+  getData();
+ }
+  },[selectedExam])
 
 useEffect(() => {
 setStudentExamId(selectedExam);
@@ -235,9 +237,9 @@ console.log(validMockTests, "ValidMocks")
     setMock(mocklist);
   }, [mocklist, pre]);
 
-  // useEffect(() => {
-  //   getUser();
-  // }, []);
+  useEffect(() => {
+    getUser();
+  }, []);
 
   const getCustomeExam = async (id) => {
     const data = {
@@ -325,6 +327,7 @@ console.log(validMockTests, "ValidMocks")
 
   const handleStartTest = async (item, type) => {
     try {
+      setLoading(true);
       setExamLoading(true);
       setSelectedItem(item);
       console.log(item, "uieurgirqbwkqef")
@@ -335,7 +338,7 @@ console.log(validMockTests, "ValidMocks")
       // Case 1: Previous exam with no session
       if (
         selectedType === "previous" &&
-        item.exam_session_id == 0 &&
+        // item.exam_session_id == 0 &&
         type !== "replay" &&
         item?.previous_session_id == 0
       ) {
@@ -371,13 +374,15 @@ console.log(validMockTests, "ValidMocks")
   
       console.log("✅ Final Session ID:", sessionId);
   
+     if(type== "replay"||selectedType=="previous"||selectedType=="custom") {
       dispatch(setExamSessionId(sessionId));
+     }
       dispatch(setAutoSaveId(item?.auto_save_id || 0));
   
       if (!item?.auto_save_id) {
         dispatch(setExamDuration(item?.exam_duration));
       }
-  
+      setLoading(false);
       navigation.navigate("InstructionAuth", {
         obj: item,
         studentExamId: selectedExam,
@@ -415,9 +420,11 @@ console.log(validMockTests, "ValidMocks")
   };
 
   const handleCheckResults = async (data, type) => {
+    setLoading(true);
     const examObject = {
       ...data,
       type: type,
+      from: "dashboabrd",
       studentExamUID: selectedExam ,
     };
     // dispatch(setExamSessionId(data.exam_session_id));
@@ -451,7 +458,7 @@ console.log(validMockTests, "ValidMocks")
     
       console.error("Error:", errorMessage);
   }
-
+  setLoading(false);
     navigation.navigate("resultsPage", { state: examObject });
   };
  
@@ -512,57 +519,57 @@ console.log(validMockTests, "ValidMocks")
     setIsOpen(true);
   };
 
-//  const getUser = async () => {
+ const getUser = async () => {
 
-//     try {
-//       const response = await getAutoLogin();
+    try {
+      const response = await getAutoLogin();
 
-//       if (!response?.data) {
-//         console.warn("No user data received from API");
-//         return;
-//       }
+      if (!response?.data) {
+        console.warn("No user data received from API");
+        return;
+      }
 
-//       const { name, student_user_id, examsData } = response.data;
+      const { name, student_user_id, examsData } = response.data;
 
-//       let comData = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
-//       let parsedData = comData ? JSON.parse(comData) : null;
+      let comData = await AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
+      let parsedData = comData ? JSON.parse(comData) : null;
 
-//       if (parsedData && Array.isArray(parsedData) && parsedData.length > 0) {
-//         console.log("parse",parsedData);
+      if (parsedData && Array.isArray(parsedData) && parsedData.length > 0) {
+        console.log("parse",parsedData);
 
-//         const uniqueExams = parsedData.filter(
-//           (exam, index, self) =>
-//             index === self.findIndex((e) => e.exam_id === exam.exam_id)
-//         );
+        const uniqueExams = parsedData.filter(
+          (exam, index, self) =>
+            index === self.findIndex((e) => e.exam_id === exam.exam_id)
+        );
         
-//         const updatedExamsData = await createExamIds(uniqueExams, student_user_id);
-//         if (updatedExamsData) {
-//           setExamsData(updatedExamsData);
-//           addDropDownValues(updatedExamsData);
+        const updatedExamsData = await createExamIds(uniqueExams, student_user_id);
+        if (updatedExamsData) {
+          setExamsData(updatedExamsData);
+          addDropDownValues(updatedExamsData);
 
-//           await submitAllStoredResults()
-//         }
-//         return
+          await submitAllStoredResults()
+        }
+        return
 
-//       }
+      }
 
-//       console.log("Fetched user data:", response.data);
+      console.log("Fetched user data:", response.data);   
 
-//       setName(name);
-//       setStudentId(student_user_id);
-//       // setStudentUserId(student_user_id);
+      setName(name);
+      // setStudentId(student_user_id);
+      // setStudentUserId(student_user_id);
 
-//       if (!(examsData?.length)) {
-//         setAddExam(true); // No exam data, prompt user to add an exam
-//       } else {
-//         setExamsData(examsData);
-//         addDropDownValues(examsData);
-//       }
+      if (!(examsData?.length)) {
+        setAddExam(true); // No exam data, prompt user to add an exam
+      } else {
+        setExamsData(examsData);
+        addDropDownValues(examsData);
+      }
 
-//     } catch (error) {
-//       console.error("Error fetching user data:", error);
-//     }
-//   };
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  };
 
 
 
@@ -596,46 +603,46 @@ console.log(validMockTests, "ValidMocks")
 
 
 
-  // const addDropDownValues = async (existingExams) => {
-  //   console.log("dropdownavlaues");
+  const addDropDownValues = async (existingExams) => {
+    console.log("dropdownavlaues");
 
-  //   const exams = await getExamType();
+    const exams = await getExamType();
 
-  //   const examsDataMap = new Map(
-  //     existingExams.map((exam) => [exam.exam_id, exam])
-  //   );
+    const examsDataMap = new Map(
+      existingExams.map((exam) => [exam.exam_id, exam])
+    );
 
-  //   const mergedExamsData = exams.data.map((exam) => {
-  //     const existingExamData = examsDataMap.get(exam.exam_id);
-  //     return { ...exam, ...(existingExamData || {}) };
-  //   });
-  //   const filteredMergedData = mergedExamsData.filter((exam) =>
-  //     exam.hasOwnProperty("is_default")
-  //   );
-
-
-  //   const dropdownItems = [
-  //     ...filteredMergedData.map((option) => ({
-  //       label: option.exam_type,
-  //       value: option.exam_id,
-  //       isDefault: option.is_default,
-  //       stUserExamId: option.student_user_exam_id,
-  //     })),
-  //     { label: "➕ Add", value: "add", custom: true },
-  //   ];
+    const mergedExamsData = exams.data.map((exam) => {
+      const existingExamData = examsDataMap.get(exam.exam_id);
+      return { ...exam, ...(existingExamData || {}) };
+    });
+    const filteredMergedData = mergedExamsData.filter((exam) =>
+      exam.hasOwnProperty("is_default")
+    );
 
 
+    const dropdownItems = [
+      ...filteredMergedData.map((option) => ({
+        label: option.exam_type,
+        value: option.exam_id,
+        isDefault: option.is_default,
+        stUserExamId: option.student_user_exam_id,
+      })),
+      { label: "➕ Add", value: "add", custom: true },
+    ];
 
 
-  //   setItems(dropdownItems);
-  //   const defaultItem = dropdownItems.find((item) => item.isDefault === 1);
-  //   let examID = (defaultItem || dropdownItems[0]).stUserExamId
-  //   setSelectedOption(defaultItem || dropdownItems[0]);
-  //   setStudentExamId(examID);
 
-  //   await fetchData(examID);
 
-  // };
+    setItems(dropdownItems);
+    const defaultItem = dropdownItems.find((item) => item.isDefault === 1);
+    let examID = (defaultItem || dropdownItems[0]).stUserExamId
+    setSelectedOption(defaultItem || dropdownItems[0]);
+    setStudentExamId(examID);
+
+    // await fetchData();
+
+  };
 
 
 
@@ -646,7 +653,8 @@ console.log(validMockTests, "ValidMocks")
       console.warn("No user data received from API");
       return;
     }
-  
+       const { name: nm, student_user_id: id } = response.data;
+               dispatch(setStudentUid(id))
     const { examsData } = response.data;
   
     let storedMockTests = await AsyncStorage.getItem(COMPLETED_MOCK_TESTS_KEY);

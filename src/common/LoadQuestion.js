@@ -4,6 +4,7 @@ import AppStyles from './AppStyles';
 import COLORS from './Colors';
 import React, { Fragment, useEffect, useRef } from 'react'
 import OptionGroup from './OptionGroup';
+import CheckboxGroup from "./CheckboxGroup";
 import { theme } from '../core/theme';
 import UserUtils from './UserUtils';
 import { useSelector } from 'react-redux';
@@ -159,6 +160,8 @@ if(studentExamId!==null) {
                             onChangeValue={(value)=>onChangeValue(value)}
                             selectedAnswers={selectedAnswers}
                               selectedNumber={selectedNumber}
+                              qtype={qtype}
+                              answer={answer}
                             />
                         </Fragment>
                     )

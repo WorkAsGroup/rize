@@ -4,7 +4,7 @@ import AppStyles from './AppStyles';
 import OptionCard from './OptionCard';
 import { theme } from '../core/theme';
 
-const OptionGroup = ({ value: propValue, onChangeValue, multiple = false, option1, option2, option3, option4, selectedAnswers,
+const OptionGroup = ({ value: propValue, qtype, answer,onChangeValue, multiple = false, option1, option2, option3, option4, selectedAnswers,
     selectedNumber }) => {
     const [value, setValue] = useState(propValue);
 
@@ -38,6 +38,9 @@ const OptionGroup = ({ value: propValue, onChangeValue, multiple = false, option
                 optionText={option1}
                 onChangeValue={() => onChange('A')}
                 isSelected={selectedAnswers[selectedNumber] == 'A'? true : false}
+                qtype={qtype}
+                answer={answer}
+
             />
 
             <OptionCard 
@@ -46,6 +49,8 @@ const OptionGroup = ({ value: propValue, onChangeValue, multiple = false, option
                 optionText={option2}
                 onChangeValue={() => onChange('B')}
                 isSelected={selectedAnswers[selectedNumber] == 'B'? true : false}
+                qtype={qtype}
+                answer={answer}
             />
 
             <OptionCard 
@@ -54,6 +59,8 @@ const OptionGroup = ({ value: propValue, onChangeValue, multiple = false, option
                 optionText={option3}
                 onChangeValue={() => onChange('C')}
                 isSelected={selectedAnswers[selectedNumber] == 'C'? true : false}
+                qtype={qtype}
+                answer={answer}
             />
 
             <OptionCard 
@@ -62,6 +69,8 @@ const OptionGroup = ({ value: propValue, onChangeValue, multiple = false, option
                 optionText={option4}
                 onChangeValue={() => onChange('D')}
                 isSelected={selectedAnswers[selectedNumber] == 'D' ? true : false}
+                qtype={qtype}
+                answer={answer}
             />
                      
         </View>

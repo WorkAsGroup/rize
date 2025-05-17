@@ -5,6 +5,7 @@ const initialState = {
   examData:[],
   examLabel: null,
   deviceId: null,
+  studentUid: null,
 };
 
 const heaserSlice = createSlice({
@@ -22,9 +23,12 @@ const heaserSlice = createSlice({
     },
     setDeviceId: (state, action) => {
       state.deviceId = action.payload;
-    }
+    },
+    setStudentUid: (state, action) => {
+      state.studentUid = action.payload;
+    },
   },
 });
 
-export const { setSelectedExam, setExamLabel, setDeviceId, setExamData } = heaserSlice.actions;
+export const { setSelectedExam, setExamLabel, setDeviceId, setExamData, setStudentUid } = heaserSlice.actions;
 export default heaserSlice.reducer;

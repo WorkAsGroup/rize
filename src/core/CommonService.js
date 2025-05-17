@@ -40,7 +40,8 @@ export const endPoint = {
     getAutoSaveData: '/api/v1/exams/autoSaveData',
 	autoSaveTime: '/api/v1/exams/auto-save-time',
 	reloadQuestion: "/api/v1/exams/reload-question",
-	addAanalytics: "/api/v1/general/addAnalytics"
+	addAanalytics: "/api/v1/general/addAnalytics",
+	appVersion: "api/v1/general/app-version",
   };
 
 import AsyncStorage from "@react-native-async-storage/async-storage";

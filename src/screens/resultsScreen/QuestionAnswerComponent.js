@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 
 import {
   View,
@@ -20,6 +20,7 @@ import { Picker } from "@react-native-picker/picker";
 import { useWindowDimensions } from "react-native";
 import AppStyles from "../../common/AppStyles";
 import COLORS from "../../common/Colors";
+import UserUtils from "../../common/UserUtils";
 var striptags = require('striptags');
 
 const QuestionAndAnswerComponent = ({ questionAndAnwerData }) => {
@@ -204,15 +205,76 @@ const renderersProps = {
       {state.isAccordianExpand === index && (
         <View style={styles.accordionContent}>
 
-            
-<HtmlComponent 
+  <Fragment>   
+{item?.qtype !== 3&&item?.qtype!==9&&<HtmlComponent 
                             style={{...AppStyles.oddMRegular,color:COLORS.BLACK,fontSize:15,lineHeight:23}} 
                             containerStyle={{ marginBottom:20,marginTop:3}} 
                             baseFontStyle={18}
                             text={`${item?.question}`}
                             tintColor={COLORS.BLACK}
-                            />   
+                            /> } 
+                             {
+                    (item?.qtype == 3 || item?.qtype == 9) && (
+                        
+                        <Fragment>
+                             {/* <ReloadButton onPress={()=>onReload()} /> */}
+                            <HtmlComponent 
+                            style={{...AppStyles.oddMRegular,color:COLORS.BLACK,fontSize:15,lineHeight:23}} 
+                            containerStyle={{ marginBottom:20,marginTop:3}} 
+                            baseFontStyle={18}
+                            text={`${item?.mat_question}`}
+                            tintColor={COLORS.BLACK}
+                            />
 
+                        <View style={{backgroundColor:'#fff',marginHorizontal:-10,paddingHorizontal:10,paddingVertical:10,marginBottom:20,borderRadius:4}}>
+                         
+                           
+                            <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
+                                <View style={{flex:1,flexDirection:'row',justifyContent:'flex-start'}}>
+                                    <Text style={AppStyles.oddMMedium}>List 1</Text>
+                                </View>
+
+                                <View style={{flex:1,flexDirection:'row',justifyContent:'flex-start'}}>
+                                <Text style={AppStyles.oddMMedium}>List 2</Text>
+                                </View>
+                            </View>
+                            
+
+                           {
+                              UserUtils.isValidJSON(item?.question) &&  
+                              JSON.parse(item?.question).map((item,index) =>{
+                                   return(
+
+                                    <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
+                                         <View style={{flex:1,flexDirection:'row',justifyContent:'flex-start'}}>
+                                         <HtmlComponent 
+                                                style={{...AppStyles.oddMRegular,color:COLORS.BLACK,fontSize:15,lineHeight:23}}
+                                                baseFontStyle={18}
+                                                text={`(${UserUtils.getIndex(index,item?.list1type)})  ${item.qlist1}`}
+                                                tintColor={COLORS.BLACK}
+                                                />
+                                         </View>
+                                         <View style={{flex:1,flexDirection:'row',justifyContent:'flex-start'}}>
+                                          <HtmlComponent 
+                                                style={{...AppStyles.oddMRegular,color:COLORS.BLACK,fontSize:15,lineHeight:23}} 
+                                                
+                                                baseFontStyle={18}
+                                                text={`(${UserUtils.getIndex(index,item?.list2type)})  ${item.qlist2}`}
+                                                tintColor={COLORS.BLACK}
+                                                />
+                                         </View>
+                                       </View>
+                                     )
+                               })
+                           }
+
+                          </View> 
+
+                           
+                        </Fragment>
+                    )
+                }
+</Fragment>         
           {/* Add more content rendering here */}
           {/* <Text>{item.question}</Text> */}
           {item?.qtype !== 8 ? (
