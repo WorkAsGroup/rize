@@ -231,7 +231,7 @@ console.log(userData, "userData")
         const data = await response.json();
  
         const currentVersion = DeviceInfo.getVersion(); // e.g. '1.2'
-        console.log(currentVersion, data?.data?.[0]?.latest_version , "dataedwd")
+        console.log(currentVersion, data?.data , "dataedwd")
         if  (isVersionOlder(currentVersion, data?.data?.[0]?.user_version || "0.0")) {
           // Prompt user to update
           Alert.alert(
@@ -244,14 +244,22 @@ console.log(userData, "userData")
           );
         } else {
           // Optionally update backend with current version
-          await fetch('https://mocktestapi.rizee.in/api/v1/general/update-app-version', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              student_user_id: userId,
-              app_version: parseFloat(currentVersion),
-            })
-          });
+          try {
+            const res = await fetch('https://mocktestapi.rizee.in/api/v1/general/update-app-version', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                student_user_id: userId,
+                app_version: currentVersion,
+              }),
+            });
+          
+            const json = await res.json(); // Convert the response to JSON
+            console.log('📦 Update app version response:', json); // Log the full response
+          } catch (error) {
+            console.error('❌ Failed to update app version:', error);
+          }
+          
         }
       } catch (error) {
         console.error("Version check failed", error);
