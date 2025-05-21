@@ -10,26 +10,73 @@ import { setSelectedExam, setExamLabel, setExamData } from '../store/slices/head
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { setStudentUid } from "../store/slices/headerSlice";
 
+let exams = [
+  {
+      "label": "NEET",
+      "exam_id": 1
+  },
+  {
+      "label": "JEE",
+      "exam_id": 2
+  },
+  {
+      "label": "AP-EAMCET-MPC",
+      "exam_id": 3
+  },
+  {
+      "label": "TS-EAMCET-MPC",
+      "exam_id": 6
+  },
+  {
+      "label": "AP-EAMCET-BIPC",
+      "exam_id": 7
+  },
+  {
+      "label": "TS-EAMCET-BIPC",
+      "exam_id": 8
+  },
+  {
+      "label": "KCET - PCMB",
+      "exam_id": 9
+  },
+  {
+      "label": "KCET - PCM",
+      "exam_id": 10
+  },
+  {
+      "label": "KCET - PCB",
+      "exam_id": 11
+  }
+];
 
-
-
+const COMPLETED_MOCK_TESTS_KEY = "completedMockTests";
 const Header = ({ route, setId }) => {
   const navigation = useNavigation();
-
+  const [instituteId, setInstituteId] = useState(0)
 
   const [selectedOption, setSelectedOption] = useState(null);
-  const [ addExam, setAddExam] = useState(false);
+  const [addExam, setAddExam] = useState(false);
   const [examsData, setExamsData] = useState([]);
   const [studentId, setStudentId] = useState("")
-const selectedExam = useSelector((state) => state.header.selectedExam);
-const examData = useSelector((state) => state.header.examData)
-const examLabel = useSelector((state) => state.header.examLabel);
-const [items, setItems] = useState(examData? examData: []);
-const [hasFetched, setHasFetched] = useState(false);
-const dispatch = useDispatch();
+  const selectedExam = useSelector((state) => state.header.selectedExam);
+  const examData = useSelector((state) => state.header.examData)
+  const examLabel = useSelector((state) => state.header.examLabel);
+  const [items, setItems] = useState(examData ? examData : []);
+  const [hasFetched, setHasFetched] = useState(false);
+  const userData = useSelector((state) => state.user.data)
+  const dispatch = useDispatch();
 
+
+  useEffect(() => {
+    getInstituteId();
+  }, [])
+  const getInstituteId = async () => {
+    const userData = await AsyncStorage.getItem('userdata')
+    setInstituteId(userData?.institute_id)
+  }
   const getUser = async () => {
     try {
+
       const response = await getAutoLogin();
       console.log("auto-login-", response);
 
@@ -37,33 +84,31 @@ const dispatch = useDispatch();
         console.warn("No user data received from API");
         return; // Early exit if no data
       }
-
+      console.log(response.data, "response")
       const { name: nm, student_user_id: id, examsData } = response.data;
       //   setName(nm);
-        setStudentId(id);
-        dispatch(setStudentUid(id))
+      setStudentId(id);
+      dispatch(setStudentUid(id))
       //   setStudentUserId(id);
       setExamsData(examsData);
 
-      //   if (!examsData || examsData.length === 0) {
-      //     const comData = AsyncStorage.getItem(COMPLETED_EXAMS_KEY);
-      //     if (JSON.parse(comData).length < 1) {
-      //       setAddExam(true);
-      //     }
-      //     return; // Early exit if no examsData
-      //   }
-
-      const exams = await getExamType();
-
-      if (exams?.data?.length > 0&&examsData?.length>0) {
+    
+      
+      const userData = await AsyncStorage.getItem('userdata')
+      if (exams?.length > 0 && examsData?.length > 0) {
         // Use a Map for efficient lookup of examsData
         const examsDataMap = new Map(
           examsData.map((exam) => [exam.exam_id, exam])
         );
 
-        const mergedExamsData = exams.data.map((exam) => {
+        console.log(examsData, exams.data, "examsDataMap")
+
+
+        const mergedExamsData = exams.map((exam) => {
+          console.log(exam.exam_id, "exam.exam_id")
           const existingExamData = examsDataMap.get(exam.exam_id);
           // Use spread operator conditionally, providing a default empty object if existingExamData is undefined
+          console.log(existingExamData, "existingExamData")
           return { ...exam, ...(existingExamData || {}) };
         });
 
@@ -75,12 +120,12 @@ const dispatch = useDispatch();
 
         const dropdownItems = [
           ...filteredMergedData.map((option) => ({
-            label: option.exam_type,
+            label: option.label,
             value: option.exam_id,
             isDefault: option.is_default,
             stUserExamId: option.student_user_exam_id,
           })),
-          { label: "➕ Add", value: "add", custom: true },
+          userData?.institute_id == 0 && { label: "➕ Add", value: "add", custom: true },
         ];
 
         setItems(dropdownItems);
@@ -90,9 +135,10 @@ const dispatch = useDispatch();
         setId(defaultItem?.stUserExamId || dropdownItems[0]?.stUserExamId)
 
         // Example usage
-dispatch(setSelectedExam(defaultItem?.stUserExamId || dropdownItems[0]?.stUserExamId));
-dispatch(setExamLabel(defaultItem?.label||dropdownItems[0]?.label));
- console.log(defaultItem, "default")
+        console.log(defaultItem, dropdownItems, "dropdownItems")
+        dispatch(setSelectedExam(defaultItem?.stUserExamId || dropdownItems[0]?.stUserExamId));
+        dispatch(setExamLabel(defaultItem?.label || dropdownItems[0]?.label));
+        console.log(defaultItem, "default")
         // setStudentExamId((defaultItem || dropdownItems[0]).stUserExamId);
       } else {
         // Handle the case where getExamType returns no data or an error
@@ -118,12 +164,14 @@ dispatch(setExamLabel(defaultItem?.label||dropdownItems[0]?.label));
           setId(items[0]?.stUserExamId);
           console.log(defaultItem, "default")
           dispatch(setSelectedExam(items[0]?.stUserExamId));
-dispatch(setExamLabel(items[0]?.exam_type));
-     
+          dispatch(setExamLabel(items[0]?.exam_type));
+
         } else {
-          setItems([{ label: "➕ Add", value: "add" }]);
+          //  if(instituteId==0) {
+          //   setItems([{ label: "➕ Add", value: "add" }]);
+          //  }
           let storedMockTests = await AsyncStorage.getItem(COMPLETED_MOCK_TESTS_KEY);
-          if(!storedMockTests) {
+          if (!storedMockTests) {
             setAddExam(true);
           }
         }
@@ -145,68 +193,68 @@ dispatch(setExamLabel(items[0]?.exam_type));
       getUser();
     }
   }, [selectedExam]);
-  
-  
+
+
 
   useEffect(() => {
-    if (items.length == 0) {
+    if (items.length == 0 && instituteId == 0) {
       setItems([{ label: "➕ Add", value: "add" }]);
       // setAddExam(true);
     }
-  }, [items]);
+  }, [items, instituteId]);
 
 
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener('allExamsSubmitted', () => {
       console.log("🎯 Received: All exams have been submitted!");
       // You can dispatch an action, refetch data or update UI here
-    getUser(); // Example action
+      getUser(); // Example action
     });
-  
+
     return () => {
       subscription.remove();
     };
   }, []);
-  
+
 
   // const handleOptionSelect = (option) => {
   //   // console.log(option, "options", option.exam_id)
   //   setStudentExamId(option.student_user_exam_id);
   //   setSelectedOption(option.exam_type);
-    
+
   //   setIsOpen(false);
   // };
 
-    const handleSelect = (item) => {
-      if (item.value === "add") {
-        setAddExam(true);
-      } else {
-        setSelectedOption(item);
-        setId(item.stUserExamId);
-        dispatch(setSelectedExam(item.stUserExamId));
-        dispatch(setExamLabel(item.label));
-      }
-    };
+  const handleSelect = (item) => {
+    if (item.value === "add") {
+      setAddExam(true);
+    } else {
+      setSelectedOption(item);
+      setId(item.stUserExamId);
+      dispatch(setSelectedExam(item.stUserExamId));
+      dispatch(setExamLabel(item.label));
+    }
+  };
 
 
-    useEffect(() => {
-  if(selectedExam&&items.length>0){
-    setSelectedOption(items.find((item) => item.stUserExamId === selectedExam))
-  }
-    },[selectedExam])
+  useEffect(() => {
+    if (selectedExam && items.length > 0) {
+      setSelectedOption(items.find((item) => item.stUserExamId === selectedExam))
+    }
+  }, [selectedExam])
+console.log(userData, "userData")
+  const memoizedContent = useMemo(() => (
+    addExam == true ? (
+      <ExamModalComponent
+        show={addExam}
+        setShow={setAddExam}
+        existingExams={items}
+        studentUserId={studentId}
+      />
+    ) : null
+  ), [addExam, items]);
 
-    const memoizedContent = useMemo(() => (
-       addExam==true ? (
-          <ExamModalComponent
-              show={addExam}
-              setShow={setAddExam}
-              existingExams={items}
-              studentUserId={studentId}
-          />
-      ) : null
-  ), [ addExam,items]);
-
-    console.log(examsData, "examsData")
+  console.log(examsData, "examsData")
   return (
     <View style={styles.header}>
       {/* Hamburger Menu */}
@@ -216,12 +264,17 @@ dispatch(setExamLabel(items[0]?.exam_type));
           style={[styles.icon, { tintColor: theme.textColor }]}
         />
       </TouchableOpacity>
-{memoizedContent}
+      {memoizedContent}
       {/* App Logo */}
-      {/* <Image
-        source={require("../images/logo.png")}
-        style={[styles.logo, { tintColor: theme.textColor }]}
-      /> */}
+      {userData?.institute_id!==0 && <View>
+        <Image
+       source={{ uri: userData?.institute_logo }}
+        style={[styles.logo]}
+      />
+      <Text style={{color: "#fff"}}>{userData?.institute_name} </Text>
+      </View>}
+     
+      
 
       {/* Compact Dropdown */}
       <View style={{ zIndex: 1000 }}>
@@ -253,7 +306,7 @@ dispatch(setExamLabel(items[0]?.exam_type));
               fontSize: 11, // ✅ Decreased font size for dropdown items
               color: "#E614E1",
             }}
-            data={items.length > 0 ? items : { label: "➕ Add", value: "add" }}
+            data={items.length > 0 ? items : instituteId !== 0 ? { label: "➕ Add", value: "add" } : ""}
             labelField="label"
             valueField="value"
             value={selectedOption?.value === "add" ? null : selectedOption}
@@ -284,8 +337,8 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
   },
   logo: {
-    height: 80,
-    width: 150,
+    height: 34,
+    width: 70,
     resizeMode: "contain",
   },
   headerText: {

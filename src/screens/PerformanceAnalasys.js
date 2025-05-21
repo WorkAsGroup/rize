@@ -359,7 +359,7 @@ console.log(data, "peojwiejowiej")
             { color: theme.textColor, marginBottom: 10, marginTop: 10 },
           ]}
         >
-          Performance Analasys
+          Performance Analasis
         </Text>
      
       

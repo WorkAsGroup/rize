@@ -26,6 +26,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useDispatch, useSelector } from "react-redux";
 const COMPLETED_EXAMS_KEY = "completedExams";
 import { getUniqueId } from "react-native-device-info";
+import AnimationWithImperativeApi from "../common/LoadingComponent";
 
 export default function Intro({ navigation }) {
   const dispatch = useDispatch();
@@ -305,10 +306,9 @@ export default function Intro({ navigation }) {
 
    // 🔹 Render Loading Indicator
    const renderLoading = () => (
-    <View style={{ alignItems: "center", justifyContent: "center", marginTop: 20 }}>
-      <ActivityIndicator size="large" color={theme.tx1} />
-      <Text style={{ color: theme.textColor, marginTop: 10 }}>Loading...</Text>
-    </View>
+   <View style={styles.loadingContainer}>
+          <AnimationWithImperativeApi />
+         </View>
   );
 
   const renderItem = useCallback(() => {
@@ -398,6 +398,12 @@ export default function Intro({ navigation }) {
           alignItems: "center",
           paddingBottom: 20,
           width: Dimensions.get("window").width,
+        },
+        loadingContainer: {
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: Dimensions.get("screen").height*0.6
         },
         headerContainer: {
           flexDirection: "row",

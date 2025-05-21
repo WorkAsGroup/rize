@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, useColorScheme, Alert } from 'react-native';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import DashboardContent from './DashboardContent';
@@ -11,7 +11,8 @@ import Achivements from './dashboardItems/Achivements';
 import PerformanceAnalasys from './PerformanceAnalasys';
 import { useDispatch } from 'react-redux';
 import { setSelectedExam } from '../store/slices/headerSlice';
-import DeviceInfo from 'react-native-device-info';
+
+import ScheduleExams from './ScheduleExams';
 
 
 const Drawer = createDrawerNavigator();
@@ -26,10 +27,32 @@ const CustomDrawerContent = (props) => {
   const colorScheme = useColorScheme();
   // const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   const theme =darkTheme;
+    const [instituteId, setInstituteId] = useState(0)
+  // const userData = useSelector((state) => state.user.data)
   const navigation = useNavigation();
   const route = useRoute();
   const currentRouteName = route?.name;
   const activeRoute = props.state.routes[props.state.index].name;
+  
+
+  const uId = useSelector((state) => state.header.studentUid);
+ 
+    // ✅ FIXED LOGOUT FUNCTION
+    const handleLogout = async () => {
+      try {
+        await AsyncStorage.removeItem('authToken');
+        await dispatch(setSelectedExam(null))
+        onChangeAuth(null);
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Login' }],
+        });
+      } catch (error) {
+        console.error("Logout error:", error);
+        Alert.alert("Error", "An error occurred during logout.");
+      }
+    };
+  
   // console.log(activeRoute, "currentRouteName")
   const getIconSource = (routeName) => {
     switch (routeName) {
@@ -57,6 +80,7 @@ const CustomDrawerContent = (props) => {
     <DrawerContentScrollView {...props} style={{ backgroundColor: theme.textbgcolor }}>
       <View style={[styles.drawerHeader]}>
         <Image source={require("../images/logo.png")} style={{ height: 100, width: 160,  resizeMode: 'contain', marginLeft: 10 }} />
+        {/* <Text style={{color: "#fff",  textDecorationLine: 'underline', fontSize: 16, textAlign: 'center'}}>{userData?.name}</Text> */}
       </View>
 
       <TouchableOpacity style={[styles.drawerItem, activeRoute == 'Dashboard'? styles.selectedDrawerItem: ""]} onPress={() => handleNavigation('Dashboard')}>
@@ -72,11 +96,18 @@ const CustomDrawerContent = (props) => {
         <Image source={getIconSource('Achivements')} style={[styles.drawerIcon, { tintColor: theme.textColor }]} />
         <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Achivements</Text>
       </TouchableOpacity>
+      {instituteId!==0&&
+        <TouchableOpacity style={[styles.drawerItem, activeRoute === 'SheduleExams' && styles.selectedDrawerItem]} onPress={() => handleNavigation('SheduleExams')}>
+        <Image source={getIconSource('Achivements')} style={[styles.drawerIcon, { tintColor: theme.textColor }]} />
+        <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Schedule Exams</Text>
+      </TouchableOpacity>
+      }
       {/* ✅ LOGOUT BUTTON */}
       <TouchableOpacity onPress={props.onLogout} style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 20, marginTop: 20 }}>
         <Image source={require("../images/logout.png")} style={[styles.icon, { tintColor: theme.textColor, width: 22, height: 22 }]} />
         <Text style={[styles.drawerItemText, { color: theme.textColor }]}>Logout</Text>
       </TouchableOpacity>
+   
     </DrawerContentScrollView>
   );
 };
@@ -86,9 +117,26 @@ const DashboardDrawer = ({ route }) => {
   const { onChangeAuth } = route?.params;
   const dispatch = useDispatch();
   const colorScheme = useColorScheme();
+  const activeRoute = useSelector((state) => state.user.activeTab)
   const navigation = useNavigation();
+  const [instituteId, setInstituteId] = useState(0)
   const theme = darkTheme;
-  const userId = useSelector((state) => state.header.studentUid) 
+  const uId = useSelector((state) => state.header.studentUid);
+  const [userId, setUserId] = useState();
+  const [userData, setUserData] = useState("");
+  useEffect(() => {
+    
+    getInstituteId();
+  }, [])
+  const getInstituteId = async () => {
+     const data = await AsyncStorage.getItem("userdata")
+    console.log(data, "userData")
+    setUserId(data?.student_user_id)
+    setInstituteId(data?.institute_id)
+    setUserData(data)
+  }
+
+  console.log(instituteId, "instituteId")
   // ✅ FIXED LOGOUT FUNCTION
   const handleLogout = async () => {
     try {
@@ -105,68 +153,18 @@ const DashboardDrawer = ({ route }) => {
     }
   };
 
-  const isVersionOlder = (current, latest) => {
-    const curr = current.split('.').map(Number);
-    const api = latest.split('.').map(Number);
-    for (let i = 0; i < Math.max(curr.length, api.length); i++) {
-      const a = curr[i] || 0;
-      const b = api[i] || 0;
-      if (a < b) return true;
-      if (a > b) return false;
+ 
+    const allowedRoutes = ["Dashboard", "PerformanceAnalasys", "Achivements"];
+    if (instituteId !== 0) {
+      allowedRoutes.push("SheduleExams");
     }
-    return false;
-  };
-  
-
-  
-  useEffect(() => {
-    if(userId) {
-      checkAppVersion(userId)
-    }
-    },[navigation, userId])
-  
-    const checkAppVersion = async (userId) => {
-      console.log("call ayyaaaa")
-      try {
-        const response = await fetch('https://mocktestapi.rizee.in/api/v1/general/app-version', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ student_user_id: userId })
-        });
-        const data = await response.json();
-    console.log(data, "dataedwd")
-        const currentVersion = DeviceInfo.getVersion(); // e.g. '1.2'
-        
-        if  (isVersionOlder(currentVersion, data?.[0]?.user_version || "0.0")) {
-          // Prompt user to update
-          Alert.alert(
-            "Update Available",
-            "A new version is available. Please update the app for the best experience.",
-            [
-              { text: "Update Now", onPress: () => Linking.openURL('https://play.google.com/apps/internaltest/4701724673225179262') }
-            ],
-            { cancelable: false }
-          );
-        } else {
-          // Optionally update backend with current version
-          await fetch('https://mocktestapi.rizee.in/api/v1/general/update-app-version', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              student_user_id: userId,
-              app_version: parseFloat(currentVersion),
-            })
-          });
-        }
-      } catch (error) {
-        console.error("Version check failed", error);
-      }
-    };
-  
+    
+    const validInitialRoute = allowedRoutes.includes(activeRoute) ? activeRoute : "Dashboard";
+    
 
   return (
     <Drawer.Navigator
-      initialRouteName="Dashboard"
+    initialRouteName={validInitialRoute}
       drawerContent={(props) => <CustomDrawerContent {...props} onLogout={handleLogout} />}
       screenOptions={{
         headerShown: false,
@@ -189,7 +187,14 @@ const DashboardDrawer = ({ route }) => {
   component={Achivements}
   initialParams={{ onChangeAuth: route?.params?.onChangeAuth }}
 />
+{instituteId!==0&&<Drawer.Screen
+  name="SheduleExams"
+  component={ScheduleExams}
+  initialParams={{ onChangeAuth: route?.params?.onChangeAuth }}
+/>}
+
     </Drawer.Navigator>
+    
   );
 };
 

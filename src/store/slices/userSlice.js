@@ -2,6 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
   data: null,
+  activeTab: "Dashboard"
 };
 
 export const userSlice = createSlice({
@@ -14,8 +15,11 @@ export const userSlice = createSlice({
     clearUser: (state) => {
       state.data = null;
     },
+    setActiveTab: (state, action) => {
+      state.activeTab =  action.payload
+    }
   },
 });
 
-export const { setUser, clearUser } = userSlice.actions;
+export const { setUser, clearUser,setActiveTab } = userSlice.actions;
 export default userSlice.reducer;

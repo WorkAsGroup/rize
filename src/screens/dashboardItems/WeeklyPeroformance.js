@@ -176,14 +176,14 @@ const WeeklyPerformance = ({ examResults, selectedValue, setSelectedValue, perfo
                             <Text style={{ fontSize: 24, fontWeight: "bold", color: theme.textColor }}>{totalExamCount || 0}</Text>
                         </View>
                         <View>
-                            <Text style={{ color: theme.textColor }}>{dateRange}</Text>
+                            <Text style={{ color: "#fff" }}>{dateRange}</Text>
                             <RNPickerSelect
                                 onValueChange={(value) => setSelectedValue(value)}
                                 items={options}
                                 value={selectedValue}
                                 style={{ 
                                     inputAndroid: { color:"#fff" }, 
-                                    inputIOS: { color: theme.textColor } 
+                                    inputIOS: { color: "#fff" } 
                                 }}
                             />
                         </View>

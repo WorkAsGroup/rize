@@ -1,21 +1,36 @@
 import React, { useEffect, useState } from "react";
 import { useTheme } from "react-native-paper";
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, useColorScheme, FlatList, ActivityIndicator, ScrollView, RefreshControl, Alert, Modal, Pressable } from 'react-native';
-import { darkTheme, lightTheme } from "../../theme/theme";
+import { darkTheme } from "../theme/theme";
 import LinearGradient from "react-native-linear-gradient";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import Header from "../common/Header";
+import { addAnalytics, getPreviousPapers, getScheduleExams } from "../core/CommonService";
+import AnimationWithImperativeApi from "../common/LoadingComponent";
+import { useNavigation } from "@react-navigation/native";
+import { resetState, setActiveQuestionIndex, setActiveSubjectId, setAutoSaveId, setExamDuration, setExamQuestions, setExamSessionId, setQuestionDetails } from "../store/slices/examSlice";
 
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
-const MockTests = ({ selectedType,loading, selecteditem,mocklist, handleStartTest, pre, handleCheckResults, customExams, setMock, setShowCustom, setSelectedType }) => {
+const ScheduleExams = ({ selecteditem,mocklist,  pre,   setMock, setShowCustom,  }) => {
   // console.log( mocklist, pre, selectedExam,customExams, "weioufgwoeyuyewfuywe")
   const colorScheme = useColorScheme();
+  const navigation = useNavigation()
+  const[selectedType, setSelectedType] = useState("available")
+  const [expiredExams, setExpiredExams] = useState([]);
+  const [availableExams, setAvailableExams] = useState([])
+  const [completedExams,setCompletedExams] = useState([]);
   const selectedExam = useSelector((state) => state.header.selectedExam);
+     const uniqueId = useSelector((state) => state.header.deviceId);
   const examLabel = useSelector((state) => state.header.examLabel);
+    const [studentExamId, setStudentExamId] = useState(selectedExam);
   const [selectedPYQExam, setSelectedPYQExam] = useState('mains')
+    const [loading, setLoading] = useState(true);
   const [mains, setMains] = useState([]);
   const [advance, setAdvance] = useState([]);
+    const [addExam, setAddExam] = useState(false);
+    const dispatch = useDispatch();
   // const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   const theme = darkTheme;
 
@@ -24,31 +39,170 @@ const MockTests = ({ selectedType,loading, selecteditem,mocklist, handleStartTes
 
   };
 
+
+  const handleStartTest = async (item, type) => {
+    console.log(item, type, "item, type");
+    dispatch(resetState());
+    
+    try {
+      setLoading(true);
+  
+      // ✅ Convert current time to Unix timestamp in seconds
+      const currentTime = Math.floor(Date.now() / 1000);
+  
+      // ✅ Check if exam hasn't started yet
+      if (item?.start_time && currentTime < item.start_time) {
+        const startDate = new Date(item.start_time * 1000);
+        const formattedDate = startDate.toLocaleString('en-IN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true,
+        });
+  
+        Alert.alert("Exam Not Started Yet !", `Exam Starts on ${formattedDate}`);
+        setLoading(false);
+        return;
+      }
+  
+      const previousExam = availableExams.find((p) => p.exam_name === item.exam_name);
+      let previousPaperId = previousExam ? previousExam.exam_paper_id : null;
+      let sessionId = null;
+  
+      dispatch(setExamQuestions([]));
+      dispatch(setQuestionDetails([]));
+      dispatch(setActiveQuestionIndex(0));
+      dispatch(setActiveSubjectId(null));
+  
+      if (type === "replay") {
+        dispatch(setExamSessionId(sessionId));
+      }
+  
+      dispatch(setAutoSaveId(item?.auto_save_id || 0));
+  
+      if (!item?.auto_save_id) {
+        dispatch(setExamDuration(item?.exam_duration));
+      }
+  
+      setLoading(false);
+  
+      if (type === "replay") {
+        navigation.navigate("StartExam", {
+          obj: item,
+          studentExamId: selectedExam,
+          examtype: "schedule_exam",
+          type: selectedType,
+          session_id: sessionId || item.previous_session_id || item.custom_exam_id || 0,
+        });
+      } else {
+        navigation.navigate("InstructionAuth", {
+          obj: item,
+          studentExamId: selectedExam,
+          examtype: "schedule_exam",
+          type: selectedType,
+          session_id: sessionId || item.previous_session_id || item.custom_exam_id || 0,
+        });
+      }
+  
+    } catch (error) {
+      console.error("❌ Error in handleStartTest:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+
+  const handleCheckResults = async (data, type) => {
+    setLoading(true);
+    const examObject = {
+      ...data,
+      type: type,
+      from: "scheduleexams",
+      studentExamUID: selectedExam ,
+    };
+    // dispatch(setExamSessionId(data.exam_session_id));
+    try {
+      // Define your params correctly
+      const params = {
+          "student_user_exam_id": 0,
+          "type": 0,
+          "source": 0,
+          "testonic_page_id": selectedType=="previous" ? 54:  selectedType=="mock" ? 50 : 59,
+      };
+
+      console.log(uniqueId,  "payloaddlscknl");
+
+      // Create payload
+      const payload = {
+          ...params,
+          ip_address: uniqueId ? uniqueId: "",
+          location: "Hyderabad", // Ensure location is correctly handled (but you should pass the location data properly here)
+      };
+
+      console.log(payload, "payload");
+
+      // Send analytics request
+      const response = await addAnalytics(payload); // Assuming addAnalytics is an API call function
+      console.log("Analytics Response:", response);
+
+  } catch (error) {
+      // Handle errors gracefully
+      const errorMessage = error.response?.data?.message || error.message;
+    
+      console.error("Error:", errorMessage);
+  }
+  setLoading(false);
+    navigation.navigate("resultsPage", { state: examObject });
+  };
   // console.log(selectedExam, examLabel, "weioufgwoeyuyewfuywe")
   useEffect(() => {
-    // console.log(selectedExam, examLabel, "weioufgwoeyuyewfuywe")
-    if (pre && Array.isArray(pre)) {
-      const mainsList = [];
-      const advanceList = [];
-
-      pre.forEach((exam) => {
-
-        if (exam.pexamtype === 1) {
-          mainsList.push(exam);
-        } else if (exam.pexamtype === 2) {
-          advanceList.push(exam);
-        }
-
-      });
-
-      setMains(mainsList);
-      setAdvance(advanceList);
+    getExams()
+  }, []);
+  const getExams = async() => {
+    setLoading(true)
+    const fields = {
+      student_user_exam_id: selectedExam
     }
-  }, [pre]);
+   const response =  await getScheduleExams(fields);
+   console.log(response, "wefkwbefkwjhbef")
+   if(response?.data?.length>0) {
+    setExpiredExams(response?.data?.[2]?.expired)
+    setAvailableExams(response?.data?.[0]?.available)
+    setCompletedExams(response?.data?.[1]?.completed)
+    setLoading(false)
+   }
+   setLoading(false)
+  }
+
 
 
   const renderItemMock = ({ item }) => {
     // console.log(item, selecteditem,"exam status")
+    const startTime = item?.start_time; // Unix timestamp in seconds
+const endTime = item?.end_time;
+    const formatDateTime = (timestamp) => {
+      const date = new Date(timestamp * 1000); // Convert to milliseconds
+      const options = {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      };
+    
+      const datePart = date.toLocaleDateString('en-US', options);
+      const timePart = date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      });
+    
+      return { datePart, timePart };
+    };
+    
+    const { datePart: date1, timePart: time1 } = formatDateTime(startTime);
+    const { timePart: time2 } = formatDateTime(endTime);
     return (
       <LinearGradient
   colors={["#e614e1", "#8b51fe"]}
@@ -65,20 +219,21 @@ const MockTests = ({ selectedType,loading, selecteditem,mocklist, handleStartTes
   }]}>
       <View style={styles.detailsContainer}>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.examName, { color: theme.textColor }]}>{item.exam_name}</Text>
+            <Text style={[styles.examName, { color: theme.textColor }]}>{item.exam_name}{" "}({date1})</Text>
             <View style={styles.timeContainer}>
-              <Image source={require("../../images/clock.png")} style={[styles.clockIcon, { tintColor: theme.textColor }]} />
-              <Text style={[styles.timeText, { color: theme.textColor }]}>{" "}{item.exam_duration} Mins </Text>
+              <Image source={require("../images/clock.png")} style={[styles.clockIcon, { tintColor: theme.textColor }]} />
+              <Text style={[styles.timeText, { color: theme.textColor }]}>{" "}{`${time1} - ${time2}`}  </Text>
             </View>
           </View>
           {/* Start Button */}
-          <View style={{ marginTop: 10 }}>
+           {selectedType!=="expired"&& <View style={{ marginTop: 10 }}>
             {item.exam_session_id === 0 && item.auto_save_id === 0 ? (
               // Start Button
               <TouchableOpacity
                 style={[styles.startExamBtn, { marginRight: 10 }]}
                 // onPress={() => handleStartExam(item, "mockTest")}
                 onPress={() => handleStartTest(item, selectedType)}
+          
               >
                 <LinearGradient
                   colors={["#e614e1", "#8b51fe",]}
@@ -96,20 +251,20 @@ const MockTests = ({ selectedType,loading, selecteditem,mocklist, handleStartTes
             ) : item.exam_session_id !== 0 && item.auto_save_id === 0 ? (
               // Replay & Results Button
               <View style={[styles.startExamBtn, { flexDirection: "row", marginRight: 10 }]}>
-                {selectedType !== "custom" && <TouchableOpacity
+                {selectedType !== "completed" && <TouchableOpacity
                   onPress={() => handleStartTest(item, selectedType)}
                   style={[styles.textExamBtn, styles.resultsButton, , { marginRight: 5 }]}
                 >
                  
                   {/* <Text style={styles.buttonText}>Results</Text> */}
-                  <Image source={require("../../images/synchronize.png")} style={[styles.icon]} />
+                  <Image source={require("../images/synchronize.png")} style={[styles.icon]} />
                 </TouchableOpacity>}
                 <TouchableOpacity
                   onPress={() => handleCheckResults(item, selectedType)}
                   style={[styles.textExamBtn, styles.resultsButton]}
                 >
                   {/* <Text style={styles.buttonText}>Results</Text> */}
-                  <Image source={require("../../images/pie-chart.png")} style={styles.icon} />
+                  <Image source={require("../images/pie-chart.png")} style={styles.icon} />
                 </TouchableOpacity>
               </View>
             ) : item.exam_session_id !== 0 && item.auto_save_id !== 0 ? (
@@ -126,7 +281,7 @@ const MockTests = ({ selectedType,loading, selecteditem,mocklist, handleStartTes
                <TouchableOpacity onPress={() => handleStartTest(item, "replay")}          >
                 <View style={styles.innerButton}>
              
-                    <Image source={require("../../images/replay.png")} style={{ height: 18, width: 18 }} />
+                    <Image source={require("../images/replay.png")} style={{ height: 18, width: 18 }} />
              
                 </View>
                 </TouchableOpacity>
@@ -135,7 +290,7 @@ const MockTests = ({ selectedType,loading, selecteditem,mocklist, handleStartTes
                   style={[styles.textExamBtn, styles.resultsButton]}
                 >
                   {/* <Text style={styles.buttonText}>Results</Text> */}
-                  <Image source={require("../../images/pie-chart.png")} style={styles.icon} />
+                  <Image source={require("../images/pie-chart.png")} style={styles.icon} />
                 </TouchableOpacity>
               </View>
             ) : (
@@ -148,13 +303,13 @@ const MockTests = ({ selectedType,loading, selecteditem,mocklist, handleStartTes
                      <TouchableOpacity onPress={() => handleStartTest(item, "replay")}          >
                 <View style={styles.innerButton}>
              
-                    <Image source={require("../../images/replay.png")} style={{ height: 18, width: 18 }} />
+                    <Image source={require("../images/replay.png")} style={{ height: 18, width: 18 }} />
              
                 </View>
                 </TouchableOpacity>
               </LinearGradient>
             )}
-          </View>
+          </View>}
         </View>
 
         {/* Exam Marks List */}
@@ -184,205 +339,141 @@ const MockTests = ({ selectedType,loading, selecteditem,mocklist, handleStartTes
   };
 
 
+
   return (
+        <View style={[styles.container, { backgroundColor: theme.textbgcolor }]}>
+          {/* Header */}
+       
+    <Header setAddExam={setAddExam} addExam={addExam} setId={setStudentExamId}  />
     <View style={[styles.performanceCard, { backgroundColor: theme.conbk, marginTop: 20, height: windowHeight * .85 }]}>
 
-      <Text style={[styles.performanceTitle, { color: theme.textColor }]}>Mock Tests</Text>
-      <Text style={styles.subText}>Select your preferred exam and start practicing</Text>
-      {/* <ScrollView
-        horizontal={true}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ flexGrow: 1, flexDirection: 'row', paddingHorizontal: -5, height: 60, paddingBottom: 15, }}
-      > */}
+ 
+    
+  {loading ? ( <View style={styles.loadingContainer}>
+       <AnimationWithImperativeApi />
+      </View>) : <View>
         <View
+        style={{
+          flexDirection: 'row',
+          minWidth: '100%',
+          alignItems: 'center'
+        }}
+      >
+        <TouchableOpacity
           style={{
-            flexDirection: 'row',
-            minWidth: '100%',
-            alignItems: 'center'
+            backgroundColor: "transparent",
+            padding: 8,
+            borderBottomColor: selectedType == 'available' ? theme.tx1 : "transparent"
+          }}
+          onPress={() => {
+            // setMock(mocklist);
+            handleSetMockType('available');
           }}
         >
-          <TouchableOpacity
-            style={{
-              backgroundColor: "transparent",
-              padding: 8,
-              borderBottomColor: selectedType === 'mock' ? theme.tx1 : "transparent"
-            }}
-            onPress={() => {
-              setMock(mocklist);
-              handleSetMockType('mock');
-            }}
-          >
-            <Text style={{ color: selectedType === 'mock' ? theme.tx1 : theme.textColor, fontSize: 16 }}>Curated Tests </Text>
-            {selectedType === 'mock' && (
-      <LinearGradient
-        colors={["#6A11CB", "#2575FC"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={{
-          height: 2,
-          width: '100%',
-          marginTop: 2,
-          borderRadius: 1,
-        }}
-      />
-    )}
-          </TouchableOpacity>
-
-
-          <TouchableOpacity
-  onPress={() => {
-    handleSetMockType('previous');
-    setMock(pre);
-  }}
-  style={{ padding: 8 }}
->
-  <View style={{ alignItems: 'center' }}>
-    <Text
+          <Text style={{ color: selectedType === 'available' ? theme.tx1 : theme.textColor, fontSize: 16 }}>Available </Text>
+          {selectedType === 'available' && (
+    <LinearGradient
+      colors={["#6A11CB", "#2575FC"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
       style={{
-        color: selectedType === 'previous' ? "#6A11CB" : theme.textColor,
-        fontSize: 16,
-        backgroundColor: 'transparent',
+        height: 2,
+        width: '100%',
+        marginTop: 2,
+        borderRadius: 1,
       }}
-    >
-      {"  "}PYQs{"  "}
-    </Text>
+    />
+  )}
+        </TouchableOpacity>
 
-    {selectedType === 'previous' && (
-      <LinearGradient
-        colors={["#6A11CB", "#2575FC"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={{
-          height: 2,
-          width: '100%',
-          marginTop: 2,
-          borderRadius: 1,
-        }}
-      />
-    )}
-  </View>
+
+        <TouchableOpacity
+onPress={() => {
+  handleSetMockType('completed');
+  // setMock(pre);
+}}
+style={{ padding: 8 }}
+>
+<View style={{ alignItems: 'center' }}>
+  <Text
+    style={{
+      color: selectedType === 'completed' ? "#6A11CB" : theme.textColor,
+      fontSize: 16,
+      backgroundColor: 'transparent',
+    }}
+  >
+    {"  "}Completed{"  "}
+  </Text>
+
+  {selectedType === 'completed' && (
+    <LinearGradient
+      colors={["#6A11CB", "#2575FC"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={{
+        height: 2,
+        width: '100%',
+        marginTop: 2,
+        borderRadius: 1,
+      }}
+    />
+  )}
+</View>
 </TouchableOpacity>
 
-          {/* </LinearGradient> */}
+        {/* </LinearGradient> */}
 
 
-          <TouchableOpacity
-            style={{
-              backgroundColor: "transparent",
-              padding: 8,
-              marginLeft: 10,
-              borderBottomColor: selectedType === 'custom' ? theme.tx1 : "transparent"
-            }}
-            onPress={() => {
-              handleSetMockType('custom');
-              setMock(customExams);
-            }}
-          >
-      <Text style={{ color: selectedType === 'custom' ? theme.tx1 : theme.textColor, fontSize: 16 }}>Custom Tests </Text>
-            {selectedType === 'custom' && (
-      <LinearGradient
-        colors={["#6A11CB", "#2575FC"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={{
-          height: 2,
-          width: '100%',
-          marginTop: 2,
-          borderRadius: 1,
-        }}
-      />
-    )}
-          </TouchableOpacity>
-        </View>
-      {/* </ScrollView> */}
-      {selectedType == "previous" && examLabel == 'JEE' && (
-       <View style={{ display: 'flex', flexDirection: "row", alignContent: "center", gap: 10 }}>
-       {/* MAINS Button */}
-       {selectedPYQExam === "mains" ? (
-         <TouchableOpacity onPress={() => setSelectedPYQExam("mains")}>
-           <LinearGradient
-             colors={["#e614e1", "#8b51fe"]}
-             style={styles.gradientButton}
-           >
-             <Text style={styles.textExamBtn}>MAINS</Text>
-           </LinearGradient>
-         </TouchableOpacity>
-       ) : (
-         <LinearGradient
-           colors={["#e614e1", "#8b51fe"]}
-           style={styles.gradientBorder}
-         >
-           <TouchableOpacity
-             onPress={() => setSelectedPYQExam("mains")}
-             style={styles.innerButton}
-           >
-             <Text style={styles.textExamBtn}>MAINS</Text>
-           </TouchableOpacity>
-         </LinearGradient>
-       )}
-     
-       {/* ADVANCE Button */}
-       {selectedPYQExam === "advance" ? (
-         <TouchableOpacity onPress={() => setSelectedPYQExam("advance")}>
-           <LinearGradient
-             colors={["#e614e1", "#8b51fe"]}
-             style={styles.gradientButton}
-           >
-             <Text style={styles.textExamBtn}>ADVANCE</Text>
-           </LinearGradient>
-         </TouchableOpacity>
-       ) : (
-         <LinearGradient
-           colors={["#e614e1", "#8b51fe"]}
-           style={styles.gradientBorder}
-         >
-           <TouchableOpacity
-             onPress={() => setSelectedPYQExam("advance")}
-             style={styles.innerButton}
-           >
-             <Text style={styles.textExamBtn}>ADVANCE</Text>
-           </TouchableOpacity>
-         </LinearGradient>
-       )}
-     </View>
-     
-      )}
-      {selectedType == "custom" && <TouchableOpacity
-        style={{ display: "flex", justifyContent: `${customExams && customExams.length > 0 ? "flex-end" : "center"}`, alignItems: `${customExams && customExams.length > 0 ? "flex-end" : "center"}`, width: "100%" }}
-        activeOpacity={0.8}
-        onPress={() => setShowCustom(true)}
-      >
-        <LinearGradient
-          colors={[theme.tx1, theme.tx2]}
-          start={{ x: 0, y: 1 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.startButtonGradients}
+        <TouchableOpacity
+          style={{
+            backgroundColor: "transparent",
+            padding: 8,
+            marginLeft: 10,
+            borderBottomColor: selectedType === 'expired' ? theme.tx1 : "transparent"
+          }}
+          onPress={() => {
+            handleSetMockType('expired');
+            // setMock(expiredExams);
+          }}
         >
-          <Text
-            style={[
-              styles.startButtonTexts,
-              { color: theme.textColor1, fontFamily: "CustomFont" },
-            ]}
-          >
-            + CREATE CUSTOM
-          </Text>
-        </LinearGradient>
-      </TouchableOpacity>}
-      <FlatList
-        data={selectedType === "mock" ? mocklist : selectedType === "previous" ? examLabel !== 'JEE' ? pre : selectedPYQExam == "mains" ? mains : advance : customExams}
-        renderItem={renderItemMock}
+    <Text style={{ color: selectedType === 'expired' ? theme.tx1 : theme.textColor, fontSize: 16 }}>Expired </Text>
+          {selectedType === 'expired' && (
+    <LinearGradient
+      colors={["#6A11CB", "#2575FC"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={{
+        height: 2,
+        width: '100%',
+        marginTop: 2,
+        borderRadius: 1,
+      }}
+    />
+  )}
+        </TouchableOpacity>
+      </View>
 
-        keyExtractor={(item) => item.id ? item.id.toString() : Math.random().toString()}
-        nestedScrollEnabled={true}
-        ListEmptyComponent={<Text style={{ color: theme.textColor, textAlign: 'center' }}>No mock tests available.</Text>}
-      />
+
+   
+    <FlatList
+      data={selectedType === "available" ? availableExams : selectedType === "completed" ?completedExams: expiredExams}
+      renderItem={renderItemMock}
+
+      keyExtractor={(item) => item.id ? item.id.toString() : Math.random().toString()}
+      nestedScrollEnabled={true}
+      ListEmptyComponent={<Text style={{ color: theme.textColor, textAlign: 'center' }}>No tests available.</Text>}
+    />
+  </View>
+}
+    </View>
     </View>
   );
 };
 
-export default MockTests
+export default ScheduleExams;
 
 const styles = StyleSheet.create({
+  container: { flex: 1, padding: 20 },
   itemContainer: {
     width: "99.3%",
     margin: 1,

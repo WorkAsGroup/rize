@@ -389,14 +389,25 @@ console.log(validMockTests, "ValidMocks")
         dispatch(setExamDuration(item?.exam_duration));
       }
       setLoading(false);
-      navigation.navigate("InstructionAuth", {
-        obj: item,
-        studentExamId: selectedExam,
-        examtype: "schedule_exam",
-        type: selectedType,
-        session_id:
-          sessionId || item.previous_session_id || item.custom_exam_id || 0,
-      });
+      if(type&&type=="replay") {
+        navigation.navigate("StartExam", {
+          obj: item,
+          studentExamId: selectedExam,
+          examtype: "schedule_exam",
+          type: selectedType,
+          session_id: sessionId || item.previous_session_id || item.custom_exam_id || 0,
+        });
+      } else {
+        navigation.navigate("InstructionAuth", {
+          obj: item,
+          studentExamId: selectedExam,
+          examtype: "schedule_exam",
+          type: selectedType,
+          session_id:
+            sessionId || item.previous_session_id || item.custom_exam_id || 0,
+        });
+      }
+     
     } catch (error) {
       console.error("❌ Error in handleStartTest:", error);
     } finally {

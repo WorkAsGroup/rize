@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { View, StyleSheet, Image, useColorScheme, BackHandler } from 'react-native';
+import { View, StyleSheet, Image, useColorScheme, BackHandler, Alert } from 'react-native';
 import { darkTheme, lightTheme } from './src/theme/theme';
 
 import Login from './src/screens/Login';
@@ -21,12 +21,15 @@ import Instruct from './src/screens/Instruct';
 import EmailVerification from './src/screens/EmailVerification';
 import { Provider } from 'react-redux';
 import  store  from './src/store/store';
-
+import DeviceInfo from 'react-native-device-info';
 import ResultMainComponent from './src/screens/ResultsMainConponent';
 import InstructionAuth from './src/screens/InstructionAuth';
 import StartExam from './src/screens/StartExam';
 import PerformanceAnalasys from './src/screens/PerformanceAnalasys';
 import ResetPasswordOTP from './src/screens/ResetPasswordOTP';
+import usePushNotification from './android/app/PushNotifications';
+import { getAutoLogin } from './src/core/CommonService';
+import { Linking } from 'react-native';
 
 const Stack = createStackNavigator();
 
@@ -114,7 +117,8 @@ const splashStyles = StyleSheet.create({
 export default function App() {
   const [authToken, setAuthToken] = useState(null);
   const [isAppReady, setIsAppReady] = useState(false);
-
+  const [userId, setUserId] = useState("");
+  const [userData, setUserData] = useState("");
   const handleAuthChange = useCallback(async (token) => {
     try {
       if (token) {
@@ -129,7 +133,31 @@ export default function App() {
     }
   }, []);
 
+  const {
+    requestUserPermission,
+    getFCMToken,
+    listenToBackgroundNotifications,
+    listenToForegroundNotifications,
+    onNotificationOpenedAppFromBackground,
+    onNotificationOpenedAppFromQuit,
+  } = usePushNotification();
 
+  useEffect(() => {
+    const listenToNotifications = () => {
+      try {
+        getFCMToken();
+        requestUserPermission();
+        onNotificationOpenedAppFromQuit();
+        listenToBackgroundNotifications();
+        listenToForegroundNotifications();
+        onNotificationOpenedAppFromBackground();
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    listenToNotifications();
+  }, []);
 
 
   useEffect(() => {
@@ -150,6 +178,85 @@ export default function App() {
 
     checkToken(); 
   }, []);
+
+  useEffect(() => {
+    
+    getUserId();
+  }, [])
+  const getUserId = async () => {
+      const response = await getAutoLogin();
+        console.log("auto-login-", response);
+  
+        if (!response?.data) {
+          console.warn("No user data received from API");
+          return; // Early exit if no data
+        }
+        console.log(response.data, "response")
+        const { name: nm, student_user_id: id, examsData } = response.data;
+    setUserId(id)
+    // setInstituteId(data?.institute_id)
+    setUserData(response.data)
+  }
+
+console.log(userData, "userData")
+
+  const isVersionOlder = (current, latest) => {
+    const curr = current.split('.').map(Number);
+    const api = latest.split('.').map(Number);
+    for (let i = 0; i < Math.max(curr.length, api.length); i++) {
+      const a = curr[i] || 0;
+      const b = api[i] || 0;
+      if (a < b) return true;
+      if (a > b) return false;
+    }
+    return false;
+  };
+  
+
+  
+  useEffect(() => {
+    if(userId) {
+      checkAppVersion(userId)
+    }
+    },[userData, userId])
+  
+    const checkAppVersion = async (userId) => {
+      console.log("call ayyaaaa")
+      try {
+        const response = await fetch('https://mocktestapi.rizee.in/api/v1/general/app-version', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ student_user_id: userId })
+        });
+        const data = await response.json();
+ 
+        const currentVersion = DeviceInfo.getVersion(); // e.g. '1.2'
+        console.log(currentVersion, data?.data?.[0]?.latest_version , "dataedwd")
+        if  (isVersionOlder(currentVersion, data?.data?.[0]?.user_version || "0.0")) {
+          // Prompt user to update
+          Alert.alert(
+            "Update Available",
+            "A new version is available. Please update the app for the best experience.",
+            [
+              { text: "Update Now", onPress: () => Linking.openURL('https://play.google.com/store/apps/details?id=com.testonic&hl=en_IN') }
+            ],
+            { cancelable: false }
+          );
+        } else {
+          // Optionally update backend with current version
+          await fetch('https://mocktestapi.rizee.in/api/v1/general/update-app-version', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              student_user_id: userId,
+              app_version: parseFloat(currentVersion),
+            })
+          });
+        }
+      } catch (error) {
+        console.error("Version check failed", error);
+      }
+    };
 
   return (
     <NavigationContainer>

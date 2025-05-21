@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView, BackHandler, Image } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView, BackHandler, Image, Dimensions } from "react-native";
 import { getExamResult, getAttempts } from "../core/CommonService";
 import { Picker } from "@react-native-picker/picker";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -7,7 +7,9 @@ import SubmitTestModal from "./resultsScreen/SubmitTestModal";
 import ReportComponent from "./resultsScreen/ReportComponent";
 import { Dropdown } from 'react-native-element-dropdown';
 import QuestionAndAnswerComponent from "./resultsScreen/QuestionAnswerComponent";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import AnimationWithImperativeApi from "../common/LoadingComponent";
+import { setActiveTab } from "../store/slices/userSlice";
 
 const ResultMainComponent = () => {
   const [state, setState] = useState({
@@ -23,7 +25,7 @@ const ResultMainComponent = () => {
   const [attemptsData, setAttemptsData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [finishTest, setFinishTest] = useState(false);
-  
+  const dispatch = useDispatch();
   useEffect(() => {
     if (attemptsData&&attemptsData.length > 0 && exam_session_id && state.attemptId === 0) {
       const attemptId = attemptsData.find((item) => item.id === exam_session_id)?.id;
@@ -108,7 +110,16 @@ const ResultMainComponent = () => {
 
   console.log(questionAndAnswerData, 'skfweknf')
   
-  const handleResultBack = () => navigation.replace("DashboardContent");
+  const handleResultBack = () => {
+    if(from=="scheduleexams") {
+      dispatch(setActiveTab("SheduleExams"))
+      navigation.replace("DashboardContent");
+    } else {
+      dispatch(setActiveTab("Dashboard"))
+      navigation.replace("DashboardContent");
+    }
+
+  }
 
 console.log(type, "soiefnweonf")
   return (
@@ -118,9 +129,9 @@ console.log(type, "soiefnweonf")
       ) : (
         <ScrollView contentContainerStyle={{ padding: 20 }}>
           {loading ? (
-            <View style={styles.loadingCoatiner}>
-            <ActivityIndicator size="large" color="#2575FC" />
-            </View>
+            <View style={styles.loadingContainer}>
+                  <AnimationWithImperativeApi />
+                 </View>
           ) : (
             <>
             <View><TouchableOpacity onPress={handleResultBack}><Image style={{height: 25, width: 25}} source={require("../images/arrow.png")}/></TouchableOpacity></View>
@@ -129,7 +140,7 @@ console.log(type, "soiefnweonf")
                   <Text style={styles.subHeading}>Test Results</Text>
                   <Text style={styles.heading}>{exam_name}</Text>
                 </View>
-               {type &&type !=="custom"&&from!=="finishTest" && <Dropdown
+               {type &&type !=="custom"&&from!=="finishTest" &&from!=="scheduleexams"&& <Dropdown
   data={attemptsData?.map(item => ({ label: item.name, value: item.id }))}
   labelField="label"
   valueField="value"
@@ -220,6 +231,12 @@ const styles = {
   tabText: {
     fontSize: 15,
     fontWeight: "600",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: Dimensions.get("screen").height * 0.9
   },
 };
 

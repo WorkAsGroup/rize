@@ -1,0 +1,94 @@
+{
+  "project_info": {
+    "project_number": "465297692625",
+    "firebase_url": "https://rizee-4c734.firebaseio.com",
+    "project_id": "rizee-4c734",
+    "storage_bucket": "rizee-4c734.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:465297692625:android:d3d0e0fb4a32a1e3eef2f0",
+        "android_client_info": {
+          "package_name": "com.rizee.testonic"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "465297692625-e60usn84lu8dga2r6hgrbuaciphisgcg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rizee.testonic",
+            "certificate_hash": "b085a74af9be087ae9c7e969b0fde115164cb0f9"
+          }
+        },
+        {
+          "client_id": "465297692625-qgfhf4260pgggo7fhvo6go6c7f2hq69j.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rizee.testonic",
+            "certificate_hash": "dd53bd66e5196980d0164d4cd633159652920588"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC614Ssb14_T6UvdK5ayHy55TZ9Y92NSuA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:465297692625:android:5280e768a2c648e9eef2f0",
+        "android_client_info": {
+          "package_name": "com.testonic"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "465297692625-676o8f60gd452sdni4k9h218b7nhenru.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.testonic",
+            "certificate_hash": "49542830a0e964793f704086e2f741030908209f"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC614Ssb14_T6UvdK5ayHy55TZ9Y92NSuA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:465297692625:android:7fac6bbc1e693682eef2f0",
+        "android_client_info": {
+          "package_name": "in.rizee.mylearningplus"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC614Ssb14_T6UvdK5ayHy55TZ9Y92NSuA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

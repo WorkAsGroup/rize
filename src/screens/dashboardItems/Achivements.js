@@ -7,7 +7,7 @@ import Header from "../../common/Header";
 import AchievementsModal from "../models/AchivementsModel";
 import LeaderBoard from "./LeaderBoard";
 import { addAnalytics, getAchievements } from "../../core/CommonService";
-
+import { List } from 'react-native-paper';
 import AnimationWithImperativeApi from "../../common/LoadingComponent";
 import { useSelector } from "react-redux";
 
@@ -26,7 +26,9 @@ const Achivements = () => {
           const [refreshing, setRefreshing] = useState(false);
       const uniqueId = useSelector((state) => state.header.deviceId);
       
-      
+      const [expanded, setExpanded] = useState(false);
+
+      const handlePress = () => setExpanded(!expanded);
         useEffect(() => {
           if(uniqueId) {
             handleAnalytics();
@@ -115,11 +117,9 @@ const Achivements = () => {
                   )}
         {/* Header Section */}
         <Header setId={setStudentExamId} />
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom:0, padding: 10}}>
-          <Text style={[styles.performanceTitle, { color: theme.textColor }]}>Achievements</Text>
-          <TouchableOpacity onPress={() => setAchivementShow(true)}>
-            <Image source={require("../../images/info.png")} style={{ height: 15, width: 15 }} />
-          </TouchableOpacity>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom:-10, padding: 10}}>
+          <Text style={[styles.performanceTitle, { color: theme.textColor }]}>Your Achievements</Text>
+      
         </View>
   
         {/* Make sure ScrollView is within a flexible container */}
@@ -181,7 +181,17 @@ const Achivements = () => {
           )}
           
         </ScrollView>
-
+        <View style={[{height: `${expanded? 400 : 50}`}, {flexDirection: "column"},{borderColor: "deeppink"}, {borderWidth: 1}, {alignContent: "center"},{ gap: 5},{ marginBottom:0},{marginTop: 10},{borderRadius: 10}, {padding: 10}, { backgroundColor: theme.conbk }]}>
+        <View style={{flexDirection: "row", justifyContent: "space-between"}}>
+        <Text style={[styles.performanceTitle, { color: theme.textColor }]}>Yet to Achive !  </Text>
+          <TouchableOpacity onPress={() => setExpanded(!expanded)}>
+           {!expanded ?  <Image source={require("../../images/down_arrow.png")} style={{ height: 15, width: 15, tintColor: "#fff", marginTop: 10 }} /> :  <Image source={require("../../images/up_arrow.png")} style={{ height: 15, width: 15, tintColor: "#fff", marginTop: 10 ,}} />}
+          </TouchableOpacity>
+        </View>
+           {expanded&&
+            <AchievementsModal achived={ach} />
+           }
+        </View>
 <LeaderBoard studentExamId={selectedExam} /> {/* Passing studentExamId */}
 </View>
                     )};

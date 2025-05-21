@@ -20,6 +20,7 @@ import Toast from 'react-native-toast-message';
 import { getUniqueId } from 'react-native-device-info';
 import LinearGradient from "react-native-linear-gradient";
 import Svg, { Path } from "react-native-svg";
+import { setUser } from "../store/slices/userSlice";
 import { darkTheme, lightTheme } from "../theme/theme";
 import { addAnalytics, getLoginDetails } from "../core/CommonService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -212,7 +213,8 @@ export default function Login({ route }) {
           
 
             if(response.statusCode == 200||response.statusCode == 403){
-             
+             dispatch(setUser(response.data))
+             AsyncStorage.setItem('userdata', response.data)
                 if(response.data.email_verified == 1){
                     // await handleAnalytics();
                     const tkn = response.data.token;
