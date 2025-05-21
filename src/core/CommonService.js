@@ -41,12 +41,30 @@ export const endPoint = {
 	autoSaveTime: '/api/v1/exams/auto-save-time',
 	reloadQuestion: "/api/v1/exams/reload-question",
 	addAanalytics: "/api/v1/general/addAnalytics",
-	appVersion: "api/v1/general/app-version",
-	updateAppVersion: "api/v1/general/update-app-version",
+	appVersion: "/api/v1/general/app-version",
+	updateAppVersion: "/api/v1/general/update-app-version",
+	schedueExam: "/api/v1/mocktests/schedule-exam"
   };
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+  export const getScheduleExams = async (fields) => {
+	const headers = {
+	  "content-type": "application/json",
+	  "X-Content-Type-Options": "nosniff",
+	  "X-Frame-Options": "SAMEORIGIN",
+	};
+  
+	console.log("Making request to:", apiurl + endPoint.schedueExam, "with data:", fields?.exam_paper_id, fields?.student_user_exam_id);
+	
+	return await axios
+	  .post(apiurl + endPoint.schedueExam, fields, { headers: headers })
+	  .then((res) => res.data)
+	  .catch((error) => {
+		console.error("Error in submit exam:", error.response?.data || error.message);
+		return error;
+	  }); 
+  };  
 export const getAppversion = async (fields) => {
 	const headers = {
 	  "content-type": "application/json",
