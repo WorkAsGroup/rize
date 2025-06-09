@@ -36,7 +36,7 @@ const OptionGroup = ({ value: propValue, qtype, answer,onChangeValue, multiple =
                 value={value?.includes('A') ? true : null}
                 option="A"
                 optionText={option1}
-                onChangeValue={() => onChange('A')}
+                onChangeValue={onChangeValue && (() => onChange('A'))}
                 isSelected={selectedAnswers[selectedNumber] == 'A'? true : false}
                 qtype={qtype}
                 answer={answer}
@@ -47,7 +47,7 @@ const OptionGroup = ({ value: propValue, qtype, answer,onChangeValue, multiple =
                 value={value?.includes('B') ? true : null}
                 option="B"
                 optionText={option2}
-                onChangeValue={() => onChange('B')}
+                onChangeValue={onChangeValue && (() => onChange('B'))}
                 isSelected={selectedAnswers[selectedNumber] == 'B'? true : false}
                 qtype={qtype}
                 answer={answer}
@@ -57,7 +57,7 @@ const OptionGroup = ({ value: propValue, qtype, answer,onChangeValue, multiple =
                 value={value?.includes('C') ? true : null}
                 option="C"
                 optionText={option3}
-                onChangeValue={() => onChange('C')}
+                onChangeValue={onChangeValue && (() => onChange('C'))}
                 isSelected={selectedAnswers[selectedNumber] == 'C'? true : false}
                 qtype={qtype}
                 answer={answer}
@@ -67,7 +67,7 @@ const OptionGroup = ({ value: propValue, qtype, answer,onChangeValue, multiple =
                 value={value?.includes('D') ? true : null}
                 option="D"
                 optionText={option4}
-                onChangeValue={() => onChange('D')}
+                onChangeValue={onChangeValue && (() => onChange('D'))}
                 isSelected={selectedAnswers[selectedNumber] == 'D' ? true : false}
                 qtype={qtype}
                 answer={answer}

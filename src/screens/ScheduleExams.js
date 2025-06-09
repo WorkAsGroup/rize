@@ -1,145 +1,182 @@
 import React, { useEffect, useState } from "react";
 import { useTheme } from "react-native-paper";
-import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, useColorScheme, FlatList, ActivityIndicator, ScrollView, RefreshControl, Alert, Modal, Pressable } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Dimensions,
+  useColorScheme,
+  FlatList,
+  ActivityIndicator,
+  ScrollView,
+  RefreshControl,
+  Alert,
+  Modal,
+  Pressable,
+} from "react-native";
 import { darkTheme } from "../theme/theme";
 import LinearGradient from "react-native-linear-gradient";
 import { useDispatch, useSelector } from "react-redux";
 import Header from "../common/Header";
-import { addAnalytics, getPreviousPapers, getScheduleExams } from "../core/CommonService";
+import {
+  addAnalytics,
+  getPreviousPapers,
+  getScheduleExams,
+} from "../core/CommonService";
 import AnimationWithImperativeApi from "../common/LoadingComponent";
 import { useNavigation } from "@react-navigation/native";
-import { resetState, setActiveQuestionIndex, setActiveSubjectId, setAutoSaveId, setExamDuration, setExamQuestions, setExamSessionId, setQuestionDetails } from "../store/slices/examSlice";
-
+import {
+  resetState,
+  setActiveQuestionIndex,
+  setActiveSubjectId,
+  setAutoSaveId,
+  setExamDuration,
+  setExamQuestions,
+  setExamSessionId,
+  setQuestionDetails,
+} from "../store/slices/examSlice";
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
-const ScheduleExams = ({ selecteditem,mocklist,  pre,   setMock, setShowCustom,  }) => {
+const ScheduleExams = ({
+  selecteditem,
+  mocklist,
+  pre,
+  setMock,
+  setShowCustom,
+}) => {
   // console.log( mocklist, pre, selectedExam,customExams, "weioufgwoeyuyewfuywe")
   const colorScheme = useColorScheme();
-  const navigation = useNavigation()
-  const[selectedType, setSelectedType] = useState("available")
+  const navigation = useNavigation();
+  const [selectedType, setSelectedType] = useState("available");
   const [expiredExams, setExpiredExams] = useState([]);
-  const [availableExams, setAvailableExams] = useState([])
-  const [completedExams,setCompletedExams] = useState([]);
+  const [availableExams, setAvailableExams] = useState([]);
+  const [completedExams, setCompletedExams] = useState([]);
   const selectedExam = useSelector((state) => state.header.selectedExam);
-     const uniqueId = useSelector((state) => state.header.deviceId);
+  const uniqueId = useSelector((state) => state.header.deviceId);
   const examLabel = useSelector((state) => state.header.examLabel);
-    const [studentExamId, setStudentExamId] = useState(selectedExam);
-  const [selectedPYQExam, setSelectedPYQExam] = useState('mains')
-    const [loading, setLoading] = useState(true);
+  const [studentExamId, setStudentExamId] = useState(selectedExam);
+  const [selectedPYQExam, setSelectedPYQExam] = useState("mains");
+  const [loading, setLoading] = useState(true);
   const [mains, setMains] = useState([]);
   const [advance, setAdvance] = useState([]);
-    const [addExam, setAddExam] = useState(false);
-    const dispatch = useDispatch();
+  const [addExam, setAddExam] = useState(false);
+  const dispatch = useDispatch();
   // const theme = colorScheme === "dark" ? darkTheme : lightTheme;
   const theme = darkTheme;
 
   const handleSetMockType = (type) => {
     setSelectedType(type);
-
   };
-
 
   const handleStartTest = async (item, type) => {
     console.log(item, type, "item, type");
     dispatch(resetState());
-    
+    dispatch(setAutoSaveId(0));
     try {
       setLoading(true);
-  
+
       // ✅ Convert current time to Unix timestamp in seconds
       const currentTime = Math.floor(Date.now() / 1000);
-  
+
       // ✅ Check if exam hasn't started yet
       if (item?.start_time && currentTime < item.start_time) {
         const startDate = new Date(item.start_time * 1000);
-        const formattedDate = startDate.toLocaleString('en-IN', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: 'numeric',
-          minute: '2-digit',
-          second: '2-digit',
+        const formattedDate = startDate.toLocaleString("en-IN", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          second: "2-digit",
           hour12: true,
         });
-  
-        Alert.alert("Exam Not Started Yet !", `Exam Starts on ${formattedDate}`);
+
+        Alert.alert(
+          "Exam Not Started Yet !",
+          `Exam Starts on ${formattedDate}`
+        );
         setLoading(false);
         return;
       }
-  
-      const previousExam = availableExams.find((p) => p.exam_name === item.exam_name);
+
+      const previousExam = availableExams.find(
+        (p) => p.exam_name === item.exam_name
+      );
       let previousPaperId = previousExam ? previousExam.exam_paper_id : null;
       let sessionId = null;
-  
+
       dispatch(setExamQuestions([]));
       dispatch(setQuestionDetails([]));
       dispatch(setActiveQuestionIndex(0));
       dispatch(setActiveSubjectId(null));
-  
+
       if (type === "replay") {
         dispatch(setExamSessionId(sessionId));
       }
-  
+
       dispatch(setAutoSaveId(item?.auto_save_id || 0));
-  
-      if (!item?.auto_save_id) {
+
+      if (item?.auto_save_id) {
         dispatch(setExamDuration(item?.exam_duration));
       }
-  
+
       setLoading(false);
-  
+
       if (type === "replay") {
         navigation.navigate("StartExam", {
           obj: item,
           studentExamId: selectedExam,
-          examtype: "schedule_exam",
+          examtype: "college_exam",
           type: selectedType,
-          session_id: sessionId || item.previous_session_id || item.custom_exam_id || 0,
+          session_id:
+            sessionId || item.previous_session_id || item.custom_exam_id || 0,
         });
       } else {
         navigation.navigate("InstructionAuth", {
           obj: item,
           studentExamId: selectedExam,
-          examtype: "schedule_exam",
+          examtype: "college_exam",
           type: selectedType,
-          session_id: sessionId || item.previous_session_id || item.custom_exam_id || 0,
+          session_id:
+            sessionId || item.previous_session_id || item.custom_exam_id || 0,
         });
       }
-  
     } catch (error) {
       console.error("❌ Error in handleStartTest:", error);
     } finally {
       setLoading(false);
     }
   };
-  
 
   const handleCheckResults = async (data, type) => {
     setLoading(true);
     const examObject = {
       ...data,
       type: type,
-      from: "scheduleexams",
-      studentExamUID: selectedExam ,
+      from: "ScheduleExams",
+      studentExamUID: selectedExam,
     };
     // dispatch(setExamSessionId(data.exam_session_id));
     try {
       // Define your params correctly
       const params = {
-          "student_user_exam_id": 0,
-          "type": 0,
-          "source": 0,
-          "testonic_page_id": selectedType=="previous" ? 54:  selectedType=="mock" ? 50 : 59,
+        student_user_exam_id: 0,
+        type: 0,
+        source: 0,
+        testonic_page_id:
+          selectedType == "previous" ? 54 : selectedType == "mock" ? 50 : 59,
       };
 
-      console.log(uniqueId,  "payloaddlscknl");
+      console.log(uniqueId, "payloaddlscknl");
 
       // Create payload
       const payload = {
-          ...params,
-          ip_address: uniqueId ? uniqueId: "",
-          location: "Hyderabad", // Ensure location is correctly handled (but you should pass the location data properly here)
+        ...params,
+        ip_address: uniqueId ? uniqueId : "",
+        location: "Hyderabad", // Ensure location is correctly handled (but you should pass the location data properly here)
       };
 
       console.log(payload, "payload");
@@ -147,130 +184,198 @@ const ScheduleExams = ({ selecteditem,mocklist,  pre,   setMock, setShowCustom, 
       // Send analytics request
       const response = await addAnalytics(payload); // Assuming addAnalytics is an API call function
       console.log("Analytics Response:", response);
-
-  } catch (error) {
+    } catch (error) {
       // Handle errors gracefully
       const errorMessage = error.response?.data?.message || error.message;
-    
+
       console.error("Error:", errorMessage);
-  }
-  setLoading(false);
-    navigation.navigate("resultsPage", { state: examObject });
+    }
+    setLoading(false);
+    navigation.navigate("resultsPage", {
+      state: examObject,
+      onGoBack: () => {
+        // This callback will be called when coming back from results
+        navigation.navigate("ScheduleExams");
+      },
+    });
   };
   // console.log(selectedExam, examLabel, "weioufgwoeyuyewfuywe")
   useEffect(() => {
-    getExams()
+    getExams();
   }, []);
-  const getExams = async() => {
-    setLoading(true)
+  useEffect(() => {
+    getExams();
+  }, [selectedExam]);
+  const getExams = async () => {
+    setLoading(true);
     const fields = {
-      student_user_exam_id: selectedExam
+      student_user_exam_id: selectedExam,
+    };
+    const response = await getScheduleExams(fields);
+    console.log(response, fields, "wefkwbefkwjhbef");
+    if (response?.data?.length > 0) {
+      const sortedExpiredExams = [...(response?.data?.[2]?.expired || [])].sort(
+        (a, b) => b.start_time - a.start_time
+      );
+
+      setExpiredExams(sortedExpiredExams);
+      const sortedAvailableExams = [
+        ...(response?.data?.[0]?.available || []),
+      ].sort((a, b) => a.start_time - b.start_time);
+
+      setAvailableExams(sortedAvailableExams);
+
+      setCompletedExams(response?.data?.[1]?.completed);
+      setLoading(false);
+    } else if (response.data.length === 0) {
+      setExpiredExams([]);
+      setAvailableExams([]);
+      setCompletedExams([]);
+      setLoading(false);
     }
-   const response =  await getScheduleExams(fields);
-   console.log(response, "wefkwbefkwjhbef")
-   if(response?.data?.length>0) {
-    setExpiredExams(response?.data?.[2]?.expired)
-    setAvailableExams(response?.data?.[0]?.available)
-    setCompletedExams(response?.data?.[1]?.completed)
-    setLoading(false)
-   }
-   setLoading(false)
-  }
 
-
+    setLoading(false);
+  };
 
   const renderItemMock = ({ item }) => {
     // console.log(item, selecteditem,"exam status")
     const startTime = item?.start_time; // Unix timestamp in seconds
-const endTime = item?.end_time;
+    const endTime = item?.end_time;
     const formatDateTime = (timestamp) => {
       const date = new Date(timestamp * 1000); // Convert to milliseconds
       const options = {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
+        month: "long",
+        day: "numeric",
+        year: "numeric",
       };
-    
-      const datePart = date.toLocaleDateString('en-US', options);
-      const timePart = date.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
+
+      const datePart = date.toLocaleDateString("en-US", options);
+      const timePart = date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
         hour12: true,
       });
-    
+
       return { datePart, timePart };
     };
-    
+
     const { datePart: date1, timePart: time1 } = formatDateTime(startTime);
     const { timePart: time2 } = formatDateTime(endTime);
     return (
       <LinearGradient
-  colors={["#e614e1", "#8b51fe"]}
-  style={{
-    padding: 1, // thickness of the border
-    borderRadius: 10, // match with inner view radius
-    marginTop: 10,
-  }}
-  key={item?.exam_paper_id}
->
-  <View style={[styles.itemContainer, { 
-    backgroundColor: theme.textColor1, 
-    borderRadius: 8, // should be slightly smaller than outer border if padding is small
-  }]}>
-      <View style={styles.detailsContainer}>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.examName, { color: theme.textColor }]}>{item.exam_name}{" "}({date1})</Text>
-            <View style={styles.timeContainer}>
-              <Image source={require("../images/clock.png")} style={[styles.clockIcon, { tintColor: theme.textColor }]} />
-              <Text style={[styles.timeText, { color: theme.textColor }]}>{" "}{`${time1} - ${time2}`}  </Text>
-            </View>
-          </View>
-          {/* Start Button */}
-           {selectedType!=="expired"&& <View style={{ marginTop: 10 }}>
-            {item.exam_session_id === 0 && item.auto_save_id === 0 ? (
-              // Start Button
-              <TouchableOpacity
-                style={[styles.startExamBtn, { marginRight: 10 }]}
-                // onPress={() => handleStartExam(item, "mockTest")}
-                onPress={() => handleStartTest(item, selectedType)}
-          
-              >
-                <LinearGradient
-                  colors={["#e614e1", "#8b51fe",]}
-                  style={styles.gradientBorder}
-                >{
-                  (loading&&(selecteditem?.exam_paper_id==item?.exam_paper_id)&&item?.exam_paper_id!=="0") ? <View style={styles.innerButton}>
-                       <ActivityIndicator size="small" color="#ffffff" /> 
-                  </View>
-              :
-                  <View style={styles.innerButton}>
-                    <Text style={styles.textExamBtn}>Start ➡</Text>
-                  </View>  }
-                </LinearGradient>
-              </TouchableOpacity>
-            ) : item.exam_session_id !== 0 && item.auto_save_id === 0 ? (
-              // Replay & Results Button
-              <View style={[styles.startExamBtn, { flexDirection: "row", marginRight: 10 }]}>
-                {selectedType !== "completed" && <TouchableOpacity
-                  onPress={() => handleStartTest(item, selectedType)}
-                  style={[styles.textExamBtn, styles.resultsButton, , { marginRight: 5 }]}
-                >
-                 
-                  {/* <Text style={styles.buttonText}>Results</Text> */}
-                  <Image source={require("../images/synchronize.png")} style={[styles.icon]} />
-                </TouchableOpacity>}
-                <TouchableOpacity
-                  onPress={() => handleCheckResults(item, selectedType)}
-                  style={[styles.textExamBtn, styles.resultsButton]}
-                >
-                  {/* <Text style={styles.buttonText}>Results</Text> */}
-                  <Image source={require("../images/pie-chart.png")} style={styles.icon} />
-                </TouchableOpacity>
+        colors={["#e614e1", "#8b51fe"]}
+        style={{
+          padding: 1, // thickness of the border
+          borderRadius: 10, // match with inner view radius
+          marginTop: 10,
+        }}
+        key={item?.exam_paper_id}
+      >
+        <View
+          style={[
+            styles.itemContainer,
+            {
+              backgroundColor: theme.textColor1,
+              borderRadius: 8, // should be slightly smaller than outer border if padding is small
+            },
+          ]}
+        >
+          <View style={styles.detailsContainer}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.examName, { color: theme.textColor }]}>
+                {item.exam_name} ({date1})
+              </Text>
+              <View style={styles.timeContainer}>
+                <Image
+                  source={require("../images/clock.png")}
+                  style={[styles.clockIcon, { tintColor: theme.textColor }]}
+                />
+                <Text style={[styles.timeText, { color: theme.textColor }]}>
+                  {" "}
+                  {`${time1} - ${time2}`}{" "}
+                </Text>
               </View>
-            ) : item.exam_session_id !== 0 && item.auto_save_id !== 0 ? (
-              // Resume & Results Button
-              <View style={[styles.startExamBtn, { flexDirection: "row", marginRight: 10 }]}>
-                {/* <LinearGradient
+            </View>
+            {/* Start Button */}
+            {selectedType !== "expired" && (
+              <View style={{ marginTop: 10 }}>
+                {item.exam_session_id === 0 && item.auto_save_id === 0 ? (
+                  // Start Button
+                  <TouchableOpacity
+                    style={[styles.startExamBtn, { marginRight: 10 }]}
+                    // onPress={() => handleStartExam(item, "mockTest")}
+                    onPress={() => handleStartTest(item, selectedType)}
+                  >
+                    <LinearGradient
+                      colors={["#e614e1", "#8b51fe"]}
+                      style={styles.gradientBorder}
+                    >
+                      {loading &&
+                      selecteditem?.exam_paper_id == item?.exam_paper_id &&
+                      item?.exam_paper_id !== "0" ? (
+                        <View style={styles.innerButton}>
+                          <ActivityIndicator size="small" color="#ffffff" />
+                        </View>
+                      ) : (
+                        <View style={styles.innerButton}>
+                          <Text style={styles.textExamBtn}>Start ➡</Text>
+                        </View>
+                      )}
+                    </LinearGradient>
+                  </TouchableOpacity>
+                ) : item.exam_session_id !== 0 && item.auto_save_id === 0 ? (
+                  // Replay & Results Button
+                  <View
+                    style={[
+                      styles.startExamBtn,
+                      { flexDirection: "row", marginRight: 10 },
+                    ]}
+                  >
+                    {selectedType !== "completed" && (
+                      <TouchableOpacity
+                        onPress={() => handleStartTest(item, selectedType)}
+                        style={[
+                          styles.textExamBtn,
+                          styles.resultsButton,
+                          ,
+                          { marginRight: 5 },
+                        ]}
+                      >
+                        {/* <Text style={styles.buttonText}>Results</Text> */}
+                        <Image
+                          source={require("../images/synchronize.png")}
+                          style={[styles.icon]}
+                        />
+                      </TouchableOpacity>
+                    )}
+                    <TouchableOpacity
+                      onPress={() => handleCheckResults(item, selectedType)}
+                      style={[styles.textExamBtn]}
+                    >
+                      <LinearGradient
+                        colors={["#e614e1", "#8b51fe"]}
+                        style={styles.gradientBorder}
+                      >
+                        <View
+                          style={[
+                            styles.innerButton,
+                            { paddingVertical: 8, paddingHorizontal: 10 },
+                          ]}
+                        >
+                          <Text style={styles.textExamBtn}>Results</Text>
+                        </View>
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  </View>
+                ) : item.exam_session_id !== 0 && item.auto_save_id !== 0 ? (
+                  // Resume & Results Button
+                  <View
+                    style={[
+                      styles.startExamBtn,
+                      { flexDirection: "row", marginRight: 10 },
+                    ]}
+                  >
+                    {/* <LinearGradient
                       colors={["#B465DA", "#CF6CC9", "#EE609C", "#EE609C"]}
                       style={[styles.gradientButton, { marginRight: 10 }]}
                     >
@@ -278,194 +383,296 @@ const endTime = item?.end_time;
                       <Image source={require("../../images/replay.png")} style={{height: 18, width: 18}} />
                       </TouchableOpacity>
                     </LinearGradient> */}
-               <TouchableOpacity onPress={() => handleStartTest(item, "replay")}          >
-                <View style={styles.innerButton}>
-             
-                    <Image source={require("../images/replay.png")} style={{ height: 18, width: 18 }} />
-             
-                </View>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => handleCheckResults(item, selectedType)}
-                  style={[styles.textExamBtn, styles.resultsButton]}
-                >
-                  {/* <Text style={styles.buttonText}>Results</Text> */}
-                  <Image source={require("../images/pie-chart.png")} style={styles.icon} />
-                </TouchableOpacity>
+                    {/* <TouchableOpacity
+                      onPress={() => handleStartTest(item, "replay")}
+                    >
+                      <View style={styles.innerButton}>
+                        <Image
+                          source={require("../images/replay.png")}
+                          style={{ height: 18, width: 18 }}
+                        />
+                      </View>
+                    </TouchableOpacity> */}
+                    <TouchableOpacity
+                      onPress={() => handleCheckResults(item, selectedType)}
+                      style={[styles.textExamBtn]}
+                    >
+                      <LinearGradient
+                        colors={["#e614e1", "#8b51fe"]}
+                        style={styles.gradientBorder}
+                      >
+                        <View
+                          style={[
+                            styles.innerButton,
+                            { paddingVertical: 8, paddingHorizontal: 10 },
+                          ]}
+                        >
+                          <Text style={styles.textExamBtn}>Results</Text>
+                        </View>
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  // Resume Button Only
+
+                  <LinearGradient
+                    colors={["#e614e1", "#8b51fe"]}
+                    style={styles.gradientBorder}
+                  >
+                    <TouchableOpacity
+                      onPress={() => handleStartTest(item, "replay")}
+                    >
+                      <View style={styles.innerButton}>
+                        <Image
+                          source={require("../images/replay.png")}
+                          style={{ height: 18, width: 18 }}
+                        />
+                      </View>
+                    </TouchableOpacity>
+                  </LinearGradient>
+                )}
               </View>
-            ) : (
-              // Resume Button Only
-
-              <LinearGradient
-                colors={["#e614e1", "#8b51fe",]}
-                style={styles.gradientBorder}
-              >
-                     <TouchableOpacity onPress={() => handleStartTest(item, "replay")}          >
-                <View style={styles.innerButton}>
-             
-                    <Image source={require("../images/replay.png")} style={{ height: 18, width: 18 }} />
-             
-                </View>
-                </TouchableOpacity>
-              </LinearGradient>
             )}
-          </View>}
+          </View>
+
+          {/* Exam Marks List */}
+          {item.marks?.length > 0 && (
+            <ScrollView
+              showsHorizontalScrollIndicator={false}
+              horizontal
+              contentContainerStyle={styles.marksContainer}
+            >
+              <TouchableOpacity
+                key={0}
+                style={[
+                  styles.markButton,
+                  styles[`bgColor${0}`],
+                  styles[`borderColor${0}`],
+                ]}
+              >
+                <Text style={[styles.markText, { color: "#000" }]}>
+                  Total:{" "}
+                  {item.marks.reduce(
+                    (total, mark) => total + Number(mark.subject_score || 0),
+                    0
+                  )}
+                </Text>
+              </TouchableOpacity>
+
+              {item.marks.map((mark, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.markButton,
+                    styles[`bgColor${index + 1}`],
+                    styles[`borderColor${index}`],
+                  ]}
+                >
+                  <Text style={[styles.markText, { color: "#000" }]}>
+                    {mark.subject}: {mark.subject_score}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
         </View>
-
-        {/* Exam Marks List */}
-        {item.marks?.length > 0 && (<ScrollView showsHorizontalScrollIndicator={false}
-
-          horizontal contentContainerStyle={styles.marksContainer} >
-          <TouchableOpacity
-            key={0}
-            style={[styles.markButton, styles[`bgColor${0}`], styles[`borderColor${0}`]]}
-          >
-            <Text style={[styles.markText, { color: "#000" }]}>
-              Total: {item.marks.reduce((total, mark) => total + Number(mark.subject_score || 0), 0)}
-            </Text>
-          </TouchableOpacity>
-
-          {item.marks.map((mark, index) => (
-            <TouchableOpacity key={index} style={[styles.markButton, styles[`bgColor${index + 1}`], styles[`borderColor${index}`]]}>
-              <Text style={[styles.markText, { color: "#000" }]}>{mark.subject}: {mark.subject_score}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-        )}
-  </View>
-</LinearGradient>
- 
+      </LinearGradient>
     );
   };
 
-
-
   return (
-        <View style={[styles.container, { backgroundColor: theme.textbgcolor }]}>
-          {/* Header */}
-       
-    <Header setAddExam={setAddExam} addExam={addExam} setId={setStudentExamId}  />
-    <View style={[styles.performanceCard, { backgroundColor: theme.conbk, marginTop: 20, height: windowHeight * .85 }]}>
+    <View style={[styles.container, { backgroundColor: theme.textbgcolor }]}>
+      {/* Header */}
 
- 
-    
-  {loading ? ( <View style={styles.loadingContainer}>
-       <AnimationWithImperativeApi />
-      </View>) : <View>
-        <View
-        style={{
-          flexDirection: 'row',
-          minWidth: '100%',
-          alignItems: 'center'
-        }}
+      {/* <Header
+        setAddExam={setAddExam}
+        addExam={addExam}
+        setId={setStudentExamId}
+      /> */}
+      <View
+        style={[
+          styles.performanceCard,
+          {
+            backgroundColor: theme.conbk,
+            marginTop: 20,
+            height: windowHeight * 0.85,
+          },
+        ]}
       >
-        <TouchableOpacity
-          style={{
-            backgroundColor: "transparent",
-            padding: 8,
-            borderBottomColor: selectedType == 'available' ? theme.tx1 : "transparent"
-          }}
-          onPress={() => {
-            // setMock(mocklist);
-            handleSetMockType('available');
-          }}
-        >
-          <Text style={{ color: selectedType === 'available' ? theme.tx1 : theme.textColor, fontSize: 16 }}>Available </Text>
-          {selectedType === 'available' && (
-    <LinearGradient
-      colors={["#6A11CB", "#2575FC"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={{
-        height: 2,
-        width: '100%',
-        marginTop: 2,
-        borderRadius: 1,
-      }}
-    />
-  )}
-        </TouchableOpacity>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <AnimationWithImperativeApi />
+          </View>
+        ) : (
+          <View style={{ height: windowHeight * 0.9, paddingBottom: 70 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                minWidth: "100%",
+                alignItems: "center",
+              }}
+            >
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "transparent",
+                  padding: 8,
+                  borderBottomColor:
+                    selectedType == "available" ? theme.tx1 : "transparent",
+                }}
+                onPress={() => {
+                  // setMock(mocklist);
+                  handleSetMockType("available");
+                }}
+              >
+                <Text
+                  style={{
+                    color:
+                      selectedType === "available"
+                        ? theme.tx1
+                        : theme.textColor,
+                    fontSize: 16,
+                  }}
+                >
+                  Available{" "}
+                </Text>
+                {selectedType === "available" && (
+                  <LinearGradient
+                    colors={["#6A11CB", "#2575FC"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={{
+                      height: 2,
+                      width: "100%",
+                      marginTop: 2,
+                      borderRadius: 1,
+                    }}
+                  />
+                )}
+              </TouchableOpacity>
 
+              <TouchableOpacity
+                onPress={() => {
+                  handleSetMockType("completed");
+                  // setMock(pre);
+                }}
+                style={{ padding: 8 }}
+              >
+                <View style={{ alignItems: "center" }}>
+                  <Text
+                    style={{
+                      color:
+                        selectedType === "completed"
+                          ? "#6A11CB"
+                          : theme.textColor,
+                      fontSize: 16,
+                      backgroundColor: "transparent",
+                    }}
+                  >
+                    {"  "}Completed{"  "}
+                  </Text>
 
-        <TouchableOpacity
-onPress={() => {
-  handleSetMockType('completed');
-  // setMock(pre);
-}}
-style={{ padding: 8 }}
->
-<View style={{ alignItems: 'center' }}>
-  <Text
-    style={{
-      color: selectedType === 'completed' ? "#6A11CB" : theme.textColor,
-      fontSize: 16,
-      backgroundColor: 'transparent',
-    }}
-  >
-    {"  "}Completed{"  "}
-  </Text>
+                  {selectedType === "completed" && (
+                    <LinearGradient
+                      colors={["#6A11CB", "#2575FC"]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={{
+                        height: 2,
+                        width: "100%",
+                        marginTop: 2,
+                        borderRadius: 1,
+                      }}
+                    />
+                  )}
+                </View>
+              </TouchableOpacity>
 
-  {selectedType === 'completed' && (
-    <LinearGradient
-      colors={["#6A11CB", "#2575FC"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={{
-        height: 2,
-        width: '100%',
-        marginTop: 2,
-        borderRadius: 1,
-      }}
-    />
-  )}
-</View>
-</TouchableOpacity>
+              {/* </LinearGradient> */}
 
-        {/* </LinearGradient> */}
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "transparent",
+                  padding: 8,
+                  marginLeft: 10,
+                  borderBottomColor:
+                    selectedType === "expired" ? theme.tx1 : "transparent",
+                }}
+                onPress={() => {
+                  handleSetMockType("expired");
+                  // setMock(expiredExams);
+                }}
+              >
+                <Text
+                  style={{
+                    color:
+                      selectedType === "expired" ? theme.tx1 : theme.textColor,
+                    fontSize: 16,
+                  }}
+                >
+                  Expired{" "}
+                </Text>
 
+                {selectedType === "expired" && (
+                  <LinearGradient
+                    colors={["#6A11CB", "#2575FC"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={{
+                      height: 2,
+                      width: "100%",
+                      marginTop: 2,
+                      borderRadius: 1,
+                    }}
+                  />
+                )}
+              </TouchableOpacity>
 
-        <TouchableOpacity
-          style={{
-            backgroundColor: "transparent",
-            padding: 8,
-            marginLeft: 10,
-            borderBottomColor: selectedType === 'expired' ? theme.tx1 : "transparent"
-          }}
-          onPress={() => {
-            handleSetMockType('expired');
-            // setMock(expiredExams);
-          }}
-        >
-    <Text style={{ color: selectedType === 'expired' ? theme.tx1 : theme.textColor, fontSize: 16 }}>Expired </Text>
-          {selectedType === 'expired' && (
-    <LinearGradient
-      colors={["#6A11CB", "#2575FC"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={{
-        height: 2,
-        width: '100%',
-        marginTop: 2,
-        borderRadius: 1,
-      }}
-    />
-  )}
-        </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => getExams()}
+                style={{ marginLeft: 30 }}
+              >
+                <Image
+                  source={require("../images/refresh.png")}
+                  style={{ height: 20, width: 20, tintColor: "#fafdff" }}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <FlatList
+              data={
+                selectedType === "available"
+                  ? availableExams
+                  : selectedType === "completed"
+                  ? completedExams
+                  : expiredExams
+              }
+              renderItem={renderItemMock}
+              keyExtractor={(item) =>
+                item.id ? item.id.toString() : Math.random().toString()
+              }
+              onRefresh={getExams}
+              refreshing={loading}
+              nestedScrollEnabled={true}
+              ListEmptyComponent={
+                <View
+                  style={{
+                    display: "flex",
+                    height: Dimensions.get("screen").height * 0.7,
+                    width: Dimensions.get("screen").width * 0.9,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    textAlign: "center",
+                  }}
+                >
+                  <Text style={{ color: theme.textColor, textAlign: "center" }}>
+                    No tests available.
+                  </Text>
+                </View>
+              }
+            />
+          </View>
+        )}
       </View>
-
-
-   
-    <FlatList
-      data={selectedType === "available" ? availableExams : selectedType === "completed" ?completedExams: expiredExams}
-      renderItem={renderItemMock}
-
-      keyExtractor={(item) => item.id ? item.id.toString() : Math.random().toString()}
-      nestedScrollEnabled={true}
-      ListEmptyComponent={<Text style={{ color: theme.textColor, textAlign: 'center' }}>No tests available.</Text>}
-    />
-  </View>
-}
-    </View>
     </View>
   );
 };
@@ -479,22 +686,22 @@ const styles = StyleSheet.create({
     margin: 1,
     padding: 5,
     borderRadius: 15,
-    alignContent: 'flex-start',
+    alignContent: "flex-start",
   },
   performanceCard: { padding: 10, borderRadius: 10, elevation: 1 },
-  performanceTitle: { fontSize: 18, fontWeight: 'bold' },
-  subText: { color: 'gray' },
-  bigText: { fontSize: 30, fontWeight: 'bold', marginTop: 5 },
+  performanceTitle: { fontSize: 18, fontWeight: "bold" },
+  subText: { color: "gray" },
+  bigText: { fontSize: 30, fontWeight: "bold", marginTop: 5 },
   chart: { height: 150, marginTop: 10 },
   tabScreen: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   startButtonGradient: {
     borderRadius: 15,
@@ -505,14 +712,13 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: 'black'
+    fontWeight: "600",
+    color: "black",
   },
   containertext: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between', // Pushes text & dropdown to opposite sides
-
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between", // Pushes text & dropdown to opposite sides
   },
   textContainer: {
     flex: 1, // Takes up available space
@@ -522,15 +728,15 @@ const styles = StyleSheet.create({
   },
   performanceTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   subText: {
     fontSize: 14,
-    color: 'gray',
+    color: "gray",
   },
   bigText: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   startButtonGradients: {
     paddingVertical: 5,
@@ -550,8 +756,8 @@ const styles = StyleSheet.create({
   },
   centeredView: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   timeContainer: {
@@ -619,8 +825,8 @@ const styles = StyleSheet.create({
   bgColor3: { backgroundColor: "#BFD7EA" },
   bgColor4: { backgroundColor: "#B888D7" },
   startExamBtn: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   gradientButton: {
     paddingVertical: 10,
@@ -661,14 +867,14 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   innerButton: {
-    backgroundColor: 'black', // or your background color
+    backgroundColor: "black", // or your background color
     paddingVertical: 10,
     paddingHorizontal: 25,
     borderRadius: 25,
-    alignItems: 'center',
+    alignItems: "center",
   },
   textExamBtn: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
   },
-})
+});

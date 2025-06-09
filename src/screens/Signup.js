@@ -563,8 +563,8 @@ const styles = StyleSheet.create({
     },
     header: {
         alignItems: "center",
-        marginTop: 100,
-        height: windowHeight / 10,
+        // marginTop: 100,
+        // height: windowHeight / 10,
     },
     logo: {
         width: 250,
@@ -582,12 +582,12 @@ const styles = StyleSheet.create({
     },
     formContainer: {
         width: windowWidth,
-        height: windowHeight / 1 / 1,
+        // height: windowHeight / 1 / 1,
         backgroundColor: "#4f9deb",
         justifyContent: "center",
         alignItems: "center",
         overflow: "hidden",
-        top: -90,
+        // top: -90,
     },
     welcomeText: {
         fontSize: 20,

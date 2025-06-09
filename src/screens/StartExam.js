@@ -1,4 +1,10 @@
-import React, { useState, useRef, useEffect, useCallback, useDebugValue } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useDebugValue,
+} from "react";
 import {
   View,
   Text,
@@ -27,13 +33,37 @@ import Svg, {
   Text as SvgText,
 } from "react-native-svg";
 import { useFocusEffect } from "@react-navigation/native";
-import { getExamQuestions, getActiveQuestionIndex, getQuestionDetails, getExamPatternSections, getReloadQusationLoader, getActiveSubjectId, getAutoSaveId, getExamUniqueeId, getExamSessionId, getExamDuration, getFinishTest, getAutoSaveTime } from "../store/selectors/questionsSelectors"
+import {
+  getExamQuestions,
+  getActiveQuestionIndex,
+  getQuestionDetails,
+  getExamPatternSections,
+  getReloadQusationLoader,
+  getActiveSubjectId,
+  getAutoSaveId,
+  getExamUniqueeId,
+  getExamSessionId,
+  getExamDuration,
+  getFinishTest,
+  getAutoSaveTime,
+} from "../store/selectors/questionsSelectors";
 // import HtmlComponent from "../common/HtmlComponent";
-import { updateQuestionDetail, setActiveQuestionIndex, setActiveSubjectId, setQuestionDetails } from '../store/slices/examSlice'
+import {
+  updateQuestionDetail,
+  setActiveQuestionIndex,
+  setActiveSubjectId,
+  setQuestionDetails,
+  resetState,
+} from "../store/slices/examSlice";
 import LoadQuestion from "../common/LoadQuestion";
 import AnimationWithImperativeApi from "../common/LoadingComponent";
 import { useDispatch, useSelector } from "react-redux";
-import { addAutoSaveThunk, questionsThunk, startExamThunk, submitExamThunk } from "../store/thunks/questionsThunk";
+import {
+  addAutoSaveThunk,
+  questionsThunk,
+  startExamThunk,
+  submitExamThunk,
+} from "../store/thunks/questionsThunk";
 import { reloadQuesationThunk } from "../store/thunks/questionsThunk";
 import { addAnalytics } from "../core/CommonService";
 
@@ -50,13 +80,15 @@ const StartExam = ({ navigation, route }) => {
   const autoSaveId = useSelector((state) => state.questions.autoSaveId);
   const finishTest = useSelector((state) => state.questions.finishTest);
   const finishedData = useSelector((state) => state.questions.finishedData);
-  const questionLoading = useSelector((state) => state.questions.questionLoading);
+  const questionLoading = useSelector(
+    (state) => state.questions.questionLoading
+  );
   const examQuestions = useSelector(getExamQuestions);
   const questionDetails = useSelector(getQuestionDetails);
   const examPatternData = useSelector(getExamPatternSections);
   const reloadQuestionLoader = useSelector(getReloadQusationLoader);
   const activeQuestionIndex = useSelector(getActiveQuestionIndex);
-  const loading = useSelector((state) => state.questions.loading)
+  const loading = useSelector((state) => state.questions.loading);
   const selectedQuestion = examQuestions[activeQuestionIndex];
   const examtype = route?.params?.examtype;
   const activeSubject = useSelector(getActiveSubjectId);
@@ -66,7 +98,10 @@ const StartExam = ({ navigation, route }) => {
   const autoTimerRef = useRef();
   const attemptedQuestionsRef = useRef([]);
   const uidRef = useRef();
-  const attempt_answer = questionDetails.filter((item) => item.question_id === selectedQuestion?.id)[0]?.attempt_answer || "";
+  const attempt_answer =
+    questionDetails.filter(
+      (item) => item.question_id === selectedQuestion?.id
+    )[0]?.attempt_answer || "";
   const [state, setState] = useState({
     selectSubjectQuestions: [],
     notViewed: "",
@@ -78,14 +113,14 @@ const StartExam = ({ navigation, route }) => {
   const activeQuestionIndexRef = useRef(activeQuestionIndex);
   const activeExamIdRef = useRef(studentExamId);
   const [reloadQuestions, setReloadQuestions] = useState(false);
-  
+
   const [data, setData] = useState([]);
   const flatListRef = useRef(null);
   const ITEM_WIDTH = 50;
   const [subState, setSubState] = useState({
-    uniqueSubjects: []
-});
-const isComponentMounted = useRef(true);
+    uniqueSubjects: [],
+  });
+  const isComponentMounted = useRef(true);
   const [answeredQuestions, setAnsweredQuestions] = useState({});
   const [skippedQuestions, setSkippedQuestions] = useState({});
   const [taggedQuestions, setTaggedQuestions] = useState({});
@@ -104,100 +139,97 @@ const isComponentMounted = useRef(true);
 
   const [session_id, setSessionid] = useState(route?.params?.session_id);
 
-
   const [submitModalVisible, setSubmitModalVisible] = useState(false);
   const [isTimeUp, setIsTimeUp] = useState(false);
   const intervalRef = useRef(null);
 
-
-
   const [backSubmitBtn, setBackSubmitBtn] = useState(false);
-  const [autoSaveTimer, setAutoSaveTimer] = useState(autoSaveTime)
+  const [autoSaveTimer, setAutoSaveTimer] = useState(autoSaveTime);
   const [hasSubmitted, setHasSubmitted] = useState(false);
-  const timeLeftRef = useRef(timeLeft);
-  const hasTriggeredRef = useRef()
 
-  const answerArray = selectedQuestion && selectedQuestion?.answer?.split(',').filter(item => item.trim() !== '');
+  const hasTriggeredRef = useRef();
 
+  const answerArray =
+    selectedQuestion &&
+    selectedQuestion?.answer?.split(",").filter((item) => item.trim() !== "");
 
   const [timer, setTimer] = useState(0);
   const previousTimeRef = useRef(timer);
 
-
-useEffect(() => {
-if(questionDetails) {
-  setAnsweredQuestions(questionDetails.filter((item) => item.attempt_answer!==""))
-}
-},[questionDetails])
+  useEffect(() => {
+    if (questionDetails) {
+      setAnsweredQuestions(
+        questionDetails.filter((item) => item.attempt_answer !== "")
+      );
+    }
+  }, [questionDetails]);
 
   const [restrictionMessage, setRestrictionMessage] = useState("");
-     const uniqueId = useSelector((state) => state.header.deviceId);
-    
-    
-      
-    
-        const handleAnalytics = async () => {
-            console.log("hey Um called")
-            try {
-                // Define your params correctly
-                const params = {
-                    "student_user_exam_id": studentExamId,
-                    "type": 1,
-                    "source": 0,
-                    "testonic_page_id":  route?.params?.type == "mock" ? 48 : route?.params?.type == "previous" ? 52 : 57,
-                };
-        
-                console.log(uniqueId,  "payloaddlscknl");
-        
-                // Create payload
-                const payload = {
-                    ...params,
-                    ip_address: uniqueId ? uniqueId: "",
-                    location: "Hyderabad", // Ensure location is correctly handled (but you should pass the location data properly here)
-                };
-        
-                console.log(payload, "payload");
-        
-                // Send analytics request
-                const response = await addAnalytics(payload); // Assuming addAnalytics is an API call function
-                console.log("Analytics Response:", response);
-        
-            } catch (error) {
-                // Handle errors gracefully
-                const errorMessage = error.response?.data?.message || error.message;
-              
-                console.error("Error:", errorMessage);
-            }
-        };
+  const uniqueId = useSelector((state) => state.header.deviceId);
+
+  const handleAnalytics = async () => {
+    console.log("hey Um called");
+    try {
+      // Define your params correctly
+      const params = {
+        student_user_exam_id: studentExamId,
+        type: 1,
+        source: 0,
+        testonic_page_id:
+          route?.params?.type == "mock"
+            ? 48
+            : route?.params?.type == "previous"
+            ? 52
+            : 57,
+      };
+
+      console.log(uniqueId, "payloaddlscknl");
+
+      // Create payload
+      const payload = {
+        ...params,
+        ip_address: uniqueId ? uniqueId : "",
+        location: "Hyderabad", // Ensure location is correctly handled (but you should pass the location data properly here)
+      };
+
+      console.log(payload, "payload");
+
+      // Send analytics request
+      const response = await addAnalytics(payload); // Assuming addAnalytics is an API call function
+      console.log("Analytics Response:", response);
+    } catch (error) {
+      // Handle errors gracefully
+      const errorMessage = error.response?.data?.message || error.message;
+
+      console.error("Error:", errorMessage);
+    }
+  };
   // console.log(  uidRef.current, "UID")
 
   useEffect(() => {
-    if(uniqueId) {
-      handleAnalytics()
+    if (uniqueId) {
+      handleAnalytics();
     }
-
-  },[])
-useEffect(() => {
-  console.log(uid, "UID")
-  uidRef.current=uid
-}, [uid])
+  }, []);
+  useEffect(() => {
+    console.log(uid, "UID");
+    uidRef.current = uid;
+  }, [uid]);
 
   useEffect(() => {
     activeExamIdRef.current = studentExamId;
-  }, [studentExamId])
+  }, [studentExamId]);
   useEffect(() => {
     activeQuestionIndexRef.current = activeQuestionIndex;
-  }, [activeQuestionIndex])
-  // console.log(autoSaveId, "duration")  
+  }, [activeQuestionIndex]);
+  // console.log(autoSaveId, "duration")
   const [timeLeft, setTimeLeft] = useState(() => {
     // Use examDuration if available, otherwise default to 60 minutes (3600 seconds)
     return examDuration ? examDuration * 60 : 3600;
   });
   useEffect(() => {
     attemptedQuestionsRef.current = questionDetails;
-}, [questionDetails, attempt_answer]);
-
-
+  }, [questionDetails, attempt_answer]);
 
   useEffect(() => {
     if (examDuration && examDuration > 0) {
@@ -224,130 +256,136 @@ useEffect(() => {
     console.log(examQuestions, "examQuestions");
 
     if (examQuestions.length > 0) {
-        // Extract unique subjects from examQuestions based on the subject field
-        const uniqueSubjects = examQuestions.reduce((unique, data) => {
-            if (data.subject !== undefined && !unique.some((item) => item.subject === data.subject)) {
-                unique.push(data); // Add unique subject data object
-            }
-            return unique;
-        }, []);
+      // Extract unique subjects from examQuestions based on the subject field
+      const uniqueSubjects = examQuestions.reduce((unique, data) => {
+        if (
+          data.subject !== undefined &&
+          !unique.some((item) => item.subject === data.subject)
+        ) {
+          unique.push(data); // Add unique subject data object
+        }
+        return unique;
+      }, []);
 
-        // Filter examPatternData to get only matching subjects
-        const filteredPatternData = examPatternData.filter((patternData) => {
-            return uniqueSubjects.some((unique) => unique.subject === patternData.subject_id);
-        });
-console.log(uniqueSubjects, filteredPatternData, examPatternData, "uq")
-        // Remove duplicates in the filteredPatternData
-        const distinctSubjects = filteredPatternData.reduce((unique, item) => {
-            if (!unique.some((i) => i.subject_id === item.subject_id)) {
-                unique.push(item);
-            }
-            return unique;
-        }, []);
+      // Filter examPatternData to get only matching subjects
+      const filteredPatternData = examPatternData.filter((patternData) => {
+        return uniqueSubjects.some(
+          (unique) => unique.subject === patternData.subject_id
+        );
+      });
+      console.log(uniqueSubjects, filteredPatternData, examPatternData, "uq");
+      // Remove duplicates in the filteredPatternData
+      const distinctSubjects = filteredPatternData.reduce((unique, item) => {
+        if (!unique.some((i) => i.subject_id === item.subject_id)) {
+          unique.push(item);
+        }
+        return unique;
+      }, []);
 
-        // Update state with the distinct subjects
-        setSubState((prevState) => ({
-            ...prevState,
-            uniqueSubjects: distinctSubjects, // Update with distinct subjects
-        }));
+      // Update state with the distinct subjects
+      setSubState((prevState) => ({
+        ...prevState,
+        uniqueSubjects: distinctSubjects, // Update with distinct subjects
+      }));
     }
-}, [examQuestions, examPatternData]);
+  }, [examQuestions, examPatternData]);
 
+  // console.log(subState?.uniqueSubjects, "uniqueeeeee")
+  const timeLeftRef = useRef(timeLeft);
+  const hasSubmittedRef = useRef(false);
 
-
-
-// console.log(subState?.uniqueSubjects, "uniqueeeeee")
   useEffect(() => {
-    // Initialize timeLeftRef with the current timeLeft
+    hasSubmittedRef.current = hasSubmitted;
+  }, [hasSubmitted]);
+
+  useEffect(() => {
     timeLeftRef.current = timeLeft;
-  
+
     const timerInterval = setInterval(() => {
-      setTimeLeft(prev => {
+      setTimeLeft((prev) => {
         const newTime = prev - 1;
-        timeLeftRef.current = newTime; // Keep ref in sync
-  
+        timeLeftRef.current = newTime;
+
         if (newTime <= 0) {
           clearInterval(timerInterval);
-          if (!hasSubmitted) {
+          if (!hasSubmittedRef.current) {
             setIsTimeUp(true);
             handleSubmitOnTimeUp();
             setHasSubmitted(true);
+            hasSubmittedRef.current = true;
           }
           return 0;
         }
+
         return newTime;
       });
     }, 1000);
-  
+
     return () => {
       clearInterval(timerInterval);
     };
-  }, [hasSubmitted]);
+  }, []);
 
-useEffect(() => {
-  const backAction = () => {
-    Alert.alert(
-      "Confirm Exit",
-      "Are you sure you want to exit the exam?",
-      [
+  useEffect(() => {
+    const backAction = () => {
+      Alert.alert("Confirm Exit", "Are you sure you want to exit the exam?", [
         {
           text: "Cancel",
           onPress: () => null,
-          style: "cancel"
+          style: "cancel",
         },
-        { 
-          text: "YES", 
+        {
+          text: "YES",
           onPress: () => {
             // Handle exam submission or cleanup
+            dispatch(resetState());
             navigation.goBack();
-          }
-        }
-      ]
+          },
+        },
+      ]);
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
     );
-    return true;
-  };
 
-  const backHandler = BackHandler.addEventListener(
-    "hardwareBackPress",
-    backAction
-  );
+    return () => backHandler.remove();
+  }, []);
 
-  return () => backHandler.remove();
-}, []);
+  // useEffect(() => {
+  //   attemptedQuestionsRef.current = questionDetails;
+  // }, [questionDetails]);
 
-// useEffect(() => {
-//   attemptedQuestionsRef.current = questionDetails;
-// }, [questionDetails]);
+  // Fix the auto-save useEffect
 
-// Fix the auto-save useEffect
+  useEffect(() => {
+    return () => {
+      // Clear all intervals and timeouts
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (autoTimerRef.current) clearInterval(autoTimerRef.current);
 
+      // Cancel any pending API requests or thunks
+      // (Assuming you're using Redux Toolkit, you might need additional logic here)
 
-useEffect(() => {
-  return () => {
-    // Clear all intervals and timeouts
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    if (autoTimerRef.current) clearInterval(autoTimerRef.current);
-    
-    // Cancel any pending API requests or thunks
-    // (Assuming you're using Redux Toolkit, you might need additional logic here)
-    
-    // Reset any ongoing states
-    // setHasSubmitted(true); // Prevent further submissions
-    setAutoSaveTimer(0);
-    hasTriggeredRef.current = true;
-  };
-}, [submitModalVisible]);
+      // Reset any ongoing states
+      // setHasSubmitted(true); // Prevent further submissions
+      setAutoSaveTimer(0);
+      hasTriggeredRef.current = true;
+    };
+  }, [submitModalVisible]);
 
-useEffect(() => {
-  timeLeftRef.current = timeLeft;
-}, [timeLeft]);
+  useEffect(() => {
+    timeLeftRef.current = timeLeft;
+  }, [timeLeft]);
 
   const autoSaveData = async (params) => {
     try {
       console.log("Attempting auto-save...", params);
       const response = await dispatch(addAutoSaveThunk(params));
-      setAutoSaveTimer(autoSaveTime)
-      hasTriggeredRef.current=false;
+      setAutoSaveTimer(autoSaveTime);
+      hasTriggeredRef.current = false;
       console.log("Auto-save successful:", response);
       return response;
     } catch (error) {
@@ -360,70 +398,90 @@ useEffect(() => {
       clearInterval(autoTimerRef.current);
       autoTimerRef.current = null;
     }
-  
+
     if (!autoSaveTime || autoSaveTime <= 0) return;
-  
+
     hasTriggeredRef.current = false;
     setAutoSaveTimer(autoSaveTime);
-  
+
     autoTimerRef.current = setInterval(() => {
-      setAutoSaveTimer(prev => {
+      setAutoSaveTimer((prev) => {
         const next = prev > 0 ? prev - 1 : 0;
         console.log("⏳ Auto-save countdown:", next);
-  
-        if (next === 0 && !hasTriggeredRef.current && examQuestions.length > 0) {
+
+        if (
+          next === 0 &&
+          !hasTriggeredRef.current &&
+          examQuestions.length > 0
+        ) {
           hasTriggeredRef.current = true;
           console.log("🚀 Auto-saving now...");
-  
+
           const params = {
             autoSaveId,
             exam_paper_id: obj.exam_paper_id,
             questions_data: JSON.stringify(attemptedQuestionsRef.current),
-            qsno: activeQuestionIndexRef.current + 1,  // ✅ using ref here
+            qsno: activeQuestionIndexRef.current + 1,
             examtimer: timeLeftRef.current,
             questions_count: examQuestions.length,
-            uid:uidRef.current,
-            exam_session_id: examSessionId ? examSessionId : route?.params?.ession_id,
+            uid: uidRef.current,
+            exam_session_id: examSessionId
+              ? examSessionId
+              : route?.params?.ession_id,
             student_user_exam_id: activeExamIdRef.current,
           };
-  
+
           console.log(params, "autpsavwewe");
           autoSaveData(params);
           setAutoSaveTimer(autoSaveTime);
         }
-  
+
         return next;
       });
     }, 1000);
-  
+
     return () => {
-      // if (autoTimerRef.current) {
+      console.log("🧹 Cleaning up auto-save timer...");
+      if (autoTimerRef.current) {
         clearInterval(autoTimerRef.current);
-        autoTimerRef.current=null;
         autoTimerRef.current = null;
-      // }
+      }
     };
-  }, [autoSaveTime, autoSaveId]);  
+  }, [autoSaveTime, autoSaveId]);
 
-  
-
-  const resultAnalytics = async() => {
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        console.log("🧹 useFocusEffect: Clearing autoTimerRef");
+        if (autoTimerRef.current) {
+          clearInterval(autoTimerRef.current);
+          autoTimerRef.current = null;
+        }
+      };
+    }, [])
+  );
+  const resultAnalytics = async () => {
     try {
       // Define your params correctly
       const params = {
-          "student_user_exam_id": 0,
-          "type": 0,
-          "source": 0,
-          "testonic_page_id":  route?.params?.type == "mock" ? 49 : route?.params?.type == "previous" ? 53 : 58,
+        student_user_exam_id: 0,
+        type: 0,
+        source: 0,
+        testonic_page_id:
+          route?.params?.type == "mock"
+            ? 49
+            : route?.params?.type == "previous"
+            ? 53
+            : 58,
       };
 
-      console.log(uniqueId,  "payloaddlscknl");
+      console.log(uniqueId, "payloaddlscknl");
 
       // Create payload
       const payload = {
-          ...params,
-          ip_address: uniqueId ? uniqueId: "",
-          location: "Hyderabad", // Ensure location is correctly handled (but you should pass the location data properly here)
+        ...params,
+        ip_address: uniqueId ? uniqueId : "",
+        location: "Hyderabad", // Ensure location is correctly handled (but you should pass the location data properly here)
       };
 
       console.log(payload, "payload");
@@ -431,82 +489,86 @@ useEffect(() => {
       // Send analytics request
       const response = await addAnalytics(payload); // Assuming addAnalytics is an API call function
       console.log("Analytics Response:", response);
-
-  } catch (error) {
+    } catch (error) {
       // Handle errors gracefully
       const errorMessage = error.response?.data?.message || error.message;
-    
+
       console.error("Error:", errorMessage);
-  }
-  }
+    }
+  };
   const handleSubmitOnTimeUp = useCallback(() => {
     if (hasSubmitted) return; // Prevent multiple submissions
- 
-    
+
     const isScheduledExam = obj.exam_type === "schedule_exam";
     const params = {
-      "exam_paper_id": parseInt(obj.exam_paper_id),
-      "exam_session_id": examSessionId ? examSessionId : 0,
-      "student_user_exam_id": activeExamIdRef.current,
-      "questions": JSON.stringify(attemptedQuestionsRef.current),
-      "uid": uidRef.current,
-      "type": examtype,
+      exam_paper_id: parseInt(obj.exam_paper_id),
+      exam_session_id: examSessionId ? examSessionId : 0,
+      student_user_exam_id: activeExamIdRef.current,
+      questions: JSON.stringify(attemptedQuestionsRef.current),
+      uid: uidRef.current,
+      type: examtype,
     };
-    
+
     if (["schedule_exam", "previous_exam", "custom_exam"].includes(examtype)) {
       dispatch(submitExamThunk({ params, isTimeUp: true }));
-      attemptedQuestionsRef.current=[];
+      attemptedQuestionsRef.current = [];
     }
-     resultAnalytics();
+    resultAnalytics();
     setHasSubmitted(true);
   }, [hasSubmitted]);
 
-
-
   useEffect(() => {
-    const questionInitialTime = questionDetails.filter((item) => item.question_id === selectedQuestion?.id)[0]?.question_time || 0
+    const questionInitialTime =
+      questionDetails.filter(
+        (item) => item.question_id === selectedQuestion?.id
+      )[0]?.question_time || 0;
     setTimer(questionInitialTime);
-}, [selectedQuestion, questionDetails, activeQuestionIndex]);
+  }, [selectedQuestion, questionDetails, activeQuestionIndex]);
 
-console.log(attemptedQuestionsRef.current, "attemptedQuestionsRef.current")
-useEffect(() => {
+  // console.log(attemptedQuestionsRef.current, "attemptedQuestionsRef.current")
+  useEffect(() => {
     const timerInterval = setInterval(() => {
-        setTimer((prevTime) => {
-            const newTime = prevTime + 1;
-            if (newTime !== previousTimeRef.current) {
-                if (selectedQuestion) {
-                    const updatedQuestionDetails = questionDetails.map((item) =>
-                        item.slno === activeQuestionIndex + 1
-                            ? {
-                                ...item,
-                                question_time: newTime
-                            }
-                            : item
-                    );
-                    dispatch(updateQuestionDetail(updatedQuestionDetails))
-                }
-                previousTimeRef.current = newTime;
-            }
-            return newTime;
-        });
+      setTimer((prevTime) => {
+        const newTime = prevTime + 1;
+        if (newTime !== previousTimeRef.current) {
+          if (selectedQuestion) {
+            const updatedQuestionDetails = questionDetails.map((item) =>
+              item.slno === activeQuestionIndex + 1
+                ? {
+                    ...item,
+                    question_time: newTime,
+                  }
+                : item
+            );
+            dispatch(updateQuestionDetail(updatedQuestionDetails));
+          }
+          previousTimeRef.current = newTime;
+        }
+        return newTime;
+      });
     }, 1000);
     return () => clearInterval(timerInterval);
-}, [dispatch, selectedQuestion, activeQuestionIndex, questionDetails]);
-
+  }, [dispatch, selectedQuestion, activeQuestionIndex, questionDetails]);
 
   // console.log(questionDetails, "questionsDetails")
   useEffect(() => {
-
     const counts = questionDetails.reduce(
       (acc, item) => {
         if (item.status === "0") acc.notViewed++;
         if (item.status === "1") acc.skip++;
         if (item.status === "2") acc.answered++;
         if (item.review === true) acc.markedView++;
-        if (item.review === true && item.status === "2") acc.answerAndMarkedView++;
+        if (item.review === true && item.status === "2")
+          acc.answerAndMarkedView++;
         return acc;
       },
-      { notViewed: 0, skip: 0, answered: 0, markedView: 0, answerAndMarkedView: 0 }
+      {
+        notViewed: 0,
+        skip: 0,
+        answered: 0,
+        markedView: 0,
+        answerAndMarkedView: 0,
+      }
     );
 
     const selectSubjectQuestionsData = examQuestions.filter(
@@ -516,37 +578,36 @@ useEffect(() => {
     setState((prevState) => ({
       ...prevState,
       ...counts,
-      selectSubjectQuestions: selectSubjectQuestionsData
+      selectSubjectQuestions: selectSubjectQuestionsData,
     }));
   }, [questionDetails, examQuestions, activeSubject]);
 
   const formatTime = (seconds) => {
-    const hours = Math.floor(seconds / 3600);  // 1 hour = 3600 seconds
-    const minutes = Math.floor((seconds % 3600) / 60);  // Remaining minutes after hours are accounted for
-    const remainingSeconds = seconds % 60;  // Remaining seconds after minutes are accounted for
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    const hours = Math.floor(seconds / 3600); // 1 hour = 3600 seconds
+    const minutes = Math.floor((seconds % 3600) / 60); // Remaining minutes after hours are accounted for
+    const remainingSeconds = seconds % 60; // Remaining seconds after minutes are accounted for
+    return `${hours}:${minutes.toString().padStart(2, "0")}:${remainingSeconds
+      .toString()
+      .padStart(2, "0")}`;
   };
-
-
-
 
   const disabledQuestions = (updatedQuestionDetails) => {
     const currentSlno = activeQuestionIndex + 1;
-  
+
     let patternData = examPatternData?.find(
       (item) =>
         +item.starting_no <= currentSlno && +item.ending_no >= currentSlno
     );
-  
+
     if (!patternData) return updatedQuestionDetails;
-  
+
     let answeredCount = updatedQuestionDetails.filter(
       (item) =>
         item.slno >= patternData.starting_no &&
         item.slno <= patternData.ending_no &&
         item.status === "2"
     );
-  
+
     if (answeredCount.length >= patternData.no_of_qus_answer) {
       setRestrictionMessage(
         `*You can only answer ${patternData.no_of_qus_answer} questions`
@@ -560,7 +621,7 @@ useEffect(() => {
             : item.is_disabled,
       }));
     }
-  
+
     // Reset all to enabled within range
     return updatedQuestionDetails.map((item) => ({
       ...item,
@@ -571,7 +632,6 @@ useEffect(() => {
           : item.is_disabled,
     }));
   };
-  
 
   // const handleOptionChange = (event) => {
   //     const updatedQuestionDetails = questionDetails.map((item) =>
@@ -585,44 +645,45 @@ useEffect(() => {
   //     dispatch(updateQuestionDetail(disabledQuestions(updatedQuestionDetails)))
   // };
 
-
-
   const handleOptionChange = (questionId, option) => {
-    // const value = event.target.value;
-console.log(option, "oprtion")
     const updatedQuestionDetails = questionDetails.map((item) => {
       if (item.slno === activeQuestionIndexRef.current + 1) {
-        let updatedAnswer = "";
+        const attemptAnswerString =
+          typeof item.attempt_answer === "string" ? item.attempt_answer : "";
 
-        // Convert attempt_answer to string (safe guard)
-        // console.log(item, ";dwepfwiuefiewf")
-        const attemptAnswerString = typeof item.attempt_answer === "string"
-          ? item.attempt_answer
-          : "";
-
-        if (answerArray?.length > 1&&attemptAnswerString.length>1) {
+        if (answerArray?.length > 1) {
+          // For multiple select
           const currentAnswers = attemptAnswerString
             .split(",")
-            .filter((v) => v); // remove empty strings
+            .filter((v) => v); // remove empty
 
           let newAnswers;
-// console.log(attemptAnswerString, currentAnswers, "qwidfoqiwfpqiwfoqiwfn")
+
           if (currentAnswers.includes(option)) {
+            // Deselect
             newAnswers = currentAnswers.filter((v) => v !== option);
           } else {
+            // Select
             newAnswers = [...currentAnswers, option];
           }
 
-          updatedAnswer = newAnswers.sort().join(",")
-        } else {
-          updatedAnswer = option;
-        }
+          const updatedAnswer = newAnswers.sort().join(",");
 
-        return {
-          ...item,
-          attempt_answer: updatedAnswer,
-          status: "2"
-        };
+          return {
+            ...item,
+            attempt_answer: updatedAnswer,
+            status: updatedAnswer ? "2" : "0", // 🔧 Fix: update status based on emptiness
+          };
+        } else {
+          // Single select
+          const updatedAnswer = attemptAnswerString === option ? "" : option;
+
+          return {
+            ...item,
+            attempt_answer: updatedAnswer,
+            status: updatedAnswer ? "2" : "0", // 🔧 Fix: update status here too
+          };
+        }
       }
       return item;
     });
@@ -630,73 +691,88 @@ console.log(option, "oprtion")
     dispatch(updateQuestionDetail(disabledQuestions(updatedQuestionDetails)));
   };
 
-
   const handleInputChange = (value) => {
     const regex = /^\d{0,15}(\.\d{0,50})?$/;
-  
+
     if (!regex.test(value) && value !== "") return;
-  
+
     const currentSlno = activeQuestionIndex + 1;
-  
+
     let patternData = examPatternData.find(
-      (item) => +item.starting_no <= currentSlno && +item.ending_no >= currentSlno
+      (item) =>
+        +item.starting_no <= currentSlno && +item.ending_no >= currentSlno
     );
-  
+
     let answeredCount = questionDetails.filter(
       (item) =>
         item.slno >= patternData.starting_no &&
         item.slno <= patternData.ending_no &&
         item.status === "2"
     );
-  
-    const isCurrentAlreadyAnswered = questionDetails.find(
-      (item) => item.slno === currentSlno
-    )?.status === "2";
-  
-    const isTryingToAnswerNew =
-      !isCurrentAlreadyAnswered && value !== ""; // new answer being typed
-  
+
+    const isCurrentAlreadyAnswered =
+      questionDetails.find((item) => item.slno === currentSlno)?.status === "2";
+
+    const isTryingToAnswerNew = !isCurrentAlreadyAnswered && value !== "";
+
+    // ✅ Allow user to clear answer always (even if limit reached)
+    if (value === "") {
+      const updatedQuestionDetails = questionDetails.map((item) =>
+        item.slno === currentSlno
+          ? {
+              ...item,
+              attempt_answer: "",
+              status: "1", // Mark as not answered
+            }
+          : item
+      );
+
+      dispatch(updateQuestionDetail(disabledQuestions(updatedQuestionDetails)));
+      return;
+    }
+
     if (
       isTryingToAnswerNew &&
       answeredCount.length >= patternData.no_of_qus_answer
     ) {
-      setRestrictionMessage(`*You can only answer ${patternData.no_of_qus_answer} questions in this section.`)
-      // Toast.show({
-      //   type: "error",
-      //   text1: `*You can only answer ${patternData.no_of_qus_answer} questions in this section.`,
-      // });
+      setRestrictionMessage(
+        `*You can only answer ${patternData.no_of_qus_answer} questions in this section.`
+      );
       return;
     }
-  
+
     const updatedQuestionDetails = questionDetails.map((item) =>
       item.slno === currentSlno
         ? {
             ...item,
             attempt_answer: value,
-            status: value === "" ? "1" : "2",
+            status: "2", // Answered
           }
         : item
     );
-  
-    // Apply updated disabling logic
+
     dispatch(updateQuestionDetail(disabledQuestions(updatedQuestionDetails)));
   };
-  
-  
-
 
   const handleClearOptions = () => {
+    const currentQuestion = questionDetails.find(
+      (item) => item.slno === activeQuestionIndex + 1
+    );
+
+    // Only proceed if the question has an attempt_answer
+    if (!currentQuestion || !currentQuestion.attempt_answer) return;
+
     const updatedQuestionDetails = questionDetails.map((item) =>
       item.slno === activeQuestionIndex + 1
         ? {
-          ...item,
-          attempt_answer: "",
-          status: "0",
-        }
+            ...item,
+            attempt_answer: "",
+            status: "0",
+          }
         : item
     );
 
-    let patternData = examPatternData.find(
+    const patternData = examPatternData.find(
       (item) =>
         +item.starting_no <= activeQuestionIndex + 1 &&
         +item.ending_no >= activeQuestionIndex + 1
@@ -707,7 +783,7 @@ console.log(option, "oprtion")
         ...item,
         is_disabled:
           item.slno >= patternData.starting_no &&
-            item.slno <= patternData.ending_no
+          item.slno <= patternData.ending_no
             ? false
             : item.is_disabled,
       }));
@@ -717,7 +793,6 @@ console.log(option, "oprtion")
     }
   };
 
-
   const handleMarkedReview = () => {
     const updatedQuestionDetails = questionDetails.map((item) => {
       if (item.slno === activeQuestionIndex + 1) {
@@ -725,7 +800,7 @@ console.log(option, "oprtion")
       }
       return item;
     });
-    console.log(updatedQuestionDetails, "reviewww")
+    console.log(updatedQuestionDetails, "reviewww");
     dispatch(updateQuestionDetail(updatedQuestionDetails));
   };
 
@@ -738,22 +813,22 @@ console.log(option, "oprtion")
   //   return disabled;
   // };
   const isOptionDisabled = () => {
-    return questionDetails.find((q) => q.slno === activeQuestionIndex + 1)?.is_disabled;
+    return questionDetails.find((q) => q.slno === activeQuestionIndex + 1)
+      ?.is_disabled;
   };
-  
 
   const reloadQuestion = (id) => {
     // const params = { 'question_id': id }
     // dispatch(reloadQuesationThunk(params));
     setReloadQuestions(true);
-    setTimeout(() => {  
+    setTimeout(() => {
       setReloadQuestions(false);
-    },1000)
-    
+    }, 1000);
   };
 
-
-  const questionStatus = questionDetails.find((item) => item.question_id === selectedQuestion?.id)?.question_id;
+  const questionStatus = questionDetails.find(
+    (item) => item.question_id === selectedQuestion?.id
+  )?.question_id;
 
   const getQuestionsData = async () => {
     const startExm = {
@@ -766,10 +841,10 @@ console.log(option, "oprtion")
       type: route?.params?.type,
     };
     dispatch(startExamThunk(startExm));
-  }
+  };
   useEffect(() => {
     getQuestionsData();
-  }, [])
+  }, []);
 
   useEffect(() => {
     const allNumbers = [];
@@ -778,7 +853,7 @@ console.log(option, "oprtion")
     }
 
     setAllNum(allNumbers);
-  }, [questionDetails])
+  }, [questionDetails]);
 
   useEffect(() => {
     if (activeQuestionIndex) {
@@ -786,29 +861,27 @@ console.log(option, "oprtion")
     }
   }, [activeQuestionIndex, scrollToQuestion]);
 
-  const scrollToQuestion = useCallback((questionNumber) => {
-    if (!flatListRef.current) {
-      console.warn("scrollToQuestion: FlatList ref not ready");
-      return;
-    }
+  const scrollToQuestion = useCallback(
+    (questionNumber) => {
+      if (!flatListRef.current) {
+        console.warn("scrollToQuestion: FlatList ref not ready");
+        return;
+      }
 
-    const index = allNum.indexOf(questionNumber);
+      const index = allNum.indexOf(questionNumber);
 
-    if (index !== -1) {
-      flatListRef.current.scrollToIndex({
-        index,
-        animated: true,
-        viewPosition: 0.5,
-      });
-    } else {
-      console.warn("scrollToQuestion: Question number not found in allNum");
-    }
-  }, [activeQuestionIndex,allNum]);
-
-
-
-
-
+      if (index !== -1) {
+        flatListRef.current.scrollToIndex({
+          index,
+          animated: true,
+          viewPosition: 0.5,
+        });
+      } else {
+        console.warn("scrollToQuestion: Question number not found in allNum");
+      }
+    },
+    [activeQuestionIndex, allNum]
+  );
 
   const getItemLayout = useCallback(
     (data, index) => ({
@@ -819,9 +892,7 @@ console.log(option, "oprtion")
     []
   );
 
-
-
-  if (loading||questionLoading) {
+  if (loading || questionLoading) {
     return (
       <View
         style={[
@@ -834,9 +905,6 @@ console.log(option, "oprtion")
     );
   }
   // console.log(exams, "remainingTime")
-
-
-
 
   // console.log(pattern, "patternsss")
   // const handleReloadQuestion = () => {
@@ -851,22 +919,25 @@ console.log(option, "oprtion")
   };
 
   const handleSubjectClick = (subject_id) => {
-
-    const questionStatus = questionDetails.find((item) => item.question_id === selectedQuestion?.id);
+    const questionStatus = questionDetails.find(
+      (item) => item.question_id === selectedQuestion?.id
+    );
 
     if (questionStatus?.status === "0") {
       const updatedQuestionDetails = questionDetails.map((item) =>
         item.slno === activeQuestionIndex + 1
           ? {
-            ...item,
-            status: "1",
-          }
+              ...item,
+              status: "1",
+            }
           : item
       );
-      dispatch(updateQuestionDetail(updatedQuestionDetails))
+      dispatch(updateQuestionDetail(updatedQuestionDetails));
     }
 
-    const findSubjectIndexValue = examQuestions.findIndex((item) => item.subject === subject_id);
+    const findSubjectIndexValue = examQuestions.findIndex(
+      (item) => item.subject === subject_id
+    );
 
     dispatch(setActiveQuestionIndex(findSubjectIndexValue));
     dispatch(setActiveSubjectId(subject_id));
@@ -882,24 +953,23 @@ console.log(option, "oprtion")
         const updatedQuestionDetails = questionDetails.map((item) =>
           item.slno === nextIndex
             ? {
-              ...item,
-              status: "2"
-            }
+                ...item,
+                status: "2",
+              }
             : item
         );
-        dispatch(updateQuestionDetail(updatedQuestionDetails))
-           dispatch(setQuestionDetails(updatedQuestionDetails));
-
+        dispatch(updateQuestionDetail(updatedQuestionDetails));
+        dispatch(setQuestionDetails(updatedQuestionDetails));
       } else {
         const updatedQuestionDetails = questionDetails.map((item) =>
           item.slno === nextIndex
             ? {
-              ...item,
-              status: item.review ? "0" : "1",
-            }
+                ...item,
+                status: item.review ? "0" : "1",
+              }
             : item
         );
-        dispatch(updateQuestionDetail(updatedQuestionDetails))
+        dispatch(updateQuestionDetail(updatedQuestionDetails));
         dispatch(setQuestionDetails(updatedQuestionDetails));
       }
 
@@ -909,7 +979,7 @@ console.log(option, "oprtion")
       const activeSubjectData = examQuestions[activeSubjectIndex];
       dispatch(setActiveSubjectId(activeSubjectData?.subject));
     }
-  }
+  };
 
   const handleSkip = () => {
     // scrollToTop();
@@ -922,39 +992,39 @@ console.log(option, "oprtion")
           ? item.status == "2"
             ? item
             : {
-              ...item,
-              status: item.review ? "0" : "1",
-            }
+                ...item,
+                status: item.review ? "0" : "1",
+              }
           : item
       );
-      console.log(questionDetails, updatedQuestionDetails, "updatedDetails")
-      dispatch(updateQuestionDetail(updatedQuestionDetails))
+      console.log(questionDetails, updatedQuestionDetails, "updatedDetails");
+      dispatch(updateQuestionDetail(updatedQuestionDetails));
       dispatch(setQuestionDetails(updatedQuestionDetails));
 
       const activeSubjectIndex = examQuestions.findIndex((_subject, index) => {
         return index === nextIndex;
       });
       const activeSubjectData = examQuestions[activeSubjectIndex];
-      dispatch(setActiveSubjectId(activeSubjectData?.subject))
+      dispatch(setActiveSubjectId(activeSubjectData?.subject));
     }
   };
 
-
-
   const handlePreviousQuestion = () => {
-    const questionStatus = questionDetails.find((item) => item.question_id === selectedQuestion?.id);
+    const questionStatus = questionDetails.find(
+      (item) => item.question_id === selectedQuestion?.id
+    );
     // scrollToTop();
     if (questionStatus?.status === "0") {
       const updatedQuestionDetails = questionDetails.map((item) =>
         item.slno === activeQuestionIndex + 1
           ? {
-            ...item,
-            status: "1",
-          }
+              ...item,
+              status: "1",
+            }
           : item
       );
-      dispatch(updateQuestionDetail(updatedQuestionDetails))
-    };
+      dispatch(updateQuestionDetail(updatedQuestionDetails));
+    }
 
     const nextIndex = activeQuestionIndex - 1;
     if (nextIndex >= 0) {
@@ -963,12 +1033,11 @@ console.log(option, "oprtion")
         return index === nextIndex;
       });
       const activeSubjectData = examQuestions[activeSubjectIndex];
-      dispatch(setActiveSubjectId(activeSubjectData?.subject))
-    };
+      dispatch(setActiveSubjectId(activeSubjectData?.subject));
+    }
   };
 
-  
-
+  console.log(activeQuestionIndex, examQuestions?.length, "allichillari");
 
   return (
     <LinearGradient
@@ -986,25 +1055,31 @@ console.log(option, "oprtion")
       />
 
       <View style={{ flex: 1 }}>
-        <View style={{ flexDirection: "row", marginTop: 10 , justifyContent: "space-between"}}>
+        <View
+          style={{
+            flexDirection: "row",
+            marginTop: 10,
+            justifyContent: "space-between",
+          }}
+        >
           <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>
             {obj.exam_name}
           </Text>
-      <View>
-      <Text
-            style={[
-              styles.mockSubtitle,
-              { color: theme.textColor, marginRight: 10},
-            ]}
-          >
-            Remaining Time
-          </Text>
-          <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>
-            {formatTime(timeLeft)}
-          </Text>
-      </View>
+          <View>
+            <Text
+              style={[
+                styles.mockSubtitle,
+                { color: theme.textColor, marginRight: 10 },
+              ]}
+            >
+              Remaining Time
+            </Text>
+            <Text style={[styles.mockSubtitle, { color: theme.textColor }]}>
+              {formatTime(timeLeft)}
+            </Text>
+          </View>
         </View>
-        
+
         <ScrollView>
           <View style={{ paddingHorizontal: 20 }}>
             <View
@@ -1013,47 +1088,55 @@ console.log(option, "oprtion")
               // end={{ x: 1, y: 1 }}
               style={styles.header}
             >
-          <View style={styles.headerline}>
-  {subState?.uniqueSubjects&&subState?.uniqueSubjects.length>0&&subState.uniqueSubjects
-    .filter(item => item.subject_id) // Only subjects with valid IDs
-    .map((item) => {
-      const isActive = item.subject_id === activeSubjectId;
-      // const subjectColor = subjectWiseColors(item.subject);  // assumes you have this function
+              <View style={styles.headerline}>
+                {subState?.uniqueSubjects &&
+                  subState?.uniqueSubjects.length > 0 &&
+                  subState.uniqueSubjects
+                    .filter((item) => item.subject_id) // Only subjects with valid IDs
+                    .map((item) => {
+                      const isActive = item.subject_id === activeSubjectId;
+                      // const subjectColor = subjectWiseColors(item.subject);  // assumes you have this function
 
-      return (
-        <TouchableOpacity
-          key={item.subject_id}
-          onPress={() => handleSubjectClick(item.subject_id)}
-        >
-           <LinearGradient
-          colors={isActive ? [theme.bg1, theme.bg2] : ["#ffffff", "#ffffff"]}
-          style={[
-            styles.headerline1,
-            {
-              borderWidth: isActive ? 0 : 1,
-              borderColor: isActive ? theme.textColor1 : theme.textColor,
-            },
-          ]}
-          start={{ x: 0, y: 1 }}
-          end={{ x: 1, y: 1 }}
-        >
-          <Text
-            style={[
-              styles.headtext,
-              {
-                color: isActive ? theme.textColor1 : theme.textColor,
-              },
-            ]}
-          >
-            {item.subject}
-          </Text>
-        </LinearGradient>
-        </TouchableOpacity>
-      );
-    })}
-</View>
-
-
+                      return (
+                        <TouchableOpacity
+                          key={item.subject_id}
+                          onPress={() => handleSubjectClick(item.subject_id)}
+                        >
+                          <LinearGradient
+                            colors={
+                              isActive
+                                ? [theme.bg1, theme.bg2]
+                                : ["#ffffff", "#ffffff"]
+                            }
+                            style={[
+                              styles.headerline1,
+                              {
+                                borderWidth: isActive ? 0 : 1,
+                                borderColor: isActive
+                                  ? theme.textColor1
+                                  : theme.textColor,
+                              },
+                            ]}
+                            start={{ x: 0, y: 1 }}
+                            end={{ x: 1, y: 1 }}
+                          >
+                            <Text
+                              style={[
+                                styles.headtext,
+                                {
+                                  color: isActive
+                                    ? theme.textColor1
+                                    : theme.textColor,
+                                },
+                              ]}
+                            >
+                              {item.subject}
+                            </Text>
+                          </LinearGradient>
+                        </TouchableOpacity>
+                      );
+                    })}
+              </View>
 
               {!expand && (
                 <View
@@ -1093,10 +1176,13 @@ console.log(option, "oprtion")
                       showsHorizontalScrollIndicator={false}
                       contentContainerStyle={styles.numberScrollView}
                       renderItem={({ item: num }) => {
-                        const qDetail = questionDetails.find((q) => q.slno === num);
+                        const qDetail = questionDetails.find(
+                          (q) => q.slno === num
+                        );
 
                         let backgroundColor = theme.gray;
-                        let borderColor = num === selectedQuestion ? "#fff" : "transparent";
+                        let borderColor =
+                          num === selectedQuestion ? "#fff" : "transparent";
                         let borderWidth = num === selectedQuestion ? 1 : 0;
 
                         if (qDetail?.review && qDetail.status === "2") {
@@ -1127,15 +1213,15 @@ console.log(option, "oprtion")
                                 },
                               ]}
                             >
-                              <Text style={{ color: "#FFF", fontSize: 16 }}>{num}</Text>
+                              <Text style={{ color: "#FFF", fontSize: 16 }}>
+                                {num}
+                              </Text>
                             </View>
                           </TouchableOpacity>
                         );
                       }}
                       getItemLayout={getItemLayout}
                     />
-
-
 
                     {/* <TouchableOpacity onPress={scrollRight}> */}
                     <Image
@@ -1208,62 +1294,63 @@ console.log(option, "oprtion")
                             }}
                           >
                             <View style={styles.gridContainer}>
-                            {subjectNumbers.map((num) => {
-  let backgroundColor = theme.gray;
-  let borderColor = "transparent";
-  let borderWidth = 0;
+                              {subjectNumbers.map((num) => {
+                                let backgroundColor = theme.gray;
+                                let borderColor = "transparent";
+                                let borderWidth = 0;
 
-  const qDetail = questionDetails.find((q) => q.slno === num);
+                                const qDetail = questionDetails.find(
+                                  (q) => q.slno === num
+                                );
 
-  if (qDetail?.review && qDetail.status === "2") {
-    backgroundColor = "#1B9C85"; // Answered + Review
-  } else if (qDetail?.review) {
-    backgroundColor = "#36A1F5"; // Just reviewed
-  } else if (qDetail?.status === "0") {
-    backgroundColor = "#999999"; // Not viewed
-  } else if (qDetail?.status === "1") {
-    backgroundColor = "#DE6C00"; // Skipped
-  } else if (qDetail?.status === "2") {
-    backgroundColor = "#04A953"; // Answered
-  }
+                                if (qDetail?.review && qDetail.status === "2") {
+                                  backgroundColor = "#1B9C85"; // Answered + Review
+                                } else if (qDetail?.review) {
+                                  backgroundColor = "#36A1F5"; // Just reviewed
+                                } else if (qDetail?.status === "0") {
+                                  backgroundColor = "#999999"; // Not viewed
+                                } else if (qDetail?.status === "1") {
+                                  backgroundColor = "#DE6C00"; // Skipped
+                                } else if (qDetail?.status === "2") {
+                                  backgroundColor = "#04A953"; // Answered
+                                }
 
-  if (num === selectedQuestion) {
-    borderColor = "#fff";
-    borderWidth = 1;
-  }
+                                if (num === selectedQuestion) {
+                                  borderColor = "#fff";
+                                  borderWidth = 1;
+                                }
 
-  return (
-    <TouchableOpacity
-      key={num}
-      onPress={() => {
-        dispatch(setActiveQuestionIndex(num - 1));
-        setExpand(false);
-      }}
-      style={styles.gridItem}
-    >
-      <View
-        style={[
-          styles.numberCircle1,
-          {
-            backgroundColor,
-            borderColor,
-            borderWidth,
-          },
-        ]}
-      >
-        <Text
-          style={[
-            styles.numberText,
-            { color: "#FFF" },
-          ]}
-        >
-          {num}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
-})}
-
+                                return (
+                                  <TouchableOpacity
+                                    key={num}
+                                    onPress={() => {
+                                      dispatch(setActiveQuestionIndex(num - 1));
+                                      setExpand(false);
+                                    }}
+                                    style={styles.gridItem}
+                                  >
+                                    <View
+                                      style={[
+                                        styles.numberCircle1,
+                                        {
+                                          backgroundColor,
+                                          borderColor,
+                                          borderWidth,
+                                        },
+                                      ]}
+                                    >
+                                      <Text
+                                        style={[
+                                          styles.numberText,
+                                          { color: "#FFF" },
+                                        ]}
+                                      >
+                                        {num}
+                                      </Text>
+                                    </View>
+                                  </TouchableOpacity>
+                                );
+                              })}
                             </View>
                           </View>
                         </View>
@@ -1271,7 +1358,6 @@ console.log(option, "oprtion")
                     })}
                 </View>
               )}
-
 
               <View
                 style={{ marginTop: 15, flexDirection: "row", marginBottom: 5 }}
@@ -1340,9 +1426,7 @@ console.log(option, "oprtion")
           </View>
 
           <View style={{ paddingHorizontal: 10, marginTop: 10 }}>
-            <View
-              style={styles.header}
-            >
+            <View style={styles.header}>
               <View style={{ flexDirection: "row", marginTop: 8 }}>
                 <Svg height="35" width={windowWidth * 0.35}>
                   <Defs>
@@ -1360,11 +1444,14 @@ console.log(option, "oprtion")
                     textAnchor="middle"
                     alignmentBaseline="middle"
                   >
-                    {selectedQuestion && `Question # ${activeQuestionIndex + 1}`} 
+                    {selectedQuestion &&
+                      `Question # ${activeQuestionIndex + 1}`}
                   </SvgText>
-                  <Text style={{marginTop: 19, marginLeft: 15, fontSize: 10}}>ID{selectedQuestion?.id}</Text>
+                  <Text style={{ marginTop: 19, marginLeft: 15, fontSize: 10 }}>
+                    ID{selectedQuestion?.id}
+                  </Text>
                 </Svg>
-          
+
                 <View style={{ flexDirection: "row" }}>
                   <Text
                     style={[styles.mockSubtitle, { color: theme.textColor }]}
@@ -1376,21 +1463,35 @@ console.log(option, "oprtion")
                   >
                     {formatTime(timer)}
                   </Text>
-                 
                 </View>
                 <View style={{ marginLeft: 15, marginRight: 10 }}>
                   <TouchableOpacity
-                   onPress={() => reloadQuestion(examQuestions[activeQuestionIndex]?.exam_id)}
+                    onPress={() =>
+                      reloadQuestion(
+                        examQuestions[activeQuestionIndex]?.exam_id
+                      )
+                    }
                   >
-                    <Image source={require("../images/refresh.png")} style={{ width: 18, height: 18 }} />
+                    <Image
+                      source={require("../images/refresh.png")}
+                      style={{ width: 18, height: 18 }}
+                    />
                   </TouchableOpacity>
                 </View>
               </View>
-
+              {isOptionDisabled() && (
+                <Text
+                  style={{
+                    color: "red",
+                  }}
+                >
+                  {restrictionMessage}
+                </Text>
+              )}
               {(examQuestions[activeQuestionIndex]?.compquestion.length > 0 ||
                 examQuestions[activeQuestionIndex]?.question.length > 0) && (
-                  <View>
-{!reloadQuestions ?
+                <View>
+                  {!reloadQuestions ? (
                     <LoadQuestion
                       type="exam"
                       item={examQuestions[activeQuestionIndex]}
@@ -1399,7 +1500,12 @@ console.log(option, "oprtion")
                       selectedNumber={activeQuestionIndex}
                       currentQuestionIndex={examQuestions[activeQuestionIndex]}
                       questionLength={examQuestions.length}
-                      onChangeValue={!isOptionDisabled() ? (value) => handleOptionChange(activeQuestionIndex, value):undefined}
+                      onChangeValue={
+                        !isOptionDisabled()
+                          ? (value) =>
+                              handleOptionChange(activeQuestionIndex, value)
+                          : undefined
+                      }
                       onSkip={() => {
                         handleSkip();
                         // setSelectedOption(null);
@@ -1415,33 +1521,37 @@ console.log(option, "oprtion")
                         //   setSelectedOption(null);
                         // }
                         // Remove this line as it's redundant with textInputValues
-                        // setTextInputAnswer(""); 
+                        // setTextInputAnswer("");
                       }}
                       isOptionDisabled={isOptionDisabled}
                       attempt_answer={attempt_answer}
                       onReviewLater={() => handleMarkedReview()}
                       onSubmit={() => handleSubmitTest()}
-                      handleTextInputChange={!isOptionDisabled() ?(text) => handleInputChange(text, activeQuestionIndex):undefined}
+                      handleTextInputChange={
+                        !isOptionDisabled()
+                          ? (text) =>
+                              handleInputChange(text, activeQuestionIndex)
+                          : undefined
+                      }
                       handleSelectAndNext={handleNextQuestion}
-                      handleAnswerSelect={(text) => handleInputChange(text, activeQuestionIndex)}
-                    // textInputValue={textInputValues[activeQuestionIndex] || ""} // Pass current value
+                      handleAnswerSelect={(text) =>
+                        handleInputChange(text, activeQuestionIndex)
+                      }
+                      // textInputValue={textInputValues[activeQuestionIndex] || ""} // Pass current value
                     />
-                    :  <View
-                    style={[
-                      // styles.container,
-                      { justifyContent: "center", alignItems: "center" },
-                    ]}
-                  >
-                    <AnimationWithImperativeApi />
-                  </View>
+                  ) : (
+                    <View
+                      style={[
+                        // styles.container,
+                        { justifyContent: "center", alignItems: "center" },
+                      ]}
+                    >
+                      <AnimationWithImperativeApi />
+                    </View>
+                  )}
+                </View>
+              )}
 
-
-                  }
-                  </View>
-                )}
-                   {isOptionDisabled() && <Text style={{
-                    color: 'red'
-                   }} >{restrictionMessage}</Text>}
               <View
                 style={{
                   marginTop: 10,
@@ -1450,14 +1560,12 @@ console.log(option, "oprtion")
                 }}
               >
                 <View style={{ flexDirection: "row" }}>
-
                   {/* <TouchableOpacity onPress={handleMarkedReview} style={[styles.ins, { backgroundColor: theme.textColor1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' }]}>
                     <Image
                       style={{ height: 20, width: 20, resizeMode: 'contain', tintColor: theme.textColor }}
                       source={require("../images/tag.png")}
                     />
                   </TouchableOpacity> */}
-
 
                   <TouchableOpacity
                     style={{ marginLeft: 15, marginTop: 5 }}
@@ -1525,7 +1633,10 @@ console.log(option, "oprtion")
                 justifyContent: "center",
                 alignItems: "center",
                 marginLeft: 10,
+                opacity:
+                  activeQuestionIndex === examQuestions?.length - 1 ? 0.4 : 1,
               }}
+              disabled={activeQuestionIndex == examQuestions?.length - 1}
               onPress={() => {
                 if (answeredQuestions[selectedQuestion]) {
                   moveToNextQuestion();
@@ -1537,7 +1648,7 @@ console.log(option, "oprtion")
                   handleNextQuestion(selectedQuestion, selectedOption);
                   // setSelectedOption(null);
                 }
-                setTextInputAnswer('');
+                setTextInputAnswer("");
               }}
             >
               <Text
@@ -1549,34 +1660,32 @@ console.log(option, "oprtion")
                 Save & Next
               </Text>
             </TouchableOpacity>
-            {answeredQuestions.length>0&& <TouchableOpacity 
-              onPress={handleSubmitTest}
-          >
-              <LinearGradient
-                colors={theme.background}
-                style={{
-                  height: 36,
-                  borderRadius: 16,
-                  justifyContent: "center",
-                  alignItems: "center",
-                  marginLeft: 10,
-                }}
-                start={{ x: 0, y: 1 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Text
-                  style={[
-                    styles.ans,
-                    { color: theme.textColor1, fontWeight: "700" },
-                  ]}
+            {answeredQuestions.length > 0 && (
+              <TouchableOpacity onPress={handleSubmitTest}>
+                <LinearGradient
+                  colors={theme.background}
+                  style={{
+                    height: 36,
+                    borderRadius: 16,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    marginLeft: 10,
+                  }}
+                  start={{ x: 0, y: 1 }}
+                  end={{ x: 1, y: 1 }}
                 >
-                  Submit Test
-                </Text>
-              </LinearGradient>
-            </TouchableOpacity>}
-           
+                  <Text
+                    style={[
+                      styles.ans,
+                      { color: theme.textColor1, fontWeight: "700" },
+                    ]}
+                  >
+                    Submit Test
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
           </View>
-
         </View>
       </View>
 
@@ -1590,7 +1699,6 @@ console.log(option, "oprtion")
         }}
       >
         <View style={styles.centeredView}>
-
           <View style={[styles.modalView, { backgroundColor: theme.bmc1 }]}>
             <Text style={[styles.modalText, { color: theme.textColor }]}>
               Do you want to submit the exam.
@@ -1616,7 +1724,6 @@ console.log(option, "oprtion")
                   styles.button,
                   { backgroundColor: theme.background[1] },
                 ]}
-
                 onPress={() => setSubmitModalVisible(false)}
               >
                 <Text style={[styles.textStyle, { color: theme.textColor1 }]}>
@@ -1624,16 +1731,14 @@ console.log(option, "oprtion")
                 </Text>
               </TouchableOpacity>
             </View>
-
           </View>
         </View>
       </Modal>
     </LinearGradient>
   );
-}
+};
 
-export default StartExam
-
+export default StartExam;
 
 const styles = StyleSheet.create({
   container: {
@@ -1826,7 +1931,6 @@ const styles = StyleSheet.create({
     width: 300,
     marginTop: 20,
     borderColor: "rgba(0, 0, 0, 0.5)",
-
   },
   numberScrollView: {
     paddingHorizontal: 10,

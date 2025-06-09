@@ -127,7 +127,7 @@ if(studentExamId!==null) {
                             option3={option3}
                             option4={option4}
                             value={attempted}
-                            onChangeValue={(value)=>onChangeValue(value)}
+                            onChangeValue={!isOptionDisabled() ? (value)=>onChangeValue(value):undefined}
                             selectedAnswers={selectedAnswers}
                             selectedNumber={selectedNumber}
                             />
@@ -157,7 +157,7 @@ if(studentExamId!==null) {
                             option4={option4}
                             value={attempted}
                             multiple={true}
-                            onChangeValue={(value)=>onChangeValue(value)}
+                            onChangeValue={!isOptionDisabled() ? (value)=>onChangeValue(value):undefined}
                             selectedAnswers={selectedAnswers}
                               selectedNumber={selectedNumber}
                               qtype={qtype}
@@ -193,7 +193,7 @@ if(studentExamId!==null) {
                                 option3={option3}
                                 option4={option4}
                                 value={attempted}
-                                onChangeValue={(value)=>onChangeValue(value)}
+                                onChangeValue={!isOptionDisabled() ? (value)=>onChangeValue(value):undefined}
                                 selectedAnswers={selectedAnswers}
                                   selectedNumber={selectedNumber}
                                 />

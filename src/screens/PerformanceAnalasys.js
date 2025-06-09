@@ -29,8 +29,8 @@ import WeeklyPerformance from "./dashboardItems/WeeklyPeroformance";
 import AnimationWithImperativeApi from "../common/LoadingComponent";
 import { useSelector } from "react-redux";
 
-const windowWidth  = Dimensions.get("screen").width;
-const windowHeight =Dimensions.get("screen").height;
+const windowWidth = Dimensions.get("screen").width;
+const windowHeight = Dimensions.get("screen").height;
 const PerformanceAnalasys = ({ route }) => {
   // console.log(route.params);
   const navigation = useNavigation();
@@ -50,54 +50,51 @@ const PerformanceAnalasys = ({ route }) => {
   const [chaperWiseData, setChapteriseData] = useState([]);
   const [loading, setLoading] = useState(true);
   // const theme = colorScheme === "dark" ? darkTheme : lightTheme;
-  const theme =  darkTheme;
+  const theme = darkTheme;
   const [token, setToken] = useState("");
   const handleLogout = async () => {
     onChangeAuth(null);
   };
-   const uniqueId = useSelector((state) => state.header.deviceId);
-  
-  
-    useEffect(() => {
-      if(uniqueId) {
-        handleAnalytics();
-      }
-    }, [])
-  
-      const handleAnalytics = async () => {
-          console.log("hey Um called")
-          try {
-              // Define your params correctly
-              const params = {
-                  "student_user_exam_id": selectedExam,
-                  "type": 1,
-                  "source": 0,
-                  "testonic_page_id": 42,
-              };
-      
-              console.log(uniqueId,  "payloaddlscknl");
-      
-              // Create payload
-              const payload = {
-                  ...params,
-                  ip_address: uniqueId ? uniqueId: "",
-                  location: "Hyderabad", // Ensure location is correctly handled (but you should pass the location data properly here)
-              };
-      
-              console.log(payload, "payload");
-      
-              // Send analytics request
-              const response = await addAnalytics(payload); // Assuming addAnalytics is an API call function
-              console.log("Analytics Response:", response);
-      
-          } catch (error) {
-              // Handle errors gracefully
-              const errorMessage = error.response?.data?.message || error.message;
-            
-              console.error("Error:", errorMessage);
-          }
+  const uniqueId = useSelector((state) => state.header.deviceId);
+
+  useEffect(() => {
+    if (uniqueId) {
+      handleAnalytics();
+    }
+  }, []);
+
+  const handleAnalytics = async () => {
+    console.log("hey Um called");
+    try {
+      // Define your params correctly
+      const params = {
+        student_user_exam_id: selectedExam,
+        type: 1,
+        source: 0,
+        testonic_page_id: 42,
       };
 
+      console.log(uniqueId, "payloaddlscknl");
+
+      // Create payload
+      const payload = {
+        ...params,
+        ip_address: uniqueId ? uniqueId : "",
+        location: "Hyderabad", // Ensure location is correctly handled (but you should pass the location data properly here)
+      };
+
+      console.log(payload, "payload");
+
+      // Send analytics request
+      const response = await addAnalytics(payload); // Assuming addAnalytics is an API call function
+      console.log("Analytics Response:", response);
+    } catch (error) {
+      // Handle errors gracefully
+      const errorMessage = error.response?.data?.message || error.message;
+
+      console.error("Error:", errorMessage);
+    }
+  };
 
   const options = [
     { label: "30 Days", value: 1 },
@@ -117,31 +114,42 @@ const PerformanceAnalasys = ({ route }) => {
       label: subject.subject_name,
     })) || [];
 
-
-    const performanceGraph = useMemo(() => {
-      console.log(avgTimeResults, "resultsssss")
-      if (avgTimeResults?.periods?.length > 0) {
-        return (
-          <PerformanceStatusGraph
-            performanceSubOptions={performanceSubOptions}
-            type={selectedSubject}
-            data={avgTimeResults}
-            weekData={weeksAvgScoringTime}
-            chaperWiseData={chaperWiseData}
-         
+  const performanceGraph = useMemo(() => {
+    console.log(avgTimeResults, "resultsssss");
+    if (avgTimeResults?.periods?.length > 0) {
+      return (
+        <PerformanceStatusGraph
+          performanceSubOptions={performanceSubOptions}
+          type={selectedSubject}
+          data={avgTimeResults}
+          weekData={weeksAvgScoringTime}
+          chaperWiseData={chaperWiseData}
+        />
+      );
+    } else {
+      return (
+        <View>
+          <Image
+            source={require("../images/2.jpg")}
+            style={{
+              width: windowWidth * 0.85,
+              height: windowHeight * 0.2,
+              resizeMode: "contain",
+            }}
           />
-        );
-      } else {
-        return (
-          <View>
-          <Image source={require("../images/2.jpg")} style={{ width: windowWidth * 0.85, height: windowHeight * 0.20, resizeMode: "contain" }} />
-      </View>
-        )
-      }
-      return null;
-    }, [examResults ,avgTimeResults, selectedSubject, weeksAvgScoringTime, chaperWiseData, performanceSubOptions]);
-    
-    
+        </View>
+      );
+    }
+    return null;
+  }, [
+    examResults,
+    avgTimeResults,
+    selectedSubject,
+    weeksAvgScoringTime,
+    chaperWiseData,
+    performanceSubOptions,
+  ]);
+
   const WeeklyPerformancess = () => {
     return (
       <View
@@ -151,7 +159,6 @@ const PerformanceAnalasys = ({ route }) => {
           { backgroundColor: theme.conbk },
         ]}
       >
-    
         <ScrollView
           horizontal={true}
           showsHorizontalScrollIndicator={false}
@@ -188,7 +195,7 @@ const PerformanceAnalasys = ({ route }) => {
                           : theme.textColor,
                     }}
                   >
-                    {item.label+" "}
+                    {item.label + " "}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -201,30 +208,29 @@ const PerformanceAnalasys = ({ route }) => {
     );
   };
   useEffect(() => {
-    console.log(selectedExam, studentExamId, selectedValue, "aidiydqwyidqiwyd")
+    console.log(selectedExam, studentExamId, selectedValue, "aidiydqwyidqiwyd");
     if (studentExamId || selectedValue) {
       getExamResults();
     }
   }, [selectedExam, studentExamId, selectedValue]);
-console.log(selectedValue, "selectedValue")
-// const getUser = async () => {
-//   setLoading(true);
-//   try {
-//     const response = await getAutoLogin();
-//     if (response.data) {
-//       const examId = response.data.examsData[0].student_user_exam_id;
-//       setToken(response.data.token);
-//       setStudentExamId(examId); // trigger the effects
-//       setLoading(false);
-//     } else {
-//       setLoading(false);
-//     }
-//   } catch (error) {
-//     setLoading(false);
-//     console.error("Error fetching user data:", error);
-//   }
-// };
-
+  console.log(selectedValue, "selectedValue");
+  // const getUser = async () => {
+  //   setLoading(true);
+  //   try {
+  //     const response = await getAutoLogin();
+  //     if (response.data) {
+  //       const examId = response.data.examsData[0].student_user_exam_id;
+  //       setToken(response.data.token);
+  //       setStudentExamId(examId); // trigger the effects
+  //       setLoading(false);
+  //     } else {
+  //       setLoading(false);
+  //     }
+  //   } catch (error) {
+  //     setLoading(false);
+  //     console.error("Error fetching user data:", error);
+  //   }
+  // };
 
   const getAvgScoreTime = async (id) => {
     const fields = {
@@ -234,7 +240,7 @@ console.log(selectedValue, "selectedValue")
     };
     // console.log("called", fields)
     const result = await avgScoringTime(fields);
-    console.log(result, "hellooo")
+    console.log(result, "hellooo");
     setAvgTimeResults(result?.data?.data);
   };
 
@@ -267,7 +273,7 @@ console.log(selectedValue, "selectedValue")
       student_user_exam_id: selectedExam,
       duration_id: selectedValue,
     };
-console.log(data, "peojwiejowiej")
+    console.log(data, "peojwiejowiej");
     try {
       const response = await getDashboardExamResult(data);
       console.log("exam response", response);
@@ -285,11 +291,11 @@ console.log(data, "peojwiejowiej")
     }
   };
 
-  console.log(avgTimeResults,performanceSubOptions, "results");
+  console.log(avgTimeResults, performanceSubOptions, "results");
 
   useEffect(() => {
-    console.log(studentExamId, selectedExam, token, selectedValue, "valueas")
-    if (selectedExam  && selectedValue) {
+    console.log(studentExamId, selectedExam, token, selectedValue, "valueas");
+    if (selectedExam && selectedValue) {
       getAvgScoreTime(selectedExam);
       getWeekAvgScoreTime(selectedExam);
       getChapterAvgScore(selectedExam);
@@ -339,19 +345,17 @@ console.log(data, "peojwiejowiej")
     options,
     performanceSubOptions,
   ]);
-  
-  
-  if(loading||examResults?.length<1) {
+
+  if (loading || examResults?.length < 1) {
     <View style={styles.loadingContainer}>
-    <AnimationWithImperativeApi />
-   </View>
+      <AnimationWithImperativeApi />
+    </View>;
   }
-   
 
   return (
     <View style={[styles.container, { backgroundColor: theme.textbgcolor }]}>
       {/* Header */}
-      <Header setId={setStudentExamId} />
+      {/* <Header setId={setStudentExamId} /> */}
       <ScrollView>
         <Text
           style={[
@@ -359,14 +363,11 @@ console.log(data, "peojwiejowiej")
             { color: theme.textColor, marginBottom: 10, marginTop: 10 },
           ]}
         >
-          Performance Analasis
+          Performance Analysis
         </Text>
-     
-      
-           {memoizedWeeklyPerformance}
-           {examResults.length > 0&&!loading&& <WeeklyPerformancess />}
-           
-       
+
+        {memoizedWeeklyPerformance}
+        {examResults.length > 0 && !loading && <WeeklyPerformancess />}
       </ScrollView>
     </View>
   );

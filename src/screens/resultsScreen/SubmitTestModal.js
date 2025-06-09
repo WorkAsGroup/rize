@@ -11,7 +11,7 @@ import { useDispatch, useSelector } from "react-redux";
 const SubmitTestModal = ({studentExamId,data, finishTest, isTimeUp, examType }) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-console.log(studentExamId,data, finishTest, isTimeUp, examType, "submit")
+// console.log(studentExamId,data, finishTest, isTimeUp, examType, "submit")
  const [loading, setLoading] = useState(false);
   // const examInstructionDetails = useSelector(getInstructions);
   const sessionId = useSelector((state) => state.questions.examSessionId);

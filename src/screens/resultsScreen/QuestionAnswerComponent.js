@@ -14,14 +14,14 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import HTML from "react-native-render-html";
-import RenderHtml from 'react-native-render-html';
+import RenderHtml from "react-native-render-html";
 import HtmlComponent from "../../common/HtmlComponent";
 import { Picker } from "@react-native-picker/picker";
 import { useWindowDimensions } from "react-native";
 import AppStyles from "../../common/AppStyles";
 import COLORS from "../../common/Colors";
 import UserUtils from "../../common/UserUtils";
-var striptags = require('striptags');
+var striptags = require("striptags");
 
 const QuestionAndAnswerComponent = ({ questionAndAnwerData }) => {
   const [state, setState] = useState({
@@ -38,9 +38,7 @@ const QuestionAndAnswerComponent = ({ questionAndAnwerData }) => {
   });
   const [filteredAnswers, setFilteredAnswers] = useState(questionAndAnwerData);
   console.log(filteredAnswers, "received");
-  const examSubjects = filteredAnswers
-    ? filteredAnswers[0]?.examSubjects
-    : [];
+  const examSubjects = filteredAnswers ? filteredAnswers[0]?.examSubjects : [];
   const difficultyLevels = filteredAnswers
     ? filteredAnswers[0]?.difficulty
     : [];
@@ -104,7 +102,7 @@ const QuestionAndAnswerComponent = ({ questionAndAnwerData }) => {
   }, [state.selectedSubjects, state.selectedDifficulty]);
 
   const handleMultiChange = (value, name) => {
-    console.log(value, name, "bhenchod")
+    console.log(value, name, "bhenchod");
     if (name === "subject") {
       if (value === "all") {
         const allSelected =
@@ -114,8 +112,8 @@ const QuestionAndAnswerComponent = ({ questionAndAnwerData }) => {
           selectedSubjects: allSelected ? [] : [...examSubjects],
         }));
       } else {
-        const selected = examSubjects.filter((subject) =>
-            value === subject.subject_id
+        const selected = examSubjects.filter(
+          (subject) => value === subject.subject_id
         );
         setState((prev) => ({
           ...prev,
@@ -123,7 +121,7 @@ const QuestionAndAnswerComponent = ({ questionAndAnwerData }) => {
         }));
       }
     } else if (name === "levels") {
-      if (value ==="all") {
+      if (value === "all") {
         const allSelected =
           state.selectedDifficulty.length === difficultyLevels.length;
         setState((prev) => ({
@@ -131,9 +129,7 @@ const QuestionAndAnswerComponent = ({ questionAndAnwerData }) => {
           selectedDifficulty: allSelected ? [] : [...difficultyLevels],
         }));
       } else {
-        const selected = difficultyLevels.filter((level) =>
-            value === level.id
-        );
+        const selected = difficultyLevels.filter((level) => value === level.id);
         setState((prev) => ({
           ...prev,
           selectedDifficulty: selected,
@@ -150,321 +146,476 @@ const QuestionAndAnswerComponent = ({ questionAndAnwerData }) => {
   };
 
   const renderQuestionItem = ({ item, index }) => {
-console.log(item, item.question?.qtype,"searchomgforooption")
-const sanitizeHtml = (text) =>{
-  if (text.length > 0) {
-      text = text.replace("&nbsp;", " ");
-      text = striptags(text, '<p><img>');
-  }
-  
-  return { html: text };
-}
-const renderersProps = {
-  img: {
-    initialDimensions :{width: 20, height: 20 },
-    enableExperimentalPercentWidth : true
-  }
-};
+    console.log(item, item.question?.qtype, "searchomgforooption");
+    const sanitizeHtml = (text) => {
+      if (text.length > 0) {
+        text = text.replace("&nbsp;", " ");
+        text = striptags(text, "<p><img>");
+      }
 
-    return(
-    <View key={item.slno} style={styles.accordion}>
-      <TouchableOpacity onPress={() => handleChange(index)}>
-        <View style={styles.accordionHeader}>
-          <View style={styles.headerContent}>
-            {item.status === 0 ? (
+      return { html: text };
+    };
+    const renderersProps = {
+      img: {
+        initialDimensions: { width: 20, height: 20 },
+        enableExperimentalPercentWidth: true,
+      },
+    };
+
+    const sanitizeJSON = (str) => {
+      try {
+        const cleaned = str.replace(
+          /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,
+          ""
+        );
+        return JSON.parse(cleaned);
+      } catch (e) {
+        console.error("Invalid JSON format", e);
+        return null;
+      }
+    };
+
+    console.log(item?.question, "wekuyfwkevc");
+    return (
+      <View key={item.slno} style={styles.accordion}>
+        <TouchableOpacity onPress={() => handleChange(index)}>
+          <View style={styles.accordionHeader}>
+            <View style={styles.headerContent}>
+              {item.status === 0 ? (
+                <Image
+                  source={require("../../images/play.png")}
+                  style={{ height: 19, width: 19 }}
+                />
+              ) : item.status === 1 ? (
+                <Image
+                  source={require("../../images/delete2.png")}
+                  style={{ height: 19, width: 19 }}
+                />
+              ) : item.status === 2 ? (
+                <Image
+                  source={require("../../images/check.png")}
+                  style={{ height: 19, width: 19 }}
+                />
+              ) : null}
+              <Text style={styles.questionNumber}>
+                Question No: {item.slno}
+              </Text>
+            </View>
+            {state.isAccordianExpand === index ? (
               <Image
-                source={require("../../images/play.png")}
+                source={require("../../images/up.png")}
                 style={{ height: 19, width: 19 }}
               />
-            ) : item.status === 1 ? (
+            ) : (
               <Image
-                source={require("../../images/delete2.png")}
+                source={require("../../images/down.png")}
                 style={{ height: 19, width: 19 }}
               />
-            ) : item.status === 2 ? (
-              <Image
-                source={require("../../images/check.png")}
-                style={{ height: 19, width: 19 }}
-              />
-            ) : null}
-            <Text style={styles.questionNumber}>Question No: {item.slno}</Text>
+            )}
           </View>
-          {state.isAccordianExpand === index ? (
-            <Image
-              source={require("../../images/up.png")}
-              style={{ height: 19, width: 19 }}
-            />
-          ) : (
-            <Image
-              source={require("../../images/down.png")}
-              style={{ height: 19, width: 19 }}
-            />
-          )}
-        </View>
-      </TouchableOpacity>
-      {state.isAccordianExpand === index && (
-        <View style={styles.accordionContent}>
+        </TouchableOpacity>
+        {state.isAccordianExpand === index && (
+          <View style={styles.accordionContent}>
+            <Fragment>
+              {item?.qtype !== 3 && item?.qtype !== 9 && (
+                <HtmlComponent
+                  style={{
+                    ...AppStyles.oddMRegular,
+                    color: COLORS.BLACK,
+                    fontSize: 15,
+                    lineHeight: 23,
+                  }}
+                  containerStyle={{ marginBottom: 20, marginTop: 3 }}
+                  baseFontStyle={18}
+                  text={`${item?.question}`}
+                  tintColor={COLORS.BLACK}
+                />
+              )}
+              {(item?.qtype == 3 || item?.qtype == 9) && (
+                <Fragment>
+                  {/* <ReloadButton onPress={()=>onReload()} /> */}
+                  <HtmlComponent
+                    style={{
+                      ...AppStyles.oddMRegular,
+                      color: COLORS.BLACK,
+                      fontSize: 15,
+                      lineHeight: 23,
+                    }}
+                    containerStyle={{ marginBottom: 20, marginTop: 3 }}
+                    baseFontStyle={18}
+                    text={`${item?.mat_question}`}
+                    tintColor={COLORS.BLACK}
+                  />
 
-  <Fragment>   
-{item?.qtype !== 3&&item?.qtype!==9&&<HtmlComponent 
-                            style={{...AppStyles.oddMRegular,color:COLORS.BLACK,fontSize:15,lineHeight:23}} 
-                            containerStyle={{ marginBottom:20,marginTop:3}} 
-                            baseFontStyle={18}
-                            text={`${item?.question}`}
-                            tintColor={COLORS.BLACK}
-                            /> } 
-                             {
-                    (item?.qtype == 3 || item?.qtype == 9) && (
-                        
-                        <Fragment>
-                             {/* <ReloadButton onPress={()=>onReload()} /> */}
-                            <HtmlComponent 
-                            style={{...AppStyles.oddMRegular,color:COLORS.BLACK,fontSize:15,lineHeight:23}} 
-                            containerStyle={{ marginBottom:20,marginTop:3}} 
-                            baseFontStyle={18}
-                            text={`${item?.mat_question}`}
-                            tintColor={COLORS.BLACK}
-                            />
-
-                        <View style={{backgroundColor:'#fff',marginHorizontal:-10,paddingHorizontal:10,paddingVertical:10,marginBottom:20,borderRadius:4}}>
-                         
-                           
-                            <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
-                                <View style={{flex:1,flexDirection:'row',justifyContent:'flex-start'}}>
-                                    <Text style={AppStyles.oddMMedium}>List 1</Text>
-                                </View>
-
-                                <View style={{flex:1,flexDirection:'row',justifyContent:'flex-start'}}>
-                                <Text style={AppStyles.oddMMedium}>List 2</Text>
-                                </View>
-                            </View>
-                            
-
-                           {
-                              UserUtils.isValidJSON(item?.question) &&  
-                              JSON.parse(item?.question).map((item,index) =>{
-                                   return(
-
-                                    <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
-                                         <View style={{flex:1,flexDirection:'row',justifyContent:'flex-start'}}>
-                                         <HtmlComponent 
-                                                style={{...AppStyles.oddMRegular,color:COLORS.BLACK,fontSize:15,lineHeight:23}}
-                                                baseFontStyle={18}
-                                                text={`(${UserUtils.getIndex(index,item?.list1type)})  ${item.qlist1}`}
-                                                tintColor={COLORS.BLACK}
-                                                />
-                                         </View>
-                                         <View style={{flex:1,flexDirection:'row',justifyContent:'flex-start'}}>
-                                          <HtmlComponent 
-                                                style={{...AppStyles.oddMRegular,color:COLORS.BLACK,fontSize:15,lineHeight:23}} 
-                                                
-                                                baseFontStyle={18}
-                                                text={`(${UserUtils.getIndex(index,item?.list2type)})  ${item.qlist2}`}
-                                                tintColor={COLORS.BLACK}
-                                                />
-                                         </View>
-                                       </View>
-                                     )
-                               })
-                           }
-
-                          </View> 
-
-                           
-                        </Fragment>
-                    )
-                }
-</Fragment>         
-          {/* Add more content rendering here */}
-          {/* <Text>{item.question}</Text> */}
-          {item?.qtype !== 8 ? (
-          <View style={styles.container2}>
-          {['A', 'B', 'C', 'D'].map((option, i) => {
-            const isCorrect = item?.answer.includes(`${option},`);
-            const isAttempted = option === item?.attempt_answer;
-    
-            const borderColor = isCorrect ? "#1ABE1733" : isAttempted ? "#E5000433" : "#ddd";
-            const backgroundColor = isCorrect ? "#1ABE171A" : isAttempted ? "#E500041A" : "#fff";
-    
-            return (
-              <View key={i} style={[styles.optionContainer, { width: "100%" }]}>
-                <View style={[styles.paper, { borderColor, backgroundColor }]}>
-                  <View style={styles.optionContent}>
-                    {/* Aligning Text and Image/Icon in a row */}
-                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
-                      
-                      {/* Option Text */}
-                      <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
-                        <Text style={styles.optionText}>
-                          <Text style={styles.optionLabel}>{option}</Text>
-                          <Text style={styles.optionSpacer}> . </Text>
-                        </Text>
-                        {item?.question && (
-                          // <RenderHtml
-                          //   source={sanitizeHtml(item?.[`option${i + 1}`] || "<p>No option provided.</p>")}
-                          //   renderersProps={renderersProps}
-                          //   contentWidth={width}
-                          // />
-                          <HtmlComponent 
-                            style={{...AppStyles.oddMRegular,color:COLORS.BLACK,fontSize:15,lineHeight:23}} 
-                            containerStyle={{ marginBottom:20,marginTop:3}} 
-                            baseFontStyle={18}
-                            text={item?.[`option${i + 1}`]}
-                            tintColor={COLORS.BLACK}
-                            />  
-                        )}
+                  <View
+                    style={{
+                      backgroundColor: "#fff",
+                      marginHorizontal: -10,
+                      paddingHorizontal: 10,
+                      paddingVertical: 10,
+                      marginBottom: 20,
+                      borderRadius: 4,
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                        marginBottom: 10,
+                      }}
+                    >
+                      <View
+                        style={{
+                          flex: 1,
+                          flexDirection: "row",
+                          justifyContent: "flex-start",
+                        }}
+                      >
+                        <Text style={AppStyles.oddMMedium}>List 1</Text>
                       </View>
-            
-                      {/* Correct/Wrong Icon or Radio Button */}
-                      {isCorrect ? (
-                        <Image
-                          source={require("../../images/check.png")}
-                          style={{ height: 19, width: 19 }}
-                        />
-                      ) : isAttempted ? (
-                        <Image
-                          source={require("../../images/delete2.png")}
-                          style={{ height: 19, width: 19 }}
-                        />
-                      ) : (
-                        <View style={styles.radioRounded} />
-                      )}
+
+                      <View
+                        style={{
+                          flex: 1,
+                          flexDirection: "row",
+                          justifyContent: "flex-start",
+                        }}
+                      >
+                        <Text style={AppStyles.oddMMedium}>List 2</Text>
+                      </View>
+                    </View>
+
+                    {UserUtils.isValidJSON(sanitizeJSON(item?.question)) &&
+                      sanitizeJSON(item?.question)?.map((item, index) => {
+                        return (
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              justifyContent: "space-between",
+                              alignItems: "flex-start",
+                              marginBottom: 8,
+                            }}
+                          >
+                            <View
+                              style={{
+                                flex: 1,
+                                flexDirection: "row",
+                                justifyContent: "flex-start",
+                              }}
+                            >
+                              <HtmlComponent
+                                style={{
+                                  ...AppStyles.oddMRegular,
+                                  color: COLORS.BLACK,
+                                  fontSize: 15,
+                                  lineHeight: 23,
+                                }}
+                                baseFontStyle={18}
+                                text={`(${UserUtils.getIndex(
+                                  index,
+                                  item?.list1type
+                                )})  ${item.qlist1}`}
+                                tintColor={COLORS.BLACK}
+                              />
+                            </View>
+                            <View
+                              style={{
+                                flex: 1,
+                                flexDirection: "row",
+                                justifyContent: "flex-start",
+                              }}
+                            >
+                              <HtmlComponent
+                                style={{
+                                  ...AppStyles.oddMRegular,
+                                  color: COLORS.BLACK,
+                                  fontSize: 15,
+                                  lineHeight: 23,
+                                }}
+                                baseFontStyle={18}
+                                text={`(${UserUtils.getIndex(
+                                  index,
+                                  item?.list2type
+                                )})  ${item.qlist2}`}
+                                tintColor={COLORS.BLACK}
+                              />
+                            </View>
+                          </View>
+                        );
+                      })}
+                  </View>
+                </Fragment>
+              )}
+            </Fragment>
+            {/* Add more content rendering here */}
+            {/* <Text>{item.question}</Text> */}
+            {item?.qtype !== 8 ? (
+              <View style={styles.container2}>
+                {["A", "B", "C", "D"].map((option, i) => {
+                  const isCorrect = item?.answer.includes(`${option},`);
+                  const isAttempted = option === item?.attempt_answer;
+
+                  const borderColor = isCorrect
+                    ? "#1ABE1733"
+                    : isAttempted
+                    ? "#E5000433"
+                    : "#ddd";
+                  const backgroundColor = isCorrect
+                    ? "#1ABE171A"
+                    : isAttempted
+                    ? "#E500041A"
+                    : "#fff";
+
+                  return (
+                    <View
+                      key={i}
+                      style={[styles.optionContainer, { width: "100%" }]}
+                    >
+                      <View
+                        style={[styles.paper, { borderColor, backgroundColor }]}
+                      >
+                        <View style={styles.optionContent}>
+                          {/* Aligning Text and Image/Icon in a row */}
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              width: "100%",
+                            }}
+                          >
+                            {/* Option Text */}
+                            <View
+                              style={{
+                                flex: 1,
+                                flexDirection: "row",
+                                alignItems: "center",
+                              }}
+                            >
+                              <Text style={styles.optionText}>
+                                <Text style={styles.optionLabel}>{option}</Text>
+                                <Text style={styles.optionSpacer}> . </Text>
+                              </Text>
+                              {item?.question && (
+                                // <RenderHtml
+                                //   source={sanitizeHtml(item?.[`option${i + 1}`] || "<p>No option provided.</p>")}
+                                //   renderersProps={renderersProps}
+                                //   contentWidth={width}
+                                // />
+                                <HtmlComponent
+                                  style={{
+                                    ...AppStyles.oddMRegular,
+                                    color: COLORS.BLACK,
+                                    fontSize: 15,
+                                    lineHeight: 23,
+                                  }}
+                                  containerStyle={{
+                                    marginBottom: 20,
+                                    marginTop: 3,
+                                  }}
+                                  baseFontStyle={18}
+                                  text={item?.[`option${i + 1}`]}
+                                  tintColor={COLORS.BLACK}
+                                />
+                              )}
+                            </View>
+
+                            {/* Correct/Wrong Icon or Radio Button */}
+                            {isCorrect ? (
+                              <Image
+                                source={require("../../images/check.png")}
+                                style={{ height: 19, width: 19 }}
+                              />
+                            ) : isAttempted ? (
+                              <Image
+                                source={require("../../images/delete2.png")}
+                                style={{ height: 19, width: 19 }}
+                              />
+                            ) : (
+                              <View style={styles.radioRounded} />
+                            )}
+                          </View>
+                        </View>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            ) : (
+              <View>
+                {item?.status === 2 ? (
+                  <View
+                    style={[
+                      styles.statusContainer,
+                      {
+                        width: "100%",
+                        backgroundColor: "#1ABE171A",
+                        borderColor: "#1ABE1733",
+                      },
+                    ]}
+                  >
+                    <Text style={styles.statusText}>
+                      {item?.attempt_answer}
+                    </Text>
+                    <View style={styles.iconContainer}>
+                      <Image
+                        source={require("../../images/check.png")}
+                        style={{ height: 19, width: 19 }}
+                      />
                     </View>
                   </View>
-                </View>
+                ) : (
+                  <View>
+                    {item?.status === 2 ? (
+                      <View style={styles.rowContainer}>
+                        <View
+                          style={[
+                            styles.statusContainer,
+                            {
+                              width: "100%",
+                              backgroundColor: "#E500041A",
+                              borderColor: "#E5000433",
+                            },
+                          ]}
+                        >
+                          <Text style={styles.statusText}>
+                            {item?.attempt_answer}
+                          </Text>
+                          <View style={styles.iconContainer}>
+                            <Icon name="cancel" size={18} color="#c52e00" />
+                          </View>
+                        </View>
+                        <View
+                          style={[
+                            styles.statusContainer,
+                            {
+                              width: "48%",
+                              backgroundColor: "#1ABE171A",
+                              borderColor: "#1ABE1733",
+                            },
+                          ]}
+                        >
+                          <Text style={styles.statusText}>{item?.answer}</Text>
+                          <View style={styles.iconContainer}>
+                            <Image
+                              source={require("../../images/check.png")}
+                              style={{ height: 19, width: 19 }}
+                            />
+                          </View>
+                        </View>
+                      </View>
+                    ) : (
+                      <View
+                        style={{
+                          display: "flex",
+                          flexDirection: "row",
+                          gap: 15,
+                        }}
+                      >
+                        <View
+                          style={[
+                            styles.statusContainer,
+                            {
+                              width: "40%",
+                              backgroundColor: "#E500041A",
+                              borderColor: "#E5000433",
+                            },
+                          ]}
+                        >
+                          <Text style={styles.statusText}>
+                            {item?.attempt_answer}
+                          </Text>
+                          <View style={styles.iconContainer}>
+                            <Image
+                              source={require("../../images/delete2.png")}
+                              style={{ height: 19, width: 19 }}
+                            />
+                          </View>
+                        </View>
+                        <View
+                          style={[
+                            styles.statusContainer,
+                            {
+                              width: "48%",
+                              backgroundColor: "#1ABE171A",
+                              borderColor: "#1ABE1733",
+                            },
+                          ]}
+                        >
+                          <Text style={styles.statusText}>{item?.answer}</Text>
+                          <View style={styles.iconContainer}>
+                            <Image
+                              source={require("../../images/check.png")}
+                              style={{ height: 19, width: 19 }}
+                            />
+                          </View>
+                        </View>
+                      </View>
+                    )}
+                  </View>
+                )}
               </View>
-            );
-            
-          })}
-        </View>
-          ):<View>
-             {item?.status === 2 ? (
-                  <View
-                  style={[
-                    styles.statusContainer,
-                    { width: '100%', backgroundColor: '#1ABE171A', borderColor: '#1ABE1733' },
-                  ]}
-                >
-                  <Text style={styles.statusText}>{item?.attempt_answer}</Text>
-                  <View style={styles.iconContainer}>
-                <Image
-                          source={require("../../images/check.png")}
-                          style={{ height: 19, width: 19 }}
-                        />
-                </View>
-                </View>
-             ) : (<View>{item?.status === 2 ? (
-                <View style={styles.rowContainer}>
-          <View
-            style={[
-              styles.statusContainer,
-              { width: '100%', backgroundColor: '#E500041A', borderColor: '#E5000433' },
-            ]}
-          >
-            <Text style={styles.statusText}>{item?.attempt_answer}</Text>
-            <View style={styles.iconContainer}>
-              <Icon name="cancel" size={18} color="#c52e00" />
-            </View>
-          </View>
-          <View
-            style={[
-              styles.statusContainer,
-              { width: '48%', backgroundColor: '#1ABE171A', borderColor: '#1ABE1733' },
-            ]}
-          >
-            <Text style={styles.statusText}>{item?.answer}</Text>
-            <View style={styles.iconContainer}>
-                <Image
-                          source={require("../../images/check.png")}
-                          style={{ height: 19, width: 19 }}
-                        />
-                </View>
-          </View>
-        </View>
-             ) : ( 
-             <View style={{display: "flex", flexDirection: "row", gap: 15}}>
-              <View
-            style={[
-              styles.statusContainer,
-              { width: '40%', backgroundColor: '#E500041A', borderColor: '#E5000433' },
-            ]}
-          >
-            <Text style={styles.statusText}>{item?.attempt_answer}</Text>
-            <View style={styles.iconContainer}>
-            <Image
-                          source={require("../../images/delete2.png")}
-                          style={{ height: 19, width: 19 }}
-                        />
-            </View>
-          </View>
- <View
-                style={[
-                  styles.statusContainer,
-                  { width:'48%', backgroundColor: '#1ABE171A', borderColor: '#1ABE1733' },
-                ]}
+            )}
+            <View
+              style={{
+                marginTop: 10,
+                backgroundColor: "#0355E11A",
+                borderWidth: 1,
+                borderColor: "#0355E11A",
+                padding: 15,
+                borderRadius: 8,
+              }}
+            >
+              <Text
+                style={{ fontWeight: "600", fontSize: 16, marginBottom: 5 }}
               >
-                <Text style={styles.statusText}>{item?.answer}</Text>
-                <View style={styles.iconContainer}>
-                <Image
-                          source={require("../../images/check.png")}
-                          style={{ height: 19, width: 19 }}
-                        />
-                </View>
-                
-              </View>
+                Explanation:
+              </Text>
 
-             </View>
-            )}</View>)}
-            </View>}
-          <View
-            style={{
-              marginTop: 10,
-              backgroundColor: "#0355E11A",
-              borderWidth: 1,
-              borderColor: "#0355E11A",
-              padding: 15,
-              borderRadius: 8,
-            }}
-          >
-            <Text style={{ fontWeight: "600", fontSize: 16, marginBottom: 5 }}>
-              Explanation:
-            </Text>
-
-          
-
-<HtmlComponent 
-                            style={{...AppStyles.oddMRegular,color:COLORS.BLACK,fontSize:15,lineHeight:23}} 
-                            containerStyle={{ marginBottom:20,marginTop:3}} 
-                            baseFontStyle={18}
-                            text={`${item?.explanation}`}
-                            tintColor={COLORS.BLACK}
-                            />   
+              <HtmlComponent
+                style={{
+                  ...AppStyles.oddMRegular,
+                  color: COLORS.BLACK,
+                  fontSize: 15,
+                  lineHeight: 23,
+                }}
+                containerStyle={{ marginBottom: 20, marginTop: 3 }}
+                baseFontStyle={18}
+                text={`${item?.explanation}`}
+                tintColor={COLORS.BLACK}
+              />
+            </View>
           </View>
-        </View>
-      )}
-    </View>
-  )};
+        )}
+      </View>
+    );
+  };
 
   const handleAnswers = (type) => () => {
-
     let updatedResult = [];
-  
+
     if (type === "correct") {
-      updatedResult = questionAndAnwerData[0]?.questions?.filter((item) => item.status === 2);
+      updatedResult = questionAndAnwerData[0]?.questions?.filter(
+        (item) => item.status === 2
+      );
     } else if (type === "incorrect") {
-      updatedResult = questionAndAnwerData[0]?.questions?.filter((item) => item.status === 1);
+      updatedResult = questionAndAnwerData[0]?.questions?.filter(
+        (item) => item.status === 1
+      );
     } else if (type === "skipped") {
-      updatedResult = questionAndAnwerData[0]?.questions?.filter((item) => item.status === 0);
+      updatedResult = questionAndAnwerData[0]?.questions?.filter(
+        (item) => item.status === 0
+      );
     } else {
       updatedResult = questionAndAnwerData[0]?.questions || [];
     }
-  
+
     setState((prev) => ({
       ...prev,
       filteredQuestions: updatedResult,
     }));
   };
-  
 
   return (
     <ScrollView style={styles.container}>
@@ -515,23 +666,35 @@ const renderersProps = {
               Analysis breakdown of answers
             </Text>
             <View style={styles.analysisRow}>
-            <TouchableOpacity onPress={handleAnswers("total")} style={styles.analysisItem}>
+              <TouchableOpacity
+                onPress={handleAnswers("total")}
+                style={styles.analysisItem}
+              >
                 <Text style={styles.analysisValue}>{state.totalQuestions}</Text>
                 <Text style={styles.analysisLabel}>Total Questions</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleAnswers("correct")} style={styles.analysisItem}>
+              <TouchableOpacity
+                onPress={handleAnswers("correct")}
+                style={styles.analysisItem}
+              >
                 <Text style={[styles.analysisValue, { color: "#28A745" }]}>
                   {state.correctAnswers}
                 </Text>
                 <Text style={styles.analysisLabel}>Correct answers</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleAnswers("incorrect")} style={styles.analysisItem}>
+              <TouchableOpacity
+                onPress={handleAnswers("incorrect")}
+                style={styles.analysisItem}
+              >
                 <Text style={[styles.analysisValue, { color: "#E50004" }]}>
                   {state.inCorrectAnswers}
                 </Text>
                 <Text style={styles.analysisLabel}>Incorrect answers</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleAnswers("skipped")} style={styles.analysisItem}>
+              <TouchableOpacity
+                onPress={handleAnswers("skipped")}
+                style={styles.analysisItem}
+              >
                 <Text style={[styles.analysisValue, { color: "#FFC107" }]}>
                   {state.skipped}
                 </Text>
@@ -561,7 +724,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 16,
-    color: "#000"
+    color: "#000",
   },
   picker: {
     width: "48%",
@@ -597,7 +760,7 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     borderWidth: 1,
     borderColor: "#ddd",
-    width: Dimensions.get("screen").width*.81
+    width: Dimensions.get("screen").width * 0.81,
   },
   accordionHeader: {
     flexDirection: "row",
@@ -623,8 +786,8 @@ const styles = StyleSheet.create({
   },
   container2: {
     marginTop: 8,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
   },
   optionContainer: {
@@ -632,30 +795,30 @@ const styles = StyleSheet.create({
   },
   paper: {
     padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     borderWidth: 1,
     borderRadius: 4,
   },
   optionContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     alignContent: "center",
-    width: '100%',
+    width: "100%",
   },
   optionText: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flexWrap: "wrap",
   },
   optionLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#707070',
+    fontWeight: "bold",
+    color: "#707070",
     width: 20,
-    textAlign: 'center',
+    textAlign: "center",
     borderRadius: 32,
   },
   optionSpacer: {
@@ -663,36 +826,36 @@ const styles = StyleSheet.create({
   },
   optionTextContent: {
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   radioRounded: {
     width: 16,
     height: 16,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#707070',
+    borderColor: "#707070",
   },
   statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginTop: 8,
     borderWidth: 1,
     borderRadius: 4,
     padding: 8,
   },
   statusText: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     flex: 1,
   },
   iconContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
   },
   rowContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
   },
 });
